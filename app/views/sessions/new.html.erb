@@ -1,0 +1,18 @@
+<%= form_for :session, url: login_path do |f| %>
+	<div>
+		<%= f.label :email %>
+		<%= f.text_field :email %>
+	</div>
+
+	<div>
+		<%= f.label :password %>
+		<%= f.password_field :password %>
+	</div>
+
+	<div class="check-box">
+		<%= f.label :remember, "Remember?" %>
+		<%= f.check_box :remember %>
+	</div>
+
+	<%= f.submit "Login", class: 'submit' %>
+<% end %>

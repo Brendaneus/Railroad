@@ -1,0 +1,16 @@
+<nav>
+	<%= link_to "Dashboard", root_path %>
+	<%= link_to "Mission", mission_path %>
+	<%= link_to "Log in", login_path %>
+	<%= link_to "Log out", logout_path, method: :delete %>
+	<%= link_to "Sign up", signup_path %>
+</nav>
+<hr>
+<% if flash.any? %>
+	<ul class="flash">
+		<% flash.each do |key, msg| %>
+			<li class="<%= key %>"><%= key.capitalize %>: <%= msg %></li>
+		<% end %>
+	</ul>
+	<hr>
+<% end %>

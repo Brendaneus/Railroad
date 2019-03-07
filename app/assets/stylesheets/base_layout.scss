@@ -1,0 +1,29 @@
+* {
+	/* border: thin solid black */
+}
+
+
+/* Nav Bar */
+
+nav {
+	a {
+		display: inline-block;
+		list-style: none;
+		padding: 5px;
+	}
+}
+
+
+/* Forms */
+
+form {
+	div {
+		margin: 5px 0px;
+	}
+	.check-box * {
+		display: inline-block;
+	}
+	.submit {
+		display: block;
+	}
+}

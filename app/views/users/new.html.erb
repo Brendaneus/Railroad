@@ -1,0 +1,28 @@
+<%= form_for @user, url: signup_path do |f| %>
+	<div>
+		<%= f.label :name, "Username" %>
+		<%= f.text_field :name %>
+	</div>
+
+	<div>
+		<%= f.label :email %>
+		<%= f.text_field :email %>
+	</div>
+
+	<div>
+		<%= f.label :password %>
+		<%= f.password_field :password %>
+	</div>
+
+	<div>
+		<%= f.label :password_confirmation %>
+		<%= f.password_field :password_confirmation %>
+	</div>
+
+	<div class="check-box">
+		<%= f.label :remember, "Remember on login?" %>
+		<%= f.check_box :remember %>
+	</div>
+
+	<%= f.submit "Create account", class: 'submit' %>
+<% end %>
