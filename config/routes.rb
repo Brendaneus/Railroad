@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :blog_posts
 	root 'home_pages#dashboard'
 
 	# Home Pages
@@ -16,5 +17,11 @@ Rails.application.routes.draw do
 	post '/signup',		to: 'users#create'
 
 	# Users
-	resources :users, except: [:new, :create]
+	resources :users, except: [:new, :create, :edit, :update, :destroy]
+
+	# Blog
+	resources :blog_posts, except: [:index, :show]
+	get '/blog',		to: 'blog_posts#index'
+	get '/blog/:id',	to: 'blog_posts#show'
+	# get 'blog_posts/motd',		to: 'blog_posts#motd'
 end

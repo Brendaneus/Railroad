@@ -1,6 +1,14 @@
 class UsersController < ApplicationController
 	include SessionsHelper # This makes all helper methods into actions!
 
+	def index
+		@user = User.all
+	end
+
+	def show
+		@user = User.find( params[:id] )
+	end
+
 	def new
 		@user = User.new
 	end
@@ -17,14 +25,6 @@ class UsersController < ApplicationController
 			flash.now[:failure] = "There was a problem signing you up."
 			render :new
 		end
-	end
-
-	def index
-		@user = User.all
-	end
-
-	def show
-		@user = User.find( params[:id] )
 	end
 
 

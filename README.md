@@ -1,15 +1,15 @@
 # PLAN
 
 * Home Pages
-- Landing page -- initial redirect
-- Dashboard -- root
-- Mission Statement
++ Landing page -- initial redirect
++ Dashboard -- root
++ Mission Statement
 
-* Blog -- admin thing
-- index
-- show -- shows full comments
-- new
-- create
+* Blog -- admin thing -- add motd when you learn querying
++ index
++ show -- shows full comments
++ new
++ create
 - edit
 - update
 - delete
@@ -36,11 +36,11 @@
 - update
 - delete
 
-* Users
-- index
-- show
-- new
-- create
+* Users -- Add warning about open source and passwords
++ index
++ show
++ new
++ create
 - edit
 - update
 - delete

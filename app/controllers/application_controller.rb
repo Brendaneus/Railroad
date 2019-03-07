@@ -1,4 +1,6 @@
 class ApplicationController < ActionController::Base
+	include ApplicationHelper
+
 	def landed?
 		cookies[:landed]
 	end
@@ -7,20 +9,17 @@ class ApplicationController < ActionController::Base
 		cookies.permanent[:landed] = true
 	end
 
-	def current_user
-		user_id = session[:user_id]
-		remember_token = decode_cookie( :remember_token )
-		remember_digest = ( remember_token ) ? User.digest( remember_token ) : "" # This is based on the assumption that no digest will be ""
-		@current_user ||= ( user_id ) ? User.find( user_id ) : User.find_by( remember_digest: remember_digest )
+	def require_login
+		unless current_user
+			flash[:warning] = "You must be logged in go there."
+			redirect_to login_path
+		end
 	end
 
-	def current_user=(user)
-		@current_user = user
-	end
-
-	def decode_cookie key
-		if ( cookie = cookies[key] )
-			Base64.decode64( cookies[key].split('--').first ).chomp('"').reverse.chomp('"').reverse
+	def require_admin
+		unless current_user && current_user.admin?
+			flash[:warning] = "You aren't allowed in there."
+			redirect_to blog_path
 		end
 	end
 end
