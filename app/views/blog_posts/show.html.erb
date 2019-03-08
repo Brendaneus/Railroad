@@ -1,5 +1,5 @@
 <% if current_user && current_user.admin? %>
-	<nav class="admin_control">
+	<nav class="admin post_control">
 		<%= link_to "Edit Post", edit_blog_post_path( @blog_post ) %>
 		<%= link_to "Delete Post", blog_post_path( @blog_post ), method: :delete, data: { confirm: 'Really delete this post?'} %>
 	</nav>

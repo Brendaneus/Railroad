@@ -24,10 +24,11 @@ Rails.application.routes.draw do
 
 
 	# Catch-all
-	unless !Rails.env.development?
+	unless Rails.env.development?
 		match '*all',	to: 'application#redirector',
 						via: [:get, :post, :put, :patch, :delete],
 						constraints: lambda { |req|
 							req.path.exclude? 'rails/active_storage'
-						}	end
+						}
+	end
 end

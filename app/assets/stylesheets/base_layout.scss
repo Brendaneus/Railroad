@@ -32,17 +32,29 @@ form {
 	}
 }
 
-/* Admin & User Control */
+/* Blog & Post Control */
 
-.control {
+.post_control {
 	display: inline-block;
 	padding: 5px;
+	border: thin solid blue;
+	background-color: #eef;
 	&.admin {
 		border: thin solid red;
 		background-color: #fee;
 	}
-	&.user {
-		border: thin solid blue;
-		background-color: #efe;
+}
+
+
+/* Account Control */
+
+.account_control {
+	display: inline-block;
+	padding: 5px;
+	border: thin solid blue;
+	background-color: #eef;
+	&.admin {
+		border: thin solid red;
+		background-color: #fee;
 	}
 }

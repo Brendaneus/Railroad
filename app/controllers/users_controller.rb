@@ -5,7 +5,7 @@ class UsersController < ApplicationController
 	before_action :require_authorize, only: [:edit, :update, :destroy]
 
 	def index
-		@user = User.all
+		@users = User.all
 	end
 
 	def show

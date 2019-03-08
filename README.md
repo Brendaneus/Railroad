@@ -19,7 +19,9 @@
 + Dashboard -- root
 + Mission Statement
 
-** Blog -- admin thing -- add motd when you learn querying
+** Blog -- admin thing
+		-- add motd when you learn querying 
+		-- Fix the post control link sizing
 + index
 + show -- shows full comments
 + new
