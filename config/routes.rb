@@ -1,5 +1,4 @@
 Rails.application.routes.draw do
-  resources :blog_posts
 	root 'home_pages#dashboard'
 
 	# Home Pages
@@ -9,19 +8,26 @@ Rails.application.routes.draw do
 	# Log in
 	get '/login',		to: 'sessions#new'
 	post '/login',		to: 'sessions#create'
-	delete '/logout',	to: 'sessions#destroy'
-	# match '/logout',	to: 'sessions#destroy',		via: [:get, :delete]
+	match '/logout',	to: 'sessions#destroy',		via: [:get, :delete]
 
 	# Sign up
 	get '/signup',		to: 'users#new'
 	post '/signup',		to: 'users#create'
 
 	# Users
-	resources :users, except: [:new, :create, :edit, :update, :destroy]
+	resources :users, except: [:new, :create]
 
 	# Blog
-	resources :blog_posts, except: [:index, :show]
+	resources :blog_posts, except: [:index]
 	get '/blog',		to: 'blog_posts#index'
-	get '/blog/:id',	to: 'blog_posts#show'
-	# get 'blog_posts/motd',		to: 'blog_posts#motd'
+	# get 'motd',	to: 'blog_posts#motd'
+
+
+	# Catch-all
+	unless !Rails.env.development?
+		match '*all',	to: 'application#redirector',
+						via: [:get, :post, :put, :patch, :delete],
+						constraints: lambda { |req|
+							req.path.exclude? 'rails/active_storage'
+						}	end
 end

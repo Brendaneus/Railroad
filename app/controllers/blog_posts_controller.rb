@@ -16,15 +16,42 @@ class BlogPostsController < ApplicationController
 	def create
 		@blog_post = BlogPost.new( blog_post_params )
 		if @blog_post.save
-			flash[:success] = "Post created!"
-			redirect_to blog_path
+			flash[:success] = "Blog post created!"
+			redirect_to blog_post_path( @blog_post )
 		else
-			flash.now[:failure] = "Check for errors."
+			flash.now[:failure] = "Check blog post for errors."
 			render :new
 		end
 	end
 
+	def edit
+		@blog_post = BlogPost.find( params[:id] )
+	end
+
+	def update
+		@blog_post = BlogPost.find( params[:id] )
+		if @blog_post.update_attributes( blog_post_params )
+			flash[:success] = "Blog post updated!"
+			redirect_to blog_path
+		else
+			flash.now[:failure] = "Check blog post for errors."
+			render :edit
+		end
+	end
+
+	def destroy
+		@blog_post = BlogPost.find( params[:id] )
+		if @blog_post.destroy
+			flash[:success] = "Blog post deleted."
+			redirect_to blog_path
+		else
+			flash[:error] = "There was a problem deleting this blog post."
+			redirect_to blog_post_path( @blog_post )
+		end
+	end
+
 	private
+
 		def blog_post_params
 			params.require(:blog_post).permit( :title, :subtitle, :body, :sticky )
 		end

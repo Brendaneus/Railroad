@@ -6,8 +6,20 @@ module ApplicationHelper
 		@current_user ||= ( user_id ) ? User.find( user_id ) : User.find_by( remember_digest: remember_digest )
 	end
 
-	def current_user=(user)
+	def current_user=( user )
 		@current_user = user
+	end
+
+	def logged_in? ( user = current_user )
+		!user.nil?
+	end
+
+	def authorized? ( user = current_user, target_user = User.find( params[:id] ) )
+		user == target_user || ( user && user.admin? )
+	end
+
+	def admin_user? ( user = current_user )
+		!user.nil? && user.admin?
 	end
 
 	def decode_cookie key

@@ -11,6 +11,10 @@ nav {
 		list-style: none;
 		padding: 5px;
 	}
+	.status_control {
+		display: inline-block;
+		float: right;
+	}
 }
 
 
@@ -20,10 +24,25 @@ form {
 	div {
 		margin: 5px 0px;
 	}
-	.check-box * {
+	.check_box * {
 		display: inline-block;
 	}
 	.submit {
 		display: block;
+	}
+}
+
+/* Admin & User Control */
+
+.control {
+	display: inline-block;
+	padding: 5px;
+	&.admin {
+		border: thin solid red;
+		background-color: #fee;
+	}
+	&.user {
+		border: thin solid blue;
+		background-color: #efe;
 	}
 }

@@ -1,5 +1,8 @@
 class UsersController < ApplicationController
-	include SessionsHelper # This makes all helper methods into actions!
+	include SessionsHelper # :create, :destroy
+
+	before_action :require_login, only: [:edit, :update, :destroy]
+	before_action :require_authorize, only: [:edit, :update, :destroy]
 
 	def index
 		@user = User.all
@@ -24,6 +27,38 @@ class UsersController < ApplicationController
 		else
 			flash.now[:failure] = "There was a problem signing you up."
 			render :new
+		end
+	end
+
+	def edit
+		@user = User.find( params[:id] )
+	end
+
+	def update
+		@user = User.find( params[:id] )
+		if @user.update( user_params )
+			flash[:success] = "The account changes have been saved."
+			redirect_to user_path( @user )
+		else
+			flash.now[:failure] = "There was a problem updating this profile."
+			render :edit
+		end
+	end
+
+	def destroy
+		@user = User.find( params[:id] )
+		if @user.destroy
+			flash[:success] = "User account deleted."
+			if admin_user?
+				redirect_to users_path
+			else
+				# Logout User method???
+				session.delete( :user_id )
+				redirect_to root_url
+			end
+		else
+			flash[:failure] = "There was a problem deleting this account."
+			redirect_to user_path( @user )
 		end
 	end
 

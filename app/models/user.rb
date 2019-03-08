@@ -31,4 +31,8 @@ class User < ApplicationRecord
 		self.remember_token = nil
 		update_attribute( :remember_digest, nil )
 	end
+
+	def authorized? ( user )
+		self == user || self.admin?
+	end
 end

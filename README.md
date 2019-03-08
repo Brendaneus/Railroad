@@ -1,24 +1,38 @@
 # PLAN
 
-* Home Pages
+** Add smart redirects from unknown paths [and domains?]
+
+** Add email for verification and confirmations, etc
+
+** Change sessions to use tokens instead of ids
+
+** Nav Bar
++ Home Pages
++ Blog
++ Archive
++ Forum
++ Users
++ Account Functions -- convert into dropdown with 'LED-style' status dot for login / remembering
+
+** Home Pages
 + Landing page -- initial redirect
 + Dashboard -- root
 + Mission Statement
 
-* Blog -- admin thing -- add motd when you learn querying
+** Blog -- admin thing -- add motd when you learn querying
 + index
 + show -- shows full comments
 + new
 + create
-- edit
-- update
-- delete
++ edit
++ update -- add some form of changes screen / javascript
++ delete
 
-* Blog Comments -- user thing
+** Blog Comments -- user thing
 - new
 - create
 
-* Archive
+** Archive
 - index
 - show
 - new -- redirect_to proposal unless admin
@@ -27,7 +41,7 @@
 - update
 - destroy -- redirect_to proposal unless admin
 
-* Archive Proposal -- for non-admins
+** Archive Proposal -- for non-admins
 - index
 - show -- all cersions expandable
 - new
@@ -36,16 +50,16 @@
 - update
 - delete
 
-* Users -- Add warning about open source and passwords
+** Users -- Add warning about open source and passwords
 + index
 + show
 + new
-+ create
-- edit
-- update
-- delete
++ create -- verify over email
++ edit
++ update -- notify over email
++ delete -- confirm over email
 
-* Posts -- 'Forum'
+** Posts -- 'Forum'
 - index
 - show -- all versions expandable
 - new
