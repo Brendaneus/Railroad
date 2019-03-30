@@ -1,0 +1,23 @@
+<%= form_for @blog_post, url: yield(:form_url) do |f| %>
+	<div>
+		<%= f.label :title %>
+		<%= f.text_field :title %>
+	</div>
+
+	<div>
+		<%= f.label :subtitle %>
+		<%= f.text_field :subtitle %>
+	</div>
+
+	<div>
+		<%= f.label :content %>
+		<%= f.text_area :content %>
+	</div>
+
+	<div class="check_box">
+		<%= f.label :motd, "Make this a motd?" %>
+		<%= f.check_box :motd %>
+	</div>
+
+	<%= f.submit yield(:submit_text), class: 'submit' %>
+<% end %>

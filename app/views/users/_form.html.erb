@@ -1,0 +1,28 @@
+<%= form_for @user, url: yield(:form_url) do |f| %>
+	<div>
+		<%= f.label :name, "Username" %>
+		<%= f.text_field :name %>
+	</div>
+
+	<div>
+		<%= f.label :email %>
+		<%= f.text_field :email %>
+	</div>
+
+	<div>
+		<%= f.label :password, "New Password" %>
+		<%= f.password_field :password %>
+	</div>
+
+	<div>
+		<%= f.label :password_confirmation %>
+		<%= f.password_field :password_confirmation %>
+	</div>
+
+	<div class="check_box">
+		<%= f.label :remember, "Remember on login?" %>
+		<%= f.check_box :remember %>
+	</div>
+
+	<%= f.submit yield(:submit_text), class: 'submit' %>
+<% end %>

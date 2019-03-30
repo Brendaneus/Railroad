@@ -1,0 +1,19 @@
+<% if logged_in? %>
+	<nav class="post_control">
+		<%= link_to "New Post", new_forum_post_path %>
+	</nav>
+<% end %>
+<main>
+	<% if @forum_posts.empty? %>
+		<h2>There isn't anything here...</h2>
+	<% end %>
+
+	<% @forum_posts.each do |forum_post| %>
+		<div class="container">
+			<h2><%= link_to forum_post.title, forum_post_path( forum_post ) %></h2>
+			<% if forum_post.edited? %>
+				<h5 class="subtle">edited</h5>
+			<% end %>
+		</div>
+	<% end %>
+</main>

@@ -1,4 +1,5 @@
 class HomePagesController < ApplicationController
+
 	def landing
 		set_landing
 	end
@@ -7,7 +8,7 @@ class HomePagesController < ApplicationController
 		redirect_to :landing unless landed?
 	end
 
-	def mission
-		
+	def about
 	end
+	
 end

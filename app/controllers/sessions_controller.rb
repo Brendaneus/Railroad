@@ -1,5 +1,4 @@
 class SessionsController < ApplicationController
-	include SessionsHelper # This makes all helper methods into actions!
 
 	def new
 	end
@@ -9,6 +8,7 @@ class SessionsController < ApplicationController
 		if ( @user && @user.authenticate( params[:session][:password] ) )
 			log_in @user
 			remember @user if params[:session][:remember] == "1"
+			# puts "digest in controller: #{@user.remember_digest} "
 			current_user = @user
 			flash[:success] = "Now logged in as #{@user.name}."
 			redirect_to root_path
@@ -27,4 +27,5 @@ class SessionsController < ApplicationController
 		end
 		redirect_to root_path
 	end
+	
 end

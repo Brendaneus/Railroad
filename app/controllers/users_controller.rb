@@ -5,7 +5,7 @@ class UsersController < ApplicationController
 	before_action :require_authorize, only: [:edit, :update, :destroy]
 
 	def index
-		@users = User.all
+		@users = User.all.order( admin: :desc )
 	end
 
 	def show
@@ -47,14 +47,13 @@ class UsersController < ApplicationController
 
 	def destroy
 		@user = User.find( params[:id] )
+		log_out( @user ) if current_user == @user
 		if @user.destroy
 			flash[:success] = "User account deleted."
 			if admin_user?
 				redirect_to users_path
 			else
-				# Logout User method???
-				session.delete( :user_id )
-				redirect_to root_url
+				redirect_to root_path
 			end
 		else
 			flash[:failure] = "There was a problem deleting this account."
@@ -68,4 +67,12 @@ class UsersController < ApplicationController
 		def user_params
 			params.require(:user).permit( :name, :email, :password, :password_confirmation )
 		end
+
+		def require_authorize
+			unless authorized_for? User.find( params[:id] )
+				flash[:warning] = "You aren't allowed to do that"
+				redirect_to root_path
+			end
+		end
+		
 end

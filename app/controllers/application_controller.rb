@@ -1,5 +1,7 @@
 class ApplicationController < ActionController::Base
+
 	include ApplicationHelper
+	include SessionsHelper
 
 	def redirector
 		flash[:error] = "What you're looking for at \"#{ root_url + params[:all] }\" doesn't exist..."
@@ -21,17 +23,11 @@ class ApplicationController < ActionController::Base
 		end
 	end
 
-	def require_authorize
-		unless authorized?
-			flash[:warning] = "You aren't allowed to do that"
-			redirect_to root_path
-		end
-	end
-
 	def require_admin
 		unless admin_user?
 			flash[:warning] = "You aren't allowed in there."
 			redirect_to root_path
 		end
 	end
+	
 end

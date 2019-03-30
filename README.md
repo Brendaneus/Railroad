@@ -1,71 +1,158 @@
 # PLAN
 
-** Add smart redirects from unknown paths [and domains?]
+## **PHASE ONE:** Create Architecture
 
-** Add email for verification and confirmations, etc
+- [ ] **Set seeded admin to require password change on first visit**
 
-** Change sessions to use tokens instead of ids
+- Models need fixed testing with `assert_changes` method in Users controller, Blog_Posts controller, Users model
 
-** Nav Bar
-+ Home Pages
-+ Blog
-+ Archive
-+ Forum
-+ Users
-+ Account Functions -- convert into dropdown with 'LED-style' status dot for login / remembering
+- [x] Rename BlogPost 'body' column to 'content'
+	- [ ] ...on server too
+	- [ ] Add markup support
+		- [ ] ...with preview tab
 
-** Home Pages
-+ Landing page -- initial redirect
-+ Dashboard -- root
-+ Mission Statement
+- [x] Add smart redirects from unknown paths 
+	- [ ] ...and domains?
 
-** Blog -- admin thing
-		-- add motd when you learn querying 
-		-- Fix the post control link sizing
-+ index
-+ show -- shows full comments
-+ new
-+ create
-+ edit
-+ update -- add some form of changes screen / javascript
-+ delete
+- [ ] Create RememberTokens table in database
+	- Includes user_id, remember_token, and session_name
 
-** Blog Comments -- user thing
-- new
-- create
+- [ ] Add a 'Trash Can' archive for all deleted posts, comments, accounts (?), instead of just destroying the database entry ( just add an attribute )
 
-** Archive
-- index
-- show
-- new -- redirect_to proposal unless admin
-- create 
-- edit -- redirect_to proposal unless admin
-- update
-- destroy -- redirect_to proposal unless admin
+## Nav Bar
+- [x] **TESTS**
+- [x] **Home Pages**
+- [x] **Blog**
+- [ ] **Archive**
+- [ ] **Forum**
+- [x] **Users**
+- [ ] **Account Functions**
+	- [ ] Convert into dropdown with 'LED-style' status dot for login / remembering
 
-** Archive Proposal -- for non-admins
-- index
-- show -- all cersions expandable
-- new
-- create
-- edit -- tracks history
-- update
-- delete
+## Home Pages
+- [x] **TESTS**
+- [ ] **Landing page**
+	- [x] Redirect
+	- [ ] Content
+- [ ] **Dashboard**
+	- [ ] Graphic
+	- [ ] ???
+- [x] **About**
+	- [ ] Description
+	- [ ] Styling
+- [ ] **Road Map**
+	- [ ] Plan
+	- [ ] Graphic?
 
-** Users -- Add warning about open source and passwords
-+ index
-+ show
-+ new
-+ create -- verify over email
-+ edit
-+ update -- notify over email
-+ delete -- confirm over email
+## Users
+- [ ] **TESTS**
+	- [ ] Model
+	- [ ] Controller
+	- [ ] Integration
+- [ ] Link to RememberTokens table in database
+- [ ] Add _'Logged in Sessions'_ control view
+- [ ] Add _Email Confirmations_
+	- [ ] Add 'Activated' column to table in database
+- [ ] Add _MFA Multi-Factor Authentication_
+- [ ] Filter admins or authenticated on _**database**_ actions
+- [ ] Confirm on destructive actions
 
-** Posts -- 'Forum'
-- index
-- show -- all versions expandable
-- new
-- create
-- edit -- tracks history
-- update
-- delete
+- [x] **index**
+- [x] **show**
+- [x] **new**
+- [x] **create**
+- [x] **edit**
+- [x] **update**
+- [x] **destroy**
+	- [ ] VERY EXPLICIT CONFIRM
+	- [ ] MFA / EMAIL CONFIRM
+
+## Blog
+- [ ] **TESTS**
+	- [x] Model
+	- [ ] Controller
+	- [ ] Integration
+- [ ] Fix the post control link sizing
+- [ ] Add timestamps to page display
+- [ ] Filter admins on _**database**_ actions
+- [ ] Confirm on destructive actions
+
+- [ ] **motd**
+- [x] **index**
+- [x] **show**
+	- [ ] Comments
+- [x] **new**
+- [x] **create**
+- [x] **edit**
+- [x] **update**
+- [x] **destroy**clear
+	- [ ] VERY EXPLICIT CONFIRM
+	- [ ] MFA / EMAIL CONFIRM
+
+## Blog Comments
+- [ ] **TESTS**
+	- [ ] Model
+	- [ ] Controller
+	- [ ] Integration
+- [ ] Filter admins or authenticated on _**destructive**_ actions
+- [ ] Confirm on destructive actions
+
+- [ ] **new**
+- [ ] **create**
+- [ ] **edit**
+- [ ] **update**
+- [ ] **destroy**
+
+## Archive
+- [ ] **TESTS**
+	- [ ] Model
+	- [ ] Controller
+	- [ ] Integration
+- [ ] Set up S3 Bucket
+- [ ] Filter non-admins to proposals on _**database**_ actions
+- [ ] Confirm on destructive actions
+
+- [ ] **index**
+- [ ] **show**
+- [ ] **new**
+- [ ] **new_proposal**
+- [ ] **create**
+- [ ] **create_proposal**
+- [ ] **edit**
+- [ ] **edit_proposal**
+- [ ] **update**
+- [ ] **destroy**
+	- [ ] VERY EXPLICIT CONFIRM
+	- [ ] MFA / EMAIL CONFIRM
+- [ ] **destroy_proposal**
+
+## Forum
+- [ ] **TESTS**
+	- [x] Model
+	- [ ] Controller
+	- [ ] Integration
+- [ ] Filter admins or authenticated on _**database**_ actions
+- [ ] Confirm on destructive actions
+
+- [ ] **index**
+- [ ] **show**
+- [ ] **new**
+- [ ] **create**
+- [ ] **edit**
+- [ ] **update**
+- [ ] **destroy**
+	- [ ] VERY EXPLICIT CONFIRM
+
+## Forum Comments
+- [ ] **TESTS**
+	- [ ] Model
+	- [ ] Controller
+	- [ ] Integration
+- [ ] Filter admins or authenticated on _**destructive**_ actions
+- [ ] Confirm on destructive actions
+
+- [ ] **new**
+- [ ] **create**
+- [ ] **edit**
+- [ ] **update**
+- [ ] **destroy**

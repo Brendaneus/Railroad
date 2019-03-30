@@ -1,38 +1,51 @@
 class User < ApplicationRecord
+
 	attr_accessor :remember_token
 
+	has_many :forum_posts
+
 	validates :name, presence: true,
-					 length: { minimum: 4, maximum: 16 },
-					 uniqueness: { case_sensitive: false }
+					 uniqueness: { case_sensitive: false },
+					 length: { maximum: 16 }
 	VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i
 	validates :email, presence: true,
-					  format: { with: VALID_EMAIL_REGEX },
-					  uniqueness: { case_sensitive: false }
+					  uniqueness: { case_sensitive: false },
+					  format: { with: VALID_EMAIL_REGEX }
 	has_secure_password
 
 	def self.new_token
 		SecureRandom.urlsafe_base64
 	end
 
-	def self.digest token
-		Digest::SHA1.hexdigest( token )
+	def self.digest string
+		cost = ActiveModel::SecurePassword.min_cost ? BCrypt::Engine::MIN_COST : BCrypt::Engine.cost
+    	BCrypt::Password.create(string, cost: cost)
 	end
 
 	def remember
-		self.remember_token = User.new_token
-		self.remember_digest = User.digest( self.remember_token )
+		remember_token = User.new_token
+		remember_digest = User.digest( remember_token )
 
-		if User.find_by( email: self.email )
-			update_attribute( :remember_digest, self.remember_digest )
+		unless new_record?
+			update_attribute( :remember_digest, remember_digest )
 		end
+		# puts "digest in model: #{remember_digest} "
 	end
 
 	def forget
-		self.remember_token = nil
+		remember_token = nil
 		update_attribute( :remember_digest, nil )
 	end
 
 	def authorized? ( user )
-		self == user || self.admin?
+		self == user || admin?
 	end
+
+	# Straight outta railstutorial.org
+	def authenticates? attribute, token
+		digest = send("#{attribute}_digest")
+		return false if digest.nil?
+		User.digest(token) == digest
+	end
+	
 end

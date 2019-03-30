@@ -1,4 +1,4 @@
-<% if authorized? %>
+<% if authorized_for? @user %>
 	<div class="<%= ( admin_user? ) ? "admin" : "" %> account_control">
 		<%= link_to "Edit Profile", edit_user_path( @user ) %>
 		<%= link_to "Delete Profile", user_path( @user ), method: :delete %>

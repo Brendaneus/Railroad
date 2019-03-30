@@ -1,0 +1,22 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user: one
+  title: "Forum Post One"
+  content: "Lorem Ipsum"
+  sticky: true
+  motd: false
+
+two:
+  user: two
+  title: "Forum Post Two"
+  content: "Lorem Ipsum"
+  sticky: false
+  motd: false
+
+three:
+  user: admin
+  title: "Forum Post Three"
+  content: "Lorem Ipsum"
+  sticky: false
+  motd: true

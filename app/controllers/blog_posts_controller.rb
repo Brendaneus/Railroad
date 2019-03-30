@@ -1,8 +1,9 @@
 class BlogPostsController < ApplicationController
+	
 	before_action :require_admin, except: [:index, :show]
 
 	def index
-		@blog_posts = BlogPost.all
+		@blog_posts = BlogPost.all.order( created_at: :desc )
 	end
 
 	def show
@@ -32,7 +33,7 @@ class BlogPostsController < ApplicationController
 		@blog_post = BlogPost.find( params[:id] )
 		if @blog_post.update_attributes( blog_post_params )
 			flash[:success] = "Blog post updated!"
-			redirect_to blog_path
+			redirect_to blog_post_path(@blog_post)
 		else
 			flash.now[:failure] = "Check blog post for errors."
 			render :edit
@@ -53,6 +54,7 @@ class BlogPostsController < ApplicationController
 	private
 
 		def blog_post_params
-			params.require(:blog_post).permit( :title, :subtitle, :body, :sticky )
+			params.require(:blog_post).permit( :title, :subtitle, :content, :motd )
 		end
+
 end

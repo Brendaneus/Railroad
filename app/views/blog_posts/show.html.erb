@@ -1,4 +1,4 @@
-<% if current_user && current_user.admin? %>
+<% if admin_user? %>
 	<nav class="admin post_control">
 		<%= link_to "Edit Post", edit_blog_post_path( @blog_post ) %>
 		<%= link_to "Delete Post", blog_post_path( @blog_post ), method: :delete, data: { confirm: 'Really delete this post?'} %>
@@ -6,4 +6,7 @@
 <% end %>
 <h1><%= @blog_post.title %></h1>
 <h2><%= @blog_post.subtitle %></h2>
-<p><%= @blog_post.body %></p>
+<p><%= @blog_post.content %></p>
+<% if edited? %>
+	<h4 class="subtle">This post has been edited.</h4>
+<% end %>

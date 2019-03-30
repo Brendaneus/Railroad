@@ -1,25 +1,6 @@
+<% provide( :form_url, new_blog_post_url ) %>
+<% provide( :submit_text, "Create this blog post" ) %>
+
 <%= render 'errors' %>
 
-<%= form_for @blog_post do |f| %>
-	<div>
-		<%= f.label :title %>
-		<%= f.text_field :title %>
-	</div>
-
-	<div>
-		<%= f.label :subtitle %>
-		<%= f.text_field :subtitle %>
-	</div>
-
-	<div>
-		<%= f.label :body %>
-		<%= f.text_area :body %>
-	</div>
-
-	<div class="check_box">
-		<%= f.label :sticky, "Make this a sticky? (Does nothing right now)" %>
-		<%= f.check_box :sticky %>
-	</div>
-
-	<%= f.submit "Create a new blog post." %>
-<% end %>
+<%= render 'form' %>
