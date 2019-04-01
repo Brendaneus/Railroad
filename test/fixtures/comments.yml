@@ -1,0 +1,49 @@
+# Blog
+one:
+  post_type: 'BlogPost'
+  post: one
+  user: one
+  content: "Sample Text"
+
+two:
+  post_type: 'BlogPost'
+  post: one
+  user: two
+  content: "Sample Text"
+
+three:
+  post_type: 'BlogPost'
+  post: two
+  user: one
+  content: "Sample Text"
+
+four:
+  post_type: 'BlogPost'
+  post: two
+  user: two
+  content: "Sample Text"
+
+# Forum
+five:
+  post_type: 'ForumPost'
+  post: one
+  user: one
+  content: "Sample Text"
+
+six:
+  post_type: 'ForumPost'
+  post: one
+  user: two
+  content: "Sample Text"
+
+seven:
+  post_type: 'ForumPost'
+  post: two
+  user: one
+  content: "Sample Text"
+
+eight:
+  post_type: 'ForumPost'
+  post: two
+  user: two
+  content: "Sample Text"

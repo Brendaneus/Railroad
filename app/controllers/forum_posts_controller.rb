@@ -4,12 +4,15 @@ class ForumPostsController < ApplicationController
 	before_action :require_authorize, only: [:edit, :update, :destroy]
 
 	def index
-		@forum_posts = ForumPost.non_stickies.includes(:user)
-		@sticky_posts = ForumPost.stickies.includes(:user)
+		@forum_posts = ForumPost.includes(:user).non_stickies.order(created_at: :desc)
+		@sticky_posts = ForumPost.includes(:user).stickies.order(created_at: :desc)
 	end
 
 	def show
 		@forum_post = ForumPost.find( params[:id] )
+		@comments = @forum_post.comments.includes(:user).order(created_at: :desc)
+		@form_comment = @forum_post.comments.build(user: current_user)
+		@comment_form_url = forum_post_comments_path(@forum_post)
 	end
 
 	def new
@@ -18,8 +21,6 @@ class ForumPostsController < ApplicationController
 
 	def create
 		@forum_post = current_user.forum_posts.build(forum_post_params)
-		@forum_post.motd = false unless admin_user?
-		@forum_post.sticky = false unless admin_user?
 		if @forum_post.save
 			flash[:success] = "The forum post was successfully created."
 			redirect_to forum_post_path(@forum_post)
@@ -59,7 +60,9 @@ class ForumPostsController < ApplicationController
 	private
 
 		def forum_post_params
-			params.require(:forum_post).permit(:title, :content, :motd, :sticky)
+			params_hash = [:title, :content]
+			params_hash += [:motd, :sticky] if admin_user?
+			params.require(:forum_post).permit(params_hash)
 		end
 
 		def require_authorize

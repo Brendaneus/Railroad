@@ -37,19 +37,23 @@ class BlogPostsControllerTest < ActionDispatch::IntegrationTest
 
 	test "should post create only for admins" do
 		# Guest
-		get new_blog_post_url
+		assert_no_difference 'BlogPost.count' do
+			post blog_posts_url, params: { blog_post: { title: "Test Blog Post", content: "Sample Text" } }
+		end
 		assert flash[:warning]
-		assert_response :redirect
 		# User
 		login_as @user
-		get new_blog_post_url
+		assert_no_difference 'BlogPost.count' do
+			post blog_posts_url, params: { blog_post: { title: "Test Blog Post", content: "Sample Text" } }
+		end
 		assert flash[:warning]
-		assert_response :redirect
 		logout
 		# Admin
 		login_as @admin, password: 'admin'
-		get new_blog_post_url
-		assert_response :success
+		assert_difference 'BlogPost.count', 1 do
+			post blog_posts_url, params: { blog_post: { title: "Test Blog Post", content: "Sample Text" } }
+		end
+		assert flash[:success]
 	end
 
 	test "should get edit only for admins" do
@@ -71,8 +75,8 @@ class BlogPostsControllerTest < ActionDispatch::IntegrationTest
 
 	# test "should patch update for admins" do
 	# 	login_as @admin, password: 'admin'
-	# 	assert_changes :@blog_post do
-	# 		patch blog_post_url(@blog_post), params: { blog_post: { subtitle: "An Edited Post" } }
+	# 	assert_changes -> { @blog_post.subtitle } do
+	# 		patch blog_post_url(@blog_post), params: { blog_post: { title: @blog_post.title, subtitle: "An Edited Post", content: @blog_post.content } }
 	# 	end
 	# 	assert flash[:success]
 	# 	assert_response :redirect
@@ -80,14 +84,16 @@ class BlogPostsControllerTest < ActionDispatch::IntegrationTest
 
 	# test "shouldn't patch update for non-admins" do
 	# 	# Guest
-	# 	assert_no_changes :@blog_post do
+	# 	assert_no_changes -> { @blog_post.subtitle } do
 	# 		patch blog_post_url(@blog_post), params: { blog_post: { subtitle: "An Edited Post" } }
 	# 	end
 	# 	assert flash[:warning]
 	# 	assert_response :redirect
 	# 	# User
 	# 	login_as @user
-	# 	patch blog_post_url(@blog_post), params: { blog_post: { subtitle: "An Edited Post" } }
+	# 	assert_no_changes -> { @blog_post.subtitle } do
+	# 		patch blog_post_url(@blog_post), params: { blog_post: { subtitle: "An Edited Post" } }
+	# 	end
 	# 	assert flash[:warning]
 	# 	assert_response :redirect
 	# end

@@ -1,6 +1,9 @@
 class ForumPost < ApplicationRecord
 
 	belongs_to :user
+	has_many :comments, as: :post, dependent: :destroy
+	has_many :commenters, through: :comments,
+						  source: :user
 
 	scope :motds, -> { ForumPost.where(motd: true) }
 	scope :stickies, -> { ForumPost.where(sticky: true) }
@@ -10,6 +13,14 @@ class ForumPost < ApplicationRecord
 					  length: { maximum: 32 }
 	validates :content, presence: true,
 						length: { maximum: 1024 }
+
+	def owned_by? some_user
+		user == some_user
+	end
+
+	def admin?
+		user.admin?
+	end
 
 	def edited?
 		self.created_at != self.updated_at

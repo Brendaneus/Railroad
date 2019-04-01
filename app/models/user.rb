@@ -3,6 +3,13 @@ class User < ApplicationRecord
 	attr_accessor :remember_token
 
 	has_many :forum_posts
+	has_many :comments, dependent: :destroy
+	has_many :commented_blog_posts, through: :comments,
+									source: :post,
+									source_type: 'BlogPost'
+	has_many :commented_forum_posts, through: :comments,
+									 source: :post,
+									 source_type: 'ForumPost'
 
 	validates :name, presence: true,
 					 uniqueness: { case_sensitive: false },

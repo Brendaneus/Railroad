@@ -5,6 +5,25 @@ class UserTest < ActiveSupport::TestCase
 	def setup
 		@user = users(:one)
 		@user_too = users(:two)
+		@blog_post = blog_posts(:one)
+		@forum_post = forum_posts(:one)
+		@blog_comment = comments(:one)
+		@forum_comment = comments(:five)
+	end
+
+	test "should associate with comments" do
+		assert @user.comments
+		assert @blog_comment.user
+	end
+
+	test "should associate with blog posts" do
+		assert @user.commented_blog_posts
+		assert @blog_post.commenters
+	end
+
+	test "should associate with forum posts" do
+		assert @user.commented_forum_posts
+		assert @forum_post.commenters
 	end
 
 	test "should validate presence of name" do
@@ -54,10 +73,10 @@ class UserTest < ActiveSupport::TestCase
 
 	# test "should validate has_secure_password" do
 	# 	assert_no_changes :@user do
-	# 		@user.update(password: "foobar")
+	# 		@user.update_attributes(password: "foobar")
 	# 	end
 	# 	assert_changes :@user do
-	# 		@user.update(password: "foobar", password_confirmation: "foobar")
+	# 		@user.update_attributes(password: "foobar", password_confirmation: "foobar")
 	# 	end
 	# end
 

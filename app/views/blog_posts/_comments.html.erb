@@ -1,0 +1,17 @@
+<% provide( :submit_text, "Update" ) %>
+
+<% @comments.each do |comment| %>
+	<div class="container">
+		<% if admin_user? || (comment.owned_by? current_user) %>
+			<% @form_comment = comment %>
+			<% @comment_form_url = blog_post_comment_path(@blog_post, @form_comment) %>
+			<%= render 'comments/form' %>
+			<%= link_to "Delete", blog_post_comment_path(@blog_post, comment.id), method: :delete, data: { confirm: 'Really delete this comment?'} %>
+		<% else %>
+			<h4>
+				<%= (comment.user.present?) ? ( link_to comment.user.name, user_path(comment.user) ) : "Guest" %> wrote:
+			</h4>
+			<p><%= comment.content %></p>
+		<% end %>
+	</div>
+<% end %>

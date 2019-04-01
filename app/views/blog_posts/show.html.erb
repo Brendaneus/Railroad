@@ -1,3 +1,5 @@
+<% provide( :post_type, "BlogPost" ) %>
+
 <% if admin_user? %>
 	<nav class="admin post_control">
 		<%= link_to "Edit Post", edit_blog_post_path( @blog_post ) %>
@@ -10,3 +12,7 @@
 <% if edited? %>
 	<h4 class="subtle">This post has been edited.</h4>
 <% end %>
+
+<%= render 'comments/form' %>
+
+<%= render 'comments' %>

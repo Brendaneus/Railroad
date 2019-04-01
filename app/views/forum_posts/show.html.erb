@@ -1,3 +1,5 @@
+<% provide( :post_type, "ForumPost" ) %>
+
 <% if authorized_for? @forum_post.user %>
 	<nav class="post_control">
 		<%= link_to "Edit Post", edit_forum_post_path( @forum_post ) %>
@@ -14,3 +16,7 @@
 <% if edited? %>
 	<h4 class="subtle">This post has been edited.</h4>
 <% end %>
+
+<%= render 'comments/form' %>
+
+<%= render 'comments' %>

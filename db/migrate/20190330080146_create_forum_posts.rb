@@ -4,8 +4,8 @@ class CreateForumPosts < ActiveRecord::Migration[5.2]
       t.references :user, foreign_key: true
       t.string :title
       t.text :content
-      t.boolean :motd
-      t.boolean :sticky
+      t.boolean :motd, default: false
+      t.boolean :sticky, default: false
 
       t.timestamps
     end

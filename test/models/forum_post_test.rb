@@ -5,6 +5,17 @@ class ForumPostTest < ActiveSupport::TestCase
 	def setup
 		@user = users(:one)
 		@forum_post = forum_posts(:one)
+		@forum_comment = comments(:five)
+	end
+
+	test "should associate with comments" do
+		assert @forum_post.comments
+		assert @forum_comment.post
+	end
+
+	test "should associate with commenters" do
+		assert @forum_post.commenters
+		assert @user.commented_forum_posts
 	end
 
 	test "should require user" do

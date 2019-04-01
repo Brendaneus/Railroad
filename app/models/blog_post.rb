@@ -1,4 +1,8 @@
 class BlogPost < ApplicationRecord
+
+	has_many :comments, as: :post, dependent: :destroy
+	has_many :commenters, through: :comments,
+						  source: :user
 	
 	scope :motds, -> { BlogPost.where(motd: true) }
 

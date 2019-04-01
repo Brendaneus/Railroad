@@ -1,0 +1,7 @@
+<%= form_for @form_comment, url: @comment_form_url do |f| %>
+	<%= f.hidden_field :post_type, value: yield(:post_type) %>
+	<%= f.hidden_field :post_id, value: params[:id] %>
+	<%= f.hidden_field :user_id, value: current_user.id if logged_in? %>
+	<%= f.text_area :content %>
+	<%= f.submit "#{ ( yield(:submit_text).blank? ) ? "Create a comment" : yield(:submit_text) }" %>
+<% end %>

@@ -24,7 +24,7 @@
 - [x] **Home Pages**
 - [x] **Blog**
 - [ ] **Archive**
-- [ ] **Forum**
+- [x] **Forum**
 - [x] **Users**
 - [ ] **Account Functions**
 	- [ ] Convert into dropdown with 'LED-style' status dot for login / remembering
@@ -55,7 +55,7 @@
 	- [ ] Add 'Activated' column to table in database
 - [ ] Add _MFA Multi-Factor Authentication_
 - [ ] Filter admins or authenticated on _**database**_ actions
-- [ ] Confirm on destructive actions
+- [x] Confirm on destructive actions
 
 - [x] **index**
 - [x] **show**
@@ -75,7 +75,7 @@
 - [ ] Fix the post control link sizing
 - [ ] Add timestamps to page display
 - [ ] Filter admins on _**database**_ actions
-- [ ] Confirm on destructive actions
+- [x] Confirm on destructive actions
 
 - [ ] **motd**
 - [x] **index**
@@ -88,20 +88,6 @@
 - [x] **destroy**clear
 	- [ ] VERY EXPLICIT CONFIRM
 	- [ ] MFA / EMAIL CONFIRM
-
-## Blog Comments
-- [ ] **TESTS**
-	- [ ] Model
-	- [ ] Controller
-	- [ ] Integration
-- [ ] Filter admins or authenticated on _**destructive**_ actions
-- [ ] Confirm on destructive actions
-
-- [ ] **new**
-- [ ] **create**
-- [ ] **edit**
-- [ ] **update**
-- [ ] **destroy**
 
 ## Archive
 - [ ] **TESTS**
@@ -132,27 +118,25 @@
 	- [ ] Controller
 	- [ ] Integration
 - [ ] Filter admins or authenticated on _**database**_ actions
-- [ ] Confirm on destructive actions
+- [x] Confirm on destructive actions
 
-- [ ] **index**
-- [ ] **show**
-- [ ] **new**
-- [ ] **create**
-- [ ] **edit**
-- [ ] **update**
-- [ ] **destroy**
+- [x] **index**
+- [x] **show**
+- [x] **new**
+- [x] **create**
+- [x] **edit**
+- [x] **update**
+- [x] **destroy**
 	- [ ] VERY EXPLICIT CONFIRM
 
-## Forum Comments
+## Comments
 - [ ] **TESTS**
-	- [ ] Model
+	- [x] Model
 	- [ ] Controller
 	- [ ] Integration
 - [ ] Filter admins or authenticated on _**destructive**_ actions
-- [ ] Confirm on destructive actions
+- [x] Confirm on destructive actions
 
-- [ ] **new**
 - [ ] **create**
-- [ ] **edit**
 - [ ] **update**
 - [ ] **destroy**

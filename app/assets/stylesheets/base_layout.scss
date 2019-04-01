@@ -32,6 +32,18 @@ nav {
 	padding: 5px;
 	border: thin solid black;
 	margin: 5px 0px;
+	&.admin {
+		border: medium solid red;
+	}
+	&.owned {
+		border: medium solid blue;
+	}
+	&.motd {
+		border: thick solid green;
+	}
+	&.sticky {
+		border: thick solid orange;
+	}
 }
 
 

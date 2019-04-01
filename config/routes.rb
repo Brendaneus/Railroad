@@ -18,20 +18,25 @@ Rails.application.routes.draw do
 	resources :users, except: [:new, :create]
 
 	# Blog
-	resources :blog_posts, except: [:index]
 	get '/blog',		to: 'blog_posts#index'
-	# get 'motd',	to: 'blog_posts#motd'
+	resources :blog_posts, except: [:index] do
+		resources :comments, only: [:create, :update, :destroy]
+		get '/motd',		to: 'blog_posts#motd'
+	end
 
 	# Forum
-	resources :forum_posts, except: [:index]
 	get '/forum',		to: 'forum_posts#index'
+	resources :forum_posts, except: [:index] do
+		resources :comments, only: [:create, :update, :destroy]
+		get '/motd',		to: 'forum_posts#motd'
+	end
 
 
-	HTTP_METHODS = [:get, :post, :put, :patch, :delete, :head, :connect, :options, :trace]
+	http_methods = [:get, :post, :put, :patch, :delete, :head, :connect, :options, :trace]
 	# Catch-all
 	unless Rails.env.development?
 		match '*all',	to: 'application#redirector',
-						via: HTTP_METHODS,
+						via: http_methods,
 						constraints: lambda { |req|
 							req.path.exclude? 'rails/active_storage'
 						}

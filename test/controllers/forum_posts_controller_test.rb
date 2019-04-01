@@ -3,12 +3,12 @@ require 'test_helper'
 class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 
 	def setup
-		@forum_post = forum_posts(:one)
-		@forum_post_too = forum_posts(:two)
-		@forum_post_tri = forum_posts(:three)
 		@admin = users(:admin)
 		@user = users(:one)
 		@user_too = users(:two)
+		@forum_post = forum_posts(:one)
+		@forum_post_too = forum_posts(:two)
+		@forum_post_tri = forum_posts(:three)
 	end
 
 	test "should get index" do
@@ -55,7 +55,7 @@ class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 		assert_response :redirect
 	end
 
-	test "should only let admin make motd and sticky" do
+	test "should only let admins create motd and sticky" do
 		# User
 		login_as @user
 		assert_no_difference 'ForumPost.motds.count' do
@@ -127,6 +127,34 @@ class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 		patch forum_post_path(@forum_post), params: { forum_post: { content: "Updated content" } }
 		assert flash[:success]
 		assert_redirected_to forum_post_path(@forum_post)
+	end
+
+	test "should only let admins update motd and sticky" do
+		# User
+		login_as @user
+		assert_no_difference 'ForumPost.motds.count' do
+			patch forum_post_path(@forum_post), params: { forum_post: { motd: '1' } }
+			assert flash[:success]
+			assert_response :redirect
+		end
+		assert_no_difference 'ForumPost.stickies.count' do
+			patch forum_post_path(@forum_post), params: { forum_post: { sticky: '1' } }
+			assert flash[:success]
+			assert_response :redirect
+		end
+		logout
+		# Admin
+		login_as @admin, password: 'admin'
+		assert_difference 'ForumPost.motds.count', 1 do
+			patch forum_post_path(@forum_post), params: { forum_post: { motd: '1' } }
+			assert flash[:success]
+			assert_response :redirect
+		end
+		assert_difference 'ForumPost.stickies.count', 1 do
+			patch forum_post_path(@forum_post), params: { forum_post: { sticky: '1' } }
+			assert flash[:success]
+			assert_response :redirect
+		end
 	end
 
 	test "should delete destroy only if authorized" do

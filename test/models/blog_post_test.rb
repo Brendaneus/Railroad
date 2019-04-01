@@ -3,11 +3,25 @@ require 'test_helper'
 class BlogPostTest < ActiveSupport::TestCase
 
 	def setup
+		@user = users(:one)
 		@blog_post = blog_posts(:one)
+		@blog_comment = comments(:one)
+	end
+
+	test "should associate with comments" do
+		assert @blog_post.comments
+		assert @blog_comment.post
+	end
+
+	test "should associate with commenters" do
+		assert @blog_post.commenters
+		assert @user.commented_blog_posts
 	end
 
 	test "should validate title presence" do
 		@blog_post.title = ""
+		assert_not @blog_post.valid?
+		@blog_post.title = "    "
 		assert_not @blog_post.valid?
 	end
 

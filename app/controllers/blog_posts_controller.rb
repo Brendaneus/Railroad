@@ -8,6 +8,9 @@ class BlogPostsController < ApplicationController
 
 	def show
 		@blog_post = BlogPost.find( params[:id] )
+		@comments = @blog_post.comments.includes(:user).order(created_at: :desc)
+		@form_comment = @blog_post.comments.build
+		@comment_form_url = blog_post_comments_path(@blog_post)
 	end
 
 	def new
