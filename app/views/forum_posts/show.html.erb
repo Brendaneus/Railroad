@@ -13,7 +13,7 @@
 <% end %>
 <h1><%= @forum_post.title %></h1>
 <p><%= @forum_post.content %></p>
-<% if edited? %>
+<% if @forum_post.edited? %>
 	<h4 class="subtle">This post has been edited.</h4>
 <% end %>
 

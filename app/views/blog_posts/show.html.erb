@@ -9,7 +9,7 @@
 <h1><%= @blog_post.title %></h1>
 <h2><%= @blog_post.subtitle %></h2>
 <p><%= @blog_post.content %></p>
-<% if edited? %>
+<% if @blog_post.edited? %>
 	<h4 class="subtle">This post has been edited.</h4>
 <% end %>
 
