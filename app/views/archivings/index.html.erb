@@ -1,0 +1,15 @@
+<% if admin_user? %>
+	<nav class="admin post_control">
+		<%= link_to "New Archiving", new_archiving_path %>
+	</nav>
+<% end %>
+
+<% if @archivings.empty? %>
+	<h2>There isn't anything here...</h2>
+<% end %>
+
+<% @archivings.each do |archiving| %>
+	<div class="container">
+		<h2><%= link_to archiving.name, archiving_path(archiving) %></h2>
+	</div>
+<% end %>

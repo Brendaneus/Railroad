@@ -48,6 +48,16 @@ GEM
     archive-zip (0.12.0)
       io-like (~> 0.3.0)
     arel (9.0.0)
+    aws-eventstream (1.0.2)
+    aws-sdk (2.11.254)
+      aws-sdk-resources (= 2.11.254)
+    aws-sdk-core (2.11.254)
+      aws-sigv4 (~> 1.0)
+      jmespath (~> 1.0)
+    aws-sdk-resources (2.11.254)
+      aws-sdk-core (= 2.11.254)
+    aws-sigv4 (1.1.0)
+      aws-eventstream (~> 1.0, >= 1.0.2)
     bcrypt (3.1.12)
     bindex (0.6.0)
     bootsnap (1.4.2)
@@ -102,6 +112,7 @@ GEM
     jbuilder (2.8.0)
       activesupport (>= 4.2.0)
       multi_json (>= 1.2)
+    jmespath (1.4.0)
     listen (3.1.5)
       rb-fsevent (~> 0.9, >= 0.9.4)
       rb-inotify (~> 0.9, >= 0.9.7)
@@ -175,7 +186,7 @@ GEM
     ruby-progressbar (1.10.0)
     ruby_dep (1.5.0)
     rubyzip (1.2.2)
-    sass (3.7.3)
+    sass (3.7.4)
       sass-listen (~> 4.0.0)
     sass-listen (4.0.0)
       rb-fsevent (~> 0.9, >= 0.9.4)
@@ -228,6 +239,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  aws-sdk (~> 2)
   bcrypt (~> 3.1.7)
   bootsnap (>= 1.1.0)
   byebug

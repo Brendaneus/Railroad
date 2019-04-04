@@ -1,0 +1,13 @@
+<%= form_for @archiving do |f| %>
+	<div>
+		<%= f.label :name %>
+		<%= f.text_field :name %>
+	</div>
+
+	<div>
+		<%= f.label :content %>
+		<%= f.text_area :content %>
+	</div>
+
+	<%= f.submit %>
+<% end %>

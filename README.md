@@ -6,16 +6,15 @@
 
 - Models need fixed testing with `assert_changes` method in Users controller, Blog_Posts controller, Users model
 
-- [x] Rename BlogPost 'body' column to 'content'
-	- [ ] ...on server too
-	- [ ] Add markup support
-		- [ ] ...with preview tab
+- [ ] Add markup support
+	- [ ] ...with preview tab
 
 - [x] Add smart redirects from unknown paths 
 	- [ ] ...and domains?
 
 - [ ] Create RememberTokens table in database
 	- Includes user_id, remember_token, and session_name
+	- [ ] Add Remembered Sessions routes
 
 - [ ] Add a 'Trash Can' archive for all deleted posts, comments, accounts (?), instead of just destroying the database entry ( just add an attribute )
 
@@ -91,10 +90,34 @@
 
 ## Archive
 - [ ] **TESTS**
+	- [x] Model
+	- [ ] Controller
+	- [ ] Integration
+- [ ] Filter non-admins to proposals on _**database**_ actions
+- [ ] Confirm on destructive actions
+
+- [ ] **index**
+- [ ] **show**
+- [ ] **new**
+- [ ] **new_proposal**
+- [ ] **create**
+- [ ] **create_proposal**
+- [ ] **edit**
+- [ ] **edit_proposal**
+- [ ] **update**
+- [ ] **destroy**
+	- [ ] VERY EXPLICIT CONFIRM
+	- [ ] MFA / EMAIL CONFIRM
+- [ ] **destroy_proposal**
+
+## Document
+- [ ] **TESTS**
 	- [ ] Model
+		- Finish url format validations + test
 	- [ ] Controller
 	- [ ] Integration
 - [ ] Set up S3 Bucket
+	- [ ] Change javascript file upload to something custom
 - [ ] Filter non-admins to proposals on _**database**_ actions
 - [ ] Confirm on destructive actions
 

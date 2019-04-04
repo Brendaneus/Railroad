@@ -31,6 +31,12 @@ Rails.application.routes.draw do
 		get '/motd',		to: 'forum_posts#motd'
 	end
 
+	# Archive
+	get '/archive',		to: 'archivings#index'
+	resources :archivings, path: 'archives', except: :index do
+		resources :documents, except: :index
+	end
+
 
 	http_methods = [:get, :post, :put, :patch, :delete, :head, :connect, :options, :trace]
 	# Catch-all

@@ -1,0 +1,16 @@
+<% if admin_user? %>
+	<nav class="admin post_control">
+		<%= link_to "Edit Document", edit_archiving_document_path( @archiving, @document ) %>
+		<%= link_to "Delete Document", archiving_document_path( @archiving, @document ), method: :delete, data: { confirm: 'Really delete this document?'} %>
+	</nav>
+<% end %>
+
+<h1><%= @archiving.name %></h1>
+
+<p><%= @archiving.content %></p>
+
+<% @documents.each do |document| %>
+	<div class="container">
+		<h2><%= link_to document.name, archiving_document_path(@archiving, document) %></h2>
+	</div>
+<% end %>

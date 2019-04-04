@@ -10,7 +10,14 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_03_31_084239) do
+ActiveRecord::Schema.define(version: 2019_04_03_082923) do
+
+  create_table "archivings", force: :cascade do |t|
+    t.string "name"
+    t.text "content"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
 
   create_table "blog_posts", force: :cascade do |t|
     t.string "title"
@@ -30,6 +37,18 @@ ActiveRecord::Schema.define(version: 2019_03_31_084239) do
     t.datetime "updated_at", null: false
     t.index ["post_type", "post_id"], name: "index_comments_on_post_type_and_post_id"
     t.index ["user_id"], name: "index_comments_on_user_id"
+  end
+
+  create_table "documents", force: :cascade do |t|
+    t.integer "archiving_id"
+    t.integer "local_id"
+    t.string "url"
+    t.string "name"
+    t.text "content"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["archiving_id"], name: "index_documents_on_archiving_id"
+    t.index ["local_id"], name: "index_documents_on_local_id"
   end
 
   create_table "forum_posts", force: :cascade do |t|
