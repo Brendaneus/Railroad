@@ -1,48 +1,72 @@
 # Blog
-one:
+blogpost_one_admin:
+  post_type: 'BlogPost'
+  post: one
+  user: admin
+  content: "Sample Text"
+
+blogpost_one_guest:
+  post_type: 'BlogPost'
+  post: one
+  user:
+  content: "Sample Text"
+
+blogpost_one_one:
   post_type: 'BlogPost'
   post: one
   user: one
   content: "Sample Text"
 
-two:
+blogpost_one_two:
   post_type: 'BlogPost'
   post: one
   user: two
   content: "Sample Text"
 
-three:
+blogpost_two_one:
   post_type: 'BlogPost'
   post: two
   user: one
   content: "Sample Text"
 
-four:
+blogpost_two_two:
   post_type: 'BlogPost'
   post: two
   user: two
   content: "Sample Text"
 
 # Forum
-five:
+forumpost_one_admin:
+  post_type: 'ForumPost'
+  post: one
+  user: admin
+  content: "Sample Text"
+
+forumpost_one_guest:
+  post_type: 'ForumPost'
+  post: one
+  user:
+  content: "Sample Text"
+
+forumpost_one_one:
   post_type: 'ForumPost'
   post: one
   user: one
   content: "Sample Text"
 
-six:
+forumpost_one_two:
   post_type: 'ForumPost'
   post: one
   user: two
   content: "Sample Text"
 
-seven:
+forumpost_two one:
   post_type: 'ForumPost'
   post: two
   user: one
   content: "Sample Text"
 
-eight:
+forumpost_two two:
   post_type: 'ForumPost'
   post: two
   user: two

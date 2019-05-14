@@ -13,12 +13,13 @@ class User < ApplicationRecord
 
 	validates :name, presence: true,
 					 uniqueness: { case_sensitive: false },
-					 length: { maximum: 16 }
+					 length: { maximum: 32 }
 	VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i
 	validates :email, presence: true,
 					  uniqueness: { case_sensitive: false },
 					  format: { with: VALID_EMAIL_REGEX }
 	has_secure_password
+	validate :none_or_both_passwords
 
 	def self.new_token
 		SecureRandom.urlsafe_base64
@@ -54,5 +55,14 @@ class User < ApplicationRecord
 		return false if digest.nil?
 		User.digest(token) == digest
 	end
+
+
+	private
+
+		def none_or_both_passwords
+			if password.present? && password_confirmation.nil?
+				errors.add(:password_confirmation, "must be present to confirm password")
+			end
+		end
 	
 end

@@ -8,6 +8,7 @@ class BlogPostsController < ApplicationController
 
 	def show
 		@blog_post = BlogPost.find( params[:id] )
+		@documents = @blog_post.documents
 		@comments = @blog_post.comments.includes(:user).order(created_at: :desc)
 		@form_comment = @blog_post.comments.build
 		@comment_form_url = blog_post_comments_path(@blog_post)
@@ -47,7 +48,7 @@ class BlogPostsController < ApplicationController
 		@blog_post = BlogPost.find( params[:id] )
 		if @blog_post.destroy
 			flash[:success] = "Blog post deleted."
-			redirect_to blog_path
+			redirect_to blog_posts_path
 		else
 			flash[:error] = "There was a problem deleting this blog post."
 			redirect_to blog_post_path( @blog_post )

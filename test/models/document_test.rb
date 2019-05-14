@@ -4,88 +4,94 @@ class DocumentTest < ActiveSupport::TestCase
 
 	def setup
 		@archiving_one = archivings(:one)
-		@archiving_two = archivings(:two)
-		@document_one = documents(:one)
-		@document_two = documents(:two)
-		@document_three = documents(:three)
-		@document_four = documents(:four)
+		@blogpost_one = blog_posts(:one)
+		@archiving_one_image = documents(:archiving_one_image)
+		@archiving_one_audio = documents(:archiving_one_audio)
+		@archiving_one_video = documents(:archiving_one_video)
+		@blogpost_one_image = documents(:blogpost_one_image)
+	end
+
+	test "should associate with blog" do
+		assert @blogpost_one_image.article
+		assert @blogpost_one.documents
 	end
 
 	test "should associate with archiving" do
-		assert @document_one.archiving
+		assert @archiving_one_image.article
 		assert @archiving_one.documents
 	end
 
 	test "should validate presence of local_id on existing records" do
-		@document_one.local_id = nil;
-		assert_not @document_one.valid?
+		@archiving_one_image.local_id = nil;
+		assert_not @archiving_one_image.valid?
 	end
 
 	test "should validate uniqueness of local_id on existing records" do
-		@document_two.local_id = @document_one.local_id;
-		assert_not @document_two.valid?
+		@archiving_one_audio.local_id = @archiving_one_image.local_id;
+		assert_not @archiving_one_audio.valid?
+	end
+
+	test "should validate uniqueness of local_title on existing records (case-insensitive)" do
+		@archiving_one_audio.title = @archiving_one_image.title.downcase
+		assert_not @archiving_one_audio.valid?
+		@archiving_one_audio.title = @archiving_one_image.title.upcase
+		assert_not @archiving_one_audio.valid?
 	end
 
 	test "should auto increment local_id if not present" do
-		@new_document_one = @archiving_one.documents.create!(url: "some.website", name: "New Doc One", content: "Doc Content")
-		assert @new_document_one.local_id == (@document_two.local_id + 1)
-		@new_document_two = @archiving_one.documents.create!(url: "another.website", name: "New Doc Two", content: "Doc Content")
-		assert @new_document_two.local_id == (@new_document_one.local_id + 1)
+		new_archiving_one_image = @archiving_one.documents.create!(title: "New Image", content: "image Content")
+		assert new_archiving_one_image.local_id == (@archiving_one_video.local_id + 1)
+		new_archiving_one_audio = @archiving_one.documents.create!(title: "New audio", content: "image Content")
+		assert new_archiving_one_audio.local_id == (new_archiving_one_image.local_id + 1)
 	end
 
-	test "should validate presence of url" do
-		@document_one.url = ""
-		assert_not @document_one.valid?
-		@document_one.url = "    "
-		assert_not @document_one.valid?
+	# # Requires Fixtures, Currently unsupported in ActiveStorage
+	# test "should validate attachment of upload" do
+	# 	@archiving_one_image.upload.purge
+	# 	assert_not @archiving_one_image.valid?
+	# end
+
+	test "should validate presence of title" do
+		@archiving_one_image.title = "";
+		assert_not @archiving_one_image.valid?
+		@archiving_one_image.title = "    ";
+		assert_not @archiving_one_image.valid?
 	end
 
-	test "should validate length of url (max: 256)" do
-		@document_one.url = "X"
-		assert @document_one.valid?
-		@document_one.url = "X" * 256
-		assert @document_one.valid?
-		@document_one.url = "X" * 257
-		assert_not @document_one.valid?
+	test "should validate local uniqueness of title" do
+		@archiving_one_audio.title = @archiving_one_image.title
+		assert_not @archiving_one_audio.valid?
 	end
 
-	# TEST FORMAT OF URL
-
-	test "should validate presence of name" do
-		@document_one.name = "";
-		assert_not @document_one.valid?
-		@document_one.name = "    ";
-		assert_not @document_one.valid?
+	test "should validate length of title (max: 64)" do
+		@archiving_one_image.title = "X"
+		assert @archiving_one_image.valid?
+		@archiving_one_image.title = "X" * 64
+		assert @archiving_one_image.valid?
+		@archiving_one_image.title = "X" * 65
+		assert_not @archiving_one_image.valid?
 	end
 
-	test "should validate local uniqueness of name" do
-		@document_two.name = @document_one.name
-		assert_not @document_two.valid?
-	end
-
-	test "should validate length of name (max: 32)" do
-		@document_one.name = "X"
-		assert @document_one.valid?
-		@document_one.name = "X" * 32
-		assert @document_one.valid?
-		@document_one.name = "X" * 33
-		assert_not @document_one.valid?
-	end
-
-	test "should validate presence of content" do
-		@document_one.content = "";
-		assert_not @document_one.valid?
-		@document_one.content = "    ";
-		assert_not @document_one.valid?
+	test "should not validate presence of content" do
+		@archiving_one_image.content = "";
+		assert @archiving_one_image.valid?
+		@archiving_one_image.content = "    ";
+		assert @archiving_one_image.valid?
 	end
 
 	test "should validate length of content (max: 1024)" do
-		@document_one.content = "X"
-		assert @document_one.valid?
-		@document_one.content = "X" * 1024
-		assert @document_one.valid?
-		@document_one.content = "X" * 1025
-		assert_not @document_one.valid?
+		@archiving_one_image.content = "X"
+		assert @archiving_one_image.valid?
+		@archiving_one_image.content = "X" * 1024
+		assert @archiving_one_image.valid?
+		@archiving_one_image.content = "X" * 1025
+		assert_not @archiving_one_image.valid?
+	end
+
+	test "should check for edits" do
+		assert_not @archiving_one_image.edited?
+		@archiving_one_image.updated_at = Time.now + 1
+		assert @archiving_one_image.edited?
 	end
 
 end

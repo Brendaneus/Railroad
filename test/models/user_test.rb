@@ -5,10 +5,10 @@ class UserTest < ActiveSupport::TestCase
 	def setup
 		@user = users(:one)
 		@user_too = users(:two)
-		@blog_post = blog_posts(:one)
-		@forum_post = forum_posts(:one)
-		@blog_comment = comments(:one)
-		@forum_comment = comments(:five)
+		@blogpost = blog_posts(:one)
+		@forumpost = forum_posts(:one)
+		@blog_comment = comments(:blogpost_one_one)
+		@forum_comment = comments(:forumpost_one_one)
 	end
 
 	test "should associate with comments" do
@@ -16,14 +16,14 @@ class UserTest < ActiveSupport::TestCase
 		assert @blog_comment.user
 	end
 
-	test "should associate with blog posts" do
+	test "should associate with blog post comments" do
 		assert @user.commented_blog_posts
-		assert @blog_post.commenters
+		assert @blogpost.commenters
 	end
 
-	test "should associate with forum posts" do
+	test "should associate with forum post comments" do
 		assert @user.commented_forum_posts
-		assert @forum_post.commenters
+		assert @forumpost.commenters
 	end
 
 	test "should validate presence of name" do
@@ -33,17 +33,19 @@ class UserTest < ActiveSupport::TestCase
 		assert_not @user.valid?
 	end
 
-	test "should validate length of name (maximum: 16)" do
+	test "should validate length of name (maximum: 32)" do
 		@user.name = "X"
 		assert @user.valid?
-		@user.name = "X" * 16
+		@user.name = "X" * 32
 		assert @user.valid?
-		@user.name = "X" * 17
+		@user.name = "X" * 33
 		assert_not @user.valid?
 	end
 
-	test "should validate uniqueness of name (case insensitive)" do
-		@user.name = @user_too.name
+	test "should validate uniqueness of name (case-insensitive)" do
+		@user.name = @user_too.name.downcase
+		assert_not @user.valid?
+		@user.name = @user_too.name.upcase
 		assert_not @user.valid?
 	end
 
@@ -66,18 +68,30 @@ class UserTest < ActiveSupport::TestCase
 		end
 	end
 
-	test "should validate uniqueness of email (case insensitive)" do
-		@user.email = @user_too.email
+	test "should validate uniqueness of email (case-insensitive)" do
+		@user.email = @user_too.email.downcase
+		assert_not @user.valid?
+		@user.email = @user_too.email.upcase
 		assert_not @user.valid?
 	end
 
-	# test "should validate has_secure_password" do
-	# 	assert_no_changes :@user do
-	# 		@user.update_attributes(password: "foobar")
-	# 	end
-	# 	assert_changes :@user do
-	# 		@user.update_attributes(password: "foobar", password_confirmation: "foobar")
-	# 	end
-	# end
+	test "should validate has_secure_password (with confirmation)" do
+		assert_no_changes -> { @user.password_digest } do
+			@user.update_attributes(password: "foobar")
+			@user.reload
+		end
+		@user.password = ""
+		
+		assert_no_changes -> { @user.password_digest } do
+			@user.update_attributes(password_confirmation: "foobar")
+			@user.reload
+		end
+		@user.password_confirmation = ""
+
+		assert_changes -> { @user.password_digest } do
+			@user.update_attributes(password: "foobar", password_confirmation: "foobar")
+			@user.reload
+		end
+	end
 
 end

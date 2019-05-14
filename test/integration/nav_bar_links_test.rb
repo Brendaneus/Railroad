@@ -9,7 +9,9 @@ class NavBarLinksTest < ActionDispatch::IntegrationTest
 	test "layout links without login" do
 		get root_url
 		assert_select "a[href=?]", root_path
-		assert_select "a[href=?]", blog_path
+		assert_select "a[href=?]", blog_posts_path
+		assert_select "a[href=?]", archivings_path
+		assert_select "a[href=?]", forum_posts_path
 		assert_select "a[href=?]", users_path
 		assert_select "a[href=?]", about_path
 		assert_select "a[href=?]", signup_path
@@ -20,7 +22,9 @@ class NavBarLinksTest < ActionDispatch::IntegrationTest
 		login_as @user
 		get root_url
 		assert_select "a[href=?]", root_path
-		assert_select "a[href=?]", blog_path
+		assert_select "a[href=?]", blog_posts_path
+		assert_select "a[href=?]", archivings_path
+		assert_select "a[href=?]", forum_posts_path
 		assert_select "a[href=?]", users_path
 		assert_select "a[href=?]", about_path
 		assert_select "a[href=?]", user_path(@user)

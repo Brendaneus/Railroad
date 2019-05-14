@@ -1,7 +1,7 @@
 one:
-  name: "Archiving One"
+  title: "Archiving One"
   content: "Lorem Ipsum"
 
 two:
-  name: "Archiving Two"
+  title: "Archiving Two"
   content: "Lorem Ipsum"

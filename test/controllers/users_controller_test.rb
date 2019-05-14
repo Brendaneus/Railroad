@@ -3,8 +3,8 @@ require 'test_helper'
 class UsersControllerTest < ActionDispatch::IntegrationTest
 
 	def setup
-		@user = users(:one)
-		@user_too = users(:two)
+		@user_one = users(:one)
+		@user_two = users(:two)
 		@admin = users(:admin)
 	end
 
@@ -14,63 +14,154 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 	end
 
 	test "should get show" do
-		get user_url( @user )
+		get user_url( @user_one )
 		assert_response :success
 	end
 
-	test "should get new" do
+	test "should get new (signup)" do
 		get signup_url
 		assert_response :success
 	end
 
-	test "should get edit if authenticated" do
-		login_as @user
-		get edit_user_url( @user )
+	test "should post create (signup)" do
+		assert_difference 'User.count', 1 do
+			post signup_url, params: { user: { name: "New User", email: "new_user@test.org", password: "secret", password_confirmation: "secret" } }
+		end
+		assert flash[:success]
+	end
+
+	test "should get edit if authorized" do
+		# Guest
+		get edit_user_url( @user_one )
+		assert flash[:warning]
+		assert_redirected_to login_url
+
+		get edit_user_url( @user_two )
+		assert flash[:warning]
+		assert_redirected_to login_url
+
+		# User 1
+		login_as @user_one
+		get edit_user_url( @user_one )
+		assert_response :success
+
+		get edit_user_url( @user_two )
+		assert flash[:warning]
+		assert_redirected_to root_url
+		logout
+
+		# User 2
+		login_as @user_two
+		get edit_user_url( @user_one )
+		assert flash[:warning]
+		assert_redirected_to root_url
+
+		get edit_user_url( @user_two )
+		assert_response :success
+		logout
+
+		# Admin
+		login_as @admin, password: 'admin'
+		get edit_user_url( @user_one )
+		assert_response :success
+
+		get edit_user_url( @user_two )
 		assert_response :success
 	end
 
-	test "shouldn't get edit if not authenticated" do
-		get edit_user_url( @user )
-		assert_redirected_to login_url
-	end
-
-	# test "should patch update if authenticated" do
-	# 	login_as @user
-	# 	assert_changes :@user do
-	# 		patch user_url( @user ), params: { user: { password: "foobar", password_confirmation: "foobar" } }
-	# 	end
-	# 	assert flash[:success]
-	# end
-
-	# test "shouldn't patch update if unauthenticated" do
-	# 	assert_no_changes :@user do
-	# 		patch user_url( @user ), params: { user: { password: "foobar", password_confirmation: "foobar" } }
-	# 	end
-	# 	assert flash[:warning]
-	# end
-
-	test "should delete destroy if authenticated (redirect to root)" do
-		login_as @user
-		assert_difference 'User.count', -1 do
-			delete user_url( @user )
+	test "should patch update if authorized" do
+		# Guest
+		assert_no_changes -> { @user_one.password_digest } do
+			patch user_url( @user_one ), params: { user: { password: "foobar", password_confirmation: "foobar" } }
+			@user_one.reload
 		end
+		assert flash[:warning]
+		assert_redirected_to login_url
+
+		assert_no_changes -> { @user_two.password_digest } do
+			patch user_url( @user_two ), params: { user: { password: "foobar", password_confirmation: "foobar" } }
+			@user_two.reload
+		end
+		assert flash[:warning]
+		assert_redirected_to login_url
+
+		# User 1
+		login_as @user_one
+		assert_changes -> { @user_one.password_digest } do
+			patch user_url( @user_one ), params: { user: { password: "foobar", password_confirmation: "foobar" } }
+			@user_one.reload
+		end
+		assert flash[:success]
+
+		assert_no_changes -> { @user_two.password_digest } do
+			patch user_url( @user_two ), params: { user: { password: "foobar", password_confirmation: "foobar" } }
+			@user_two.reload
+		end
+		assert flash[:warning]
 		assert_redirected_to root_url
+		logout
+
+		# User 2
+		login_as @user_two
+		assert_no_changes -> { @user_one.password_digest } do
+			patch user_url( @user_one ), params: { user: { password: "foobar", password_confirmation: "foobar" } }
+			@user_one.reload
+		end
+		assert flash[:warning]
+		assert_redirected_to root_url
+
+		assert_changes -> { @user_two.password_digest } do
+			patch user_url( @user_two ), params: { user: { password: "foobar", password_confirmation: "foobar" } }
+			@user_two.reload
+		end
+		assert flash[:success]
+		logout
+
+		# Admin
+		login_as @admin, password: 'admin'
+		assert_changes -> { @user_one.password_digest } do
+			patch user_url( @user_one ), params: { user: { password: "new_password", password_confirmation: "new_password" } }
+			@user_one.reload
+		end
+		assert flash[:success]
+
+		assert_changes -> { @user_two.password_digest } do
+			patch user_url( @user_two ), params: { user: { password: "new_password", password_confirmation: "new_password" } }
+			@user_two.reload
+		end
+		assert flash[:success]
 	end
 
-	test "should delete destroy if admin (redirect to user index)" do
+	test "should delete destroy if authorized" do
+		# Guest
+		assert_no_difference 'User.count' do
+			delete user_url( @user_one )
+		end
+		assert flash[:warning]
+		assert_redirected_to login_url
+
+		# User 1
+		login_as @user_one
+		assert_no_difference 'User.count' do
+			delete user_url( @user_two )
+		end
+		assert flash[:warning]
+		assert_redirected_to root_url
+
+		assert_difference 'User.count', -1 do
+			delete user_url( @user_one )
+		end
+		assert flash[:success]
+		assert_response :redirect
+		logout
+
+		# Admin
 		login_as @admin, password: 'admin'
 		assert_difference 'User.count', -1 do
-			delete user_url( @user )
+			delete user_url( @user_two )
 		end
-		assert_redirected_to users_url
-	end
-
-	test "shouldn't delete destroy if unauthenticated (redirect to root)" do
-		login_as @user
-		assert_no_difference 'User.count' do
-			delete user_url( @user_too )
-		end
-		assert_redirected_to root_url
+		assert flash[:success]
+		assert_response :redirect
 	end
 
 end

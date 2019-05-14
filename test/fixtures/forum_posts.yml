@@ -1,3 +1,10 @@
+admin:
+  user: admin
+  title: "Admin Forum Post"
+  content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+  sticky: true
+  motd: true
+
 one:
   user: one
   title: "Forum Post One"
@@ -13,8 +20,8 @@ two:
   motd: false
 
 three:
-  user: admin
+  user: one
   title: "Forum Post Three"
   content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-  sticky: true
-  motd: true
+  sticky: false
+  motd: false

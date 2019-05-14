@@ -1,27 +1,71 @@
-one:
-  archiving: one
+blogpost_one_image:
+  article: one (BlogPost)
   local_id: 1
-  url: "www.example.com/doc1.png"
-  name: "Document One"
+  title: "Image One"
   content: "Lorem Ipsum"
 
-two:
-  archiving: one
+blogpost_one_audio:
+  article: one (BlogPost)
   local_id: 2
-  url: "www.example.com/doc2.png"
-  name: "Document Two"
+  title: "Audoc One"
   content: "Lorem Ipsum"
 
-three:
-  archiving: two
+blogpost_one_video:
+  article: one (BlogPost)
+  local_id: 3
+  title: "Vidoc One"
+  content: "Lorem Ipsum"
+
+blogpost_two_image:
+  article: two (BlogPost)
   local_id: 1
-  url: "www.example.com/doc3.png"
-  name: "Document One"
+  title: "Image One"
   content: "Lorem Ipsum"
 
-four:
-  archiving: two
+blogpost_two_audio:
+  article: two (BlogPost)
   local_id: 2
-  url: "www.example.com/doc4.png"
-  name: "Document Two"
+  title: "Audoc One"
+  content: "Lorem Ipsum"
+
+blogpost_two_video:
+  article: two (BlogPost)
+  local_id: 3
+  title: "Vidoc One"
+  content: "Lorem Ipsum"
+
+archiving_one_image:
+  article: one (Archiving)
+  local_id: 1
+  title: "Image One"
+  content: "Lorem Ipsum"
+
+archiving_one_audio:
+  article: one (Archiving)
+  local_id: 2
+  title: "Audoc One"
+  content: "Lorem Ipsum"
+
+archiving_one_video:
+  article: one (Archiving)
+  local_id: 3
+  title: "Vidoc One"
+  content: "Lorem Ipsum"
+
+archiving_two_image:
+  article: two (Archiving)
+  local_id: 1
+  title: "Image One"
+  content: "Lorem Ipsum"
+
+archiving_two_audio:
+  article: two (Archiving)
+  local_id: 2
+  title: "Audoc One"
+  content: "Lorem Ipsum"
+
+archiving_two_video:
+  article: two (Archiving)
+  local_id: 3
+  title: "Vidoc One"
   content: "Lorem Ipsum"

@@ -10,9 +10,9 @@ class ForumPost < ApplicationRecord
 	scope :non_stickies, -> { ForumPost.where(sticky: false) }
 
 	validates :title, presence: true,
-					  length: { maximum: 32 }
+					  length: { maximum: 64 }
 	validates :content, presence: true,
-						length: { maximum: 1024 }
+						length: { maximum: 4096 }
 
 	def owned_by? some_user
 		user == some_user

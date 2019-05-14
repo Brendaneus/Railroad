@@ -2,15 +2,36 @@
 
 ## **PHASE ONE:** Create Architecture
 
+- [ ] **6.0 Release:**  Move old upload purging for document updates and deletes to callback stack
+
+- [ ] Fix Session Testing
+
+- [ ] Move all Object html to object partials
+
+- [ ] Move all error partials to shared directory
+
+- [ ] Clean up Comments forms with :model_name params
+
+- [ ] Clean up routes with _routing concerns_
+
+- [ ] Add in-view error handling (missing attachments, etc)
+
+- [ ] Minimize server load by reducing database queries
+
+- [ ] Implement **FriendlyId**
+
 - [ ] **Set seeded admin to require password change on first visit**
 
 - Models need fixed testing with `assert_changes` method in Users controller, Blog_Posts controller, Users model
 
 - [ ] Add markup support
+	- [ ] Or at least newline
 	- [ ] ...with preview tab
 
-- [x] Add smart redirects from unknown paths 
+- [x] Add smart redirects from unknown paths
 	- [ ] ...and domains?
+
+- [ ] Add custom error pages
 
 - [ ] Create RememberTokens table in database
 	- Includes user_id, remember_token, and session_name
@@ -18,11 +39,13 @@
 
 - [ ] Add a 'Trash Can' archive for all deleted posts, comments, accounts (?), instead of just destroying the database entry ( just add an attribute )
 
+- [ ] **Bundle clean --force**
+
 ## Nav Bar
 - [x] **TESTS**
 - [x] **Home Pages**
 - [x] **Blog**
-- [ ] **Archive**
+- [x] **Archive**
 - [x] **Forum**
 - [x] **Users**
 - [ ] **Account Functions**
@@ -45,15 +68,17 @@
 
 ## Users
 - [ ] **TESTS**
-	- [ ] Model
-	- [ ] Controller
+	- [x] Model
+		- [ ] Improve email regex tests
+	- [x] Controller
 	- [ ] Integration
-- [ ] Link to RememberTokens table in database
-- [ ] Add _'Logged in Sessions'_ control view
+- [ ] Add Avatars
+- [ ] Add multiple sessions support
+	- [ ] Create and link to RememberTokens table in database
+	- [ ] Add _'Logged in Sessions'_ control view
 - [ ] Add _Email Confirmations_
 	- [ ] Add 'Activated' column to table in database
 - [ ] Add _MFA Multi-Factor Authentication_
-- [ ] Filter admins or authenticated on _**database**_ actions
 - [x] Confirm on destructive actions
 
 - [x] **index**
@@ -69,68 +94,80 @@
 ## Blog
 - [ ] **TESTS**
 	- [x] Model
-	- [ ] Controller
+	- [x] Controller
 	- [ ] Integration
-- [ ] Fix the post control link sizing
+- [x] Document support
 - [ ] Add timestamps to page display
-- [ ] Filter admins on _**database**_ actions
 - [x] Confirm on destructive actions
+
+- [ ] Share upload partial with documents
+
+- [ ] Fix the post control link sizing
 
 - [ ] **motd**
 - [x] **index**
 - [x] **show**
-	- [ ] Comments
+	- [x] Comments
 - [x] **new**
 - [x] **create**
 - [x] **edit**
+	- [ ] Document support
 - [x] **update**
-- [x] **destroy**clear
+- [x] **destroy**
 	- [ ] VERY EXPLICIT CONFIRM
 	- [ ] MFA / EMAIL CONFIRM
 
 ## Archive
 - [ ] **TESTS**
 	- [x] Model
-	- [ ] Controller
+	- [x] Controller
 	- [ ] Integration
+- [x] Document support
 - [ ] Filter non-admins to proposals on _**database**_ actions
-- [ ] Confirm on destructive actions
+- [x] Confirm on destructive actions
 
-- [ ] **index**
-- [ ] **show**
-- [ ] **new**
+- [ ] Share upload partial with documents
+
+- [x] **index**
+- [x] **show**
+- [x] **new**
 - [ ] **new_proposal**
-- [ ] **create**
+- [x] **create**
 - [ ] **create_proposal**
-- [ ] **edit**
+- [x] **edit**
 - [ ] **edit_proposal**
-- [ ] **update**
-- [ ] **destroy**
+- [x] **update**
+- [x] **destroy**
 	- [ ] VERY EXPLICIT CONFIRM
 	- [ ] MFA / EMAIL CONFIRM
 - [ ] **destroy_proposal**
 
 ## Document
 - [ ] **TESTS**
-	- [ ] Model
-		- Finish url format validations + test
-	- [ ] Controller
+	- [x] Model
+		- [ ] Test for attachment presence (Unsupported, see below)
+		- [ ] Test for attachment dependent purge (and replacement)
+	- [x] Controller
+		- [ ] Implement friendly_id support for local_id / other
+			- ActiveStorage [and soon S3] doesn't support file hierarchies
 	- [ ] Integration
-- [ ] Set up S3 Bucket
-	- [ ] Change javascript file upload to something custom
 - [ ] Filter non-admins to proposals on _**database**_ actions
 - [ ] Confirm on destructive actions
 
-- [ ] **index**
-- [ ] **show**
-- [ ] **new**
+- Attachments are needed for fixtures, currently unsupported
+
+- [ ] _Find a better solution for server-side raw, hierarchic storage (S3 soon won't support, ActiveStorage will never support)_
+
+- [x] **show**
+- [x] **new**
 - [ ] **new_proposal**
-- [ ] **create**
+- [x] **create**
 - [ ] **create_proposal**
-- [ ] **edit**
+- [x] **edit**
 - [ ] **edit_proposal**
-- [ ] **update**
-- [ ] **destroy**
+- [x] **update**
+- [x] **upload**
+- [x] **destroy**
 	- [ ] VERY EXPLICIT CONFIRM
 	- [ ] MFA / EMAIL CONFIRM
 - [ ] **destroy_proposal**
@@ -138,9 +175,8 @@
 ## Forum
 - [ ] **TESTS**
 	- [x] Model
-	- [ ] Controller
+	- [x] Controller
 	- [ ] Integration
-- [ ] Filter admins or authenticated on _**database**_ actions
 - [x] Confirm on destructive actions
 
 - [x] **index**
@@ -155,11 +191,17 @@
 ## Comments
 - [ ] **TESTS**
 	- [x] Model
-	- [ ] Controller
+	- [x] Controller
 	- [ ] Integration
-- [ ] Filter admins or authenticated on _**destructive**_ actions
 - [x] Confirm on destructive actions
 
-- [ ] **create**
-- [ ] **update**
-- [ ] **destroy**
+- [ ] Fix formatting
+
+- [x] **create**
+- [x] **update**
+- [x] **destroy**
+
+### Errors
+- [ ] **TESTS**
+	- [x] Controller
+	- [ ] Integration

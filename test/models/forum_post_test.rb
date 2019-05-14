@@ -4,67 +4,69 @@ class ForumPostTest < ActiveSupport::TestCase
 
 	def setup
 		@user = users(:one)
-		@forum_post = forum_posts(:one)
-		@forum_comment = comments(:five)
+		@admin = users(:admin)
+		@forumpost = forum_posts(:one)
+		@forumpost_admin = forum_posts(:admin)
+		@forum_comment = comments(:forumpost_one_one)
 	end
 
 	test "should associate with comments" do
-		assert @forum_post.comments
+		assert @forumpost.comments
 		assert @forum_comment.post
 	end
 
 	test "should associate with commenters" do
-		assert @forum_post.commenters
+		assert @forumpost.commenters
 		assert @user.commented_forum_posts
 	end
 
 	test "should require user" do
-		new_forum_post = ForumPost.new(title: "Test Post", content: "Sample Text")
-		assert_not new_forum_post.valid?
-		new_forum_post.user = @user
-		assert new_forum_post.valid?
+		new_forumpost = ForumPost.new(title: "Test Post", content: "Sample Text")
+		assert_not new_forumpost.valid?
+		new_forumpost.user = @user
+		assert new_forumpost.valid?
 	end
 
 	test "should validate title presence" do
-		@forum_post.title = ""
-		assert_not @forum_post.valid?
-		@forum_post.title = "    "
-		assert_not @forum_post.valid?
+		@forumpost.title = ""
+		assert_not @forumpost.valid?
+		@forumpost.title = "    "
+		assert_not @forumpost.valid?
 	end
 
-	test "should validate title length (maximum: 32)" do
-		@forum_post.title = "X"
-		assert @forum_post.valid?
-		@forum_post.title = "X" * 32
-		assert @forum_post.valid?
-		@forum_post.title = "X" * 33
-		assert_not @forum_post.valid?
+	test "should validate title length (maximum: 64)" do
+		@forumpost.title = "X"
+		assert @forumpost.valid?
+		@forumpost.title = "X" * 64
+		assert @forumpost.valid?
+		@forumpost.title = "X" * 65
+		assert_not @forumpost.valid?
 	end
 
 	test "should validate content presence" do
-		@forum_post.content = ""
-		assert_not @forum_post.valid?
-		@forum_post.content = "    "
-		assert_not @forum_post.valid?
+		@forumpost.content = ""
+		assert_not @forumpost.valid?
+		@forumpost.content = "    "
+		assert_not @forumpost.valid?
 	end
 
-	test "should validate content length (maximum: 1024)" do
-		@forum_post.content = "X"
-		assert @forum_post.valid?
-		@forum_post.content = "X" * 1024
-		assert @forum_post.valid?
-		@forum_post.content = "X" * 1025
-		assert_not @forum_post.valid?
+	test "should validate content length (maximum: 4096)" do
+		@forumpost.content = "X"
+		assert @forumpost.valid?
+		@forumpost.content = "X" * 4096
+		assert @forumpost.valid?
+		@forumpost.content = "X" * 4097
+		assert_not @forumpost.valid?
 	end
 
 	test "should default motd as false" do
-		new_forum_post = @user.forum_posts.create!(title: "A Sample Post", content: "Lorem Ipsum")
-		assert_not new_forum_post.motd?
+		new_forumpost = @user.forum_posts.create!(title: "A Sample Post", content: "Lorem Ipsum")
+		assert_not new_forumpost.motd?
 	end
 
 	test "should default sticky as false" do
-		new_forum_post = @user.forum_posts.create!(title: "A Sample Post", content: "Lorem Ipsum")
-		assert_not new_forum_post.sticky?
+		new_forumpost = @user.forum_posts.create!(title: "A Sample Post", content: "Lorem Ipsum")
+		assert_not new_forumpost.sticky?
 	end
 
 	test "should scope motd posts" do
@@ -80,9 +82,19 @@ class ForumPostTest < ActiveSupport::TestCase
 	end
 
 	test "should check for edits" do
-		assert_not @forum_post.edited?
-		@forum_post.updated_at = Time.now + 1
-		assert @forum_post.edited?
+		assert_not @forumpost.edited?
+		@forumpost.updated_at = Time.now + 1
+		assert @forumpost.edited?
+	end
+
+	test "should check if user is owner" do
+		assert @forumpost.owned_by? @user
+		assert_not @forumpost.owned_by? @admin
+	end
+
+	test "should check if owner is admin" do
+		assert @forumpost_admin.admin?
+		assert_not @forumpost.admin?
 	end
 
 end

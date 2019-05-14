@@ -42,15 +42,21 @@ class ArchivingsController < ApplicationController
 	end
 
 	def destroy
-		flash[:error] = "This feature has not been implemented yet."
-		redirect_back fallback_location: archivings_path
+		@archiving = Archiving.find( params[:id] )
+		if @archiving.destroy
+			flash[:success] = "Archiving deleted."
+			redirect_to archivings_path
+		else
+			flash[:error] = "There was a problem deleting this archving."
+			redirect_to archiving_path( @archiving )
+		end
 	end
 
 
 	private
 
 		def archiving_params
-			params.require(:archiving).permit(:name, :content)
+			params.require(:archiving).permit(:title, :content)
 		end
 
 end

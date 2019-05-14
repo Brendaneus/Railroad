@@ -1,0 +1,22 @@
+<%= form_for [@article, @document] do |f| %>
+
+	<div>
+		<%= f.label :title %>
+		<%= f.text_field :title %>
+	</div>
+
+	<%= render 'upload' if @document.persisted? %>
+
+	<div>
+		<%= f.label :upload %>
+		<%= f.file_field :upload, direct_upload: true %>
+	</div>
+
+	<div>
+		<%= f.label :content %>
+		<%= f.text_area :content %>
+	</div>
+
+	<%= f.submit %>
+
+<% end %>

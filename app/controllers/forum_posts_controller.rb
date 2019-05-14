@@ -21,11 +21,14 @@ class ForumPostsController < ApplicationController
 
 	def create
 		@forum_post = current_user.forum_posts.build(forum_post_params)
-		if @forum_post.save
+		if !admin_user? && ( params[:forum_post].has_key?(:motd) || params[:forum_post].has_key?(:sticky) )
+			flash.now[:warning] = "Only admins may make motds and stickies."
+			render :new
+		elsif @forum_post.save
 			flash[:success] = "The forum post was successfully created."
 			redirect_to forum_post_path(@forum_post)
 		else
-			flash[:error] = "There was a problem creating this post."
+			flash.now[:error] = "There was a problem creating this post."
 			render :new
 		end
 	end
@@ -36,11 +39,14 @@ class ForumPostsController < ApplicationController
 
 	def update
 		@forum_post = ForumPost.find( params[:id] )
-		if @forum_post.update_attributes(forum_post_params)
+		if !admin_user? && ( params[:forum_post].has_key?(:motd) || params[:forum_post].has_key?(:sticky) )
+			flash.now[:warning] = "Only admins may make motds and stickies."
+			render :new
+		elsif @forum_post.update_attributes(forum_post_params)
 			flash[:success] = "The forum post was successfully updated."
 			redirect_to forum_post_path(@forum_post)
 		else
-			flash[:failure] = "There was a problem updating this post."
+			flash.now[:failure] = "There was a problem updating this post."
 			render :edit
 		end
 	end
@@ -49,10 +55,10 @@ class ForumPostsController < ApplicationController
 		@forum_post = ForumPost.find( params[:id] )
 		if @forum_post.destroy
 			flash[:success] = "The forum post was successfully deleted."
-			redirect_to forum_path
+			redirect_to forum_posts_path
 		else
 			flash[:failure] = "There was a problem deleting this post."
-			redirect_back fallback_location: forum_path
+			redirect_back fallback_location: forum_posts_path
 		end
 	end
 
@@ -68,7 +74,7 @@ class ForumPostsController < ApplicationController
 		def require_authorize
 			unless authorized_for? ForumPost.find( params[:id] ).user
 				flash[:warning] = "You aren't allowed to do that"
-				redirect_to forum_path
+				redirect_to forum_posts_path
 			end
 		end
 

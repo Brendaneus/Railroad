@@ -5,35 +5,39 @@ class ArchivingTest < ActiveSupport::TestCase
 	def setup
 		@archiving_one = archivings(:one)
 		@archiving_two = archivings(:two)
-		@document_one = documents(:one)
-		@document_two = documents(:two)
-		@document_three = documents(:three)
-		@document_four = documents(:four)
+		@archiving_one_image = documents(:archiving_one_image)
 	end
 
 	test "should associate with documents" do
 		assert @archiving_one.documents
-		assert @document_one.archiving
+		assert @archiving_one_image.article
 	end
 
-	test "should validate presence of name" do
-		@archiving_one.name = "";
+	test "should dependant destroy documents" do
+		@archiving_one.destroy
+		assert_raise(ActiveRecord::RecordNotFound) { @archiving_one_image.reload }
+	end
+
+	test "should validate presence of title" do
+		@archiving_one.title = "";
 		assert_not @archiving_one.valid?
-		@archiving_one.name = "    ";
+		@archiving_one.title = "    ";
 		assert_not @archiving_one.valid?
 	end
 
-	test "should validate uniqueness of name" do
-		@archiving_two.name = @archiving_one.name
+	test "should validate title uniqueness (case-insensitive)" do
+		@archiving_two.title = @archiving_one.title.downcase
+		assert_not @archiving_two.valid?
+		@archiving_two.title = @archiving_one.title.upcase
 		assert_not @archiving_two.valid?
 	end
 
-	test "should validate length of name (max: 32)" do
-		@archiving_one.name = "X"
+	test "should validate length of title (max: 64)" do
+		@archiving_one.title = "X"
 		assert @archiving_one.valid?
-		@archiving_one.name = "X" * 32
+		@archiving_one.title = "X" * 64
 		assert @archiving_one.valid?
-		@archiving_one.name = "X" * 33
+		@archiving_one.title = "X" * 65
 		assert_not @archiving_one.valid?
 	end
 
@@ -47,10 +51,16 @@ class ArchivingTest < ActiveSupport::TestCase
 	test "should validate length of content (max: 1024)" do
 		@archiving_one.content = "X"
 		assert @archiving_one.valid?
-		@archiving_one.content = "X" * 1024
+		@archiving_one.content = "X" * 4096
 		assert @archiving_one.valid?
-		@archiving_one.content = "X" * 1025
+		@archiving_one.content = "X" * 4097
 		assert_not @archiving_one.valid?
+	end
+
+	test "should check for edits" do
+		assert_not @archiving_one.edited?
+		@archiving_one.updated_at = Time.now + 1
+		assert @archiving_one.edited?
 	end
 
 end

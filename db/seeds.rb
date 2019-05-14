@@ -10,6 +10,7 @@ puts
 puts "->SEEDING"
 puts
 
+
 LOREM_IPSUM = "Lorem ipsum dolor sit amet,
 			   consectetur adipiscing elit,
 			   sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
@@ -18,6 +19,7 @@ LOREM_IPSUM = "Lorem ipsum dolor sit amet,
 			   Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
 			   Excepteur sint occaecat cupidatat non proident,
 			   sunt in culpa qui officia deserunt mollit anim id est laborum."
+
 
 # ADMIN
 if User.count == 0
@@ -29,6 +31,7 @@ if User.count == 0
 				  admin: true )
 end
 
+
 # USER
 if User.count > 0
 	3.times do
@@ -39,6 +42,7 @@ if User.count > 0
 					  password_confirmation: 'password' )
 	end
 end
+
 
 # BLOG
 3.times do
@@ -53,6 +57,15 @@ end
 									content: "This is a comment." )
 	end
 end
+
+
+# ARCHIVE
+3.times do
+	puts " + CREATING Archiving #{Archiving.count + 1}"
+	archiving = Archiving.create!( title: "Archiving ##{Archiving.count + 1}",
+								   content: LOREM_IPSUM )
+end
+
 
 # FORUM
 User.all.each do |user|
@@ -69,6 +82,15 @@ User.all.each do |user|
 	end
 end
 
+
+puts
+puts "========="
+puts
+puts "========="
+puts
+puts "========="
+puts
+puts ">>>DON'T FORGET TO CLEAN S3 BUCKET<<<"
 puts
 puts "========="
 puts

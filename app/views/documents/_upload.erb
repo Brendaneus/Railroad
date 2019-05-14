@@ -1,0 +1,14 @@
+<% if @document.upload.attached? %>
+	<% if @document.upload.image? %>
+		<%= image_tag url_for(@document.upload) %>
+	<% elsif @document.upload.audio? %>
+		<%= audeo_tag url_for(@document.upload), controls: true %>
+	<% elsif @document.upload.video? %>
+		<%= video_tag url_for(@document.upload), controls: true %>
+	<% else %>
+		<p>file detected: Unknown Filetype</p>
+		<%= link_to url_for(@document.upload) %>
+	<% end %>
+<% else %>
+	<p>This document is missing its attachment.</p>
+<% end %>

@@ -1,12 +1,17 @@
 class Archiving < ApplicationRecord
 
-	has_many :documents
+	has_many :documents, as: :article, dependent: :destroy
 
-	validates :name, presence: true,
-					 uniqueness: { case_sensitive: false },
-					 length: { maximum: 32 }
+	validates :title, presence: true,
+					  uniqueness: { case_sensitive: false },
+					  length: { maximum: 64 }
 
 	validates :content, presence: true,
-						length: { maximum: 1024 }
+						length: { maximum: 4096 }
+
+
+	def edited?
+		self.created_at != self.updated_at
+	end
 
 end
