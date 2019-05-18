@@ -1,28 +1,45 @@
 <h1>The Railroad</h1>
-<hr>
+
 <nav>
 	<%= link_to "Dashboard", root_path %>
+
 	<%= link_to "About", about_path %>
+
 	<%= link_to "Blog", blog_posts_path %>
+
 	<%= link_to "Archive", archivings_path %>
+
 	<%= link_to "Forum", forum_posts_path %>
+
 	<%= link_to "Users", users_path %>
+
 	<div class="status_control">
 		<% if logged_in? %>
+		
 			<%= link_to current_user.name, user_path( current_user ), class: "account_link" %>
+
 			<%= link_to "Log out", logout_path, method: :delete %>
+		
 		<% else %>
+		
 			<%= link_to "Sign up", signup_path %>
+
 			<%= link_to "Log in", login_path %>
+		
 		<% end %>
 	</div>
 </nav>
-<hr>
+
 <% if flash.any? %>
+
 	<ul class="flash">
 		<% flash.each do |key, msg| %>
+
 			<li class="<%= key %>"><%= key.capitalize %>: <%= msg %></li>
+
 		<% end %>
 	</ul>
+
 	<hr>
+
 <% end %>

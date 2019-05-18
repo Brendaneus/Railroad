@@ -1,8 +1,11 @@
 <% if admin_user? %>
+
 	<nav class="admin post_control">
 		<%= link_to "Edit Document", edit_article_document_path( @article, @document ) %>
+
 		<%= link_to "Delete Document", article_document_path( @article, @document ), method: :delete, data: { confirm: 'Really delete this document?'} %>
 	</nav>
+
 <% end %>
 
 <h1><%= link_to(@article.title, @article) + ": " + @document.title %></h1>

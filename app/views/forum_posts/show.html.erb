@@ -1,22 +1,23 @@
-<% provide( :post_type, "ForumPost" ) %>
-
 <% if authorized_for? @forum_post.user %>
+
 	<nav class="post_control">
 		<%= link_to "Edit Post", edit_forum_post_path( @forum_post ) %>
+
 		<%= link_to "Delete Post", forum_post_path( @forum_post ), method: :delete, data: { confirm: 'Really delete this post?'} %>
 	</nav>
-<% elsif admin_user? %>
-	<nav class="admin post_control">
-		<%= link_to "Edit Post", edit_forum_post_path( @forum_post ) %>
-		<%= link_to "Delete Post", forum_post_path( @forum_post ), method: :delete, data: { confirm: 'Really delete this post?'} %>
-	</nav>
+
 <% end %>
+
 <h1><%= @forum_post.title %></h1>
+
 <p><%= @forum_post.content %></p>
+
 <% if @forum_post.edited? %>
+
 	<h4 class="subtle">This post has been edited.</h4>
+
 <% end %>
 
-<%= render 'comments/form' %>
+<%= render 'comments/form', comment: @new_comment, form_url: forum_post_comments_path(@forum_post) %>
 
-<%= render 'comments' %>
+<%= render @comments %>

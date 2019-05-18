@@ -1,0 +1,19 @@
+<div class="container">
+
+	<% if admin_user? || (comment.owned_by? current_user) %>
+
+		<%= render 'comments/form', comment: comment, form_url: post_comment_path(comment.post, comment) %>
+		
+		<%= link_to "Delete", post_comment_path(comment.post, comment.id), method: :delete, data: { confirm: 'Really delete this comment?'} %>
+
+	<% else %>
+
+		<h4>
+			<%= (comment.user.present?) ? ( link_to comment.user.name, user_path(comment.user) ) : "Guest" %> wrote:
+		</h4>
+
+		<p><%= comment.content %></p>
+
+	<% end %>
+
+</div>

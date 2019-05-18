@@ -1,4 +1,5 @@
 <%= form_for @archiving do |f| %>
+
 	<div>
 		<%= f.label :title %>
 		<%= f.text_field :title %>
@@ -9,5 +10,6 @@
 		<%= f.text_area :content %>
 	</div>
 
-	<%= f.submit %>
+	<%= f.submit submit_text, class: 'submit' %>
+
 <% end %>

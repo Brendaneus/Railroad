@@ -6,6 +6,10 @@
 /* Nav Bar */
 
 nav {
+	padding: 5px;
+	border-top: medium solid black;
+	border-bottom: medium solid black;
+	margin: 5px auto;
 	a {
 		display: inline-block;
 		list-style: none;

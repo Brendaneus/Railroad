@@ -60,7 +60,7 @@
 	- [ ] Graphic
 	- [ ] ???
 - [x] **About**
-	- [ ] Description
+	- [x] Description
 	- [ ] Styling
 - [ ] **Road Map**
 	- [ ] Plan

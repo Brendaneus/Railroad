@@ -1,7 +1,7 @@
-<%= form_for @form_comment, url: @comment_form_url do |f| %>
+<%= form_for comment, url: form_url do |f| %>
 
 	<%= f.text_area :content %>
 	
-	<%= f.submit "#{ ( yield(:submit_text).blank? ) ? "Create a comment" : yield(:submit_text) }" %>
+	<%= f.submit %>
 
 <% end %>

@@ -1,6 +1,3 @@
-<% provide( :form_url, forum_post_url(@forum_post) ) %>
-<% provide( :submit_text, "Update this forum post" ) %>
+<%= render 'shared/error_messages', object: @forum_post %>
 
-<%= render 'errors' %>
-
-<%= render 'form' %>
+<%= render 'form', submit_text: "Update Forum Post" %>

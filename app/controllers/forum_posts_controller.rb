@@ -11,8 +11,7 @@ class ForumPostsController < ApplicationController
 	def show
 		@forum_post = ForumPost.find( params[:id] )
 		@comments = @forum_post.comments.includes(:user).order(created_at: :desc)
-		@form_comment = @forum_post.comments.build(user: current_user)
-		@comment_form_url = forum_post_comments_path(@forum_post)
+		@new_comment = @forum_post.comments.build(user: current_user)
 	end
 
 	def new

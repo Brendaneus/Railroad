@@ -1,6 +1,3 @@
-<% provide( :form_url, blog_posts_url ) %>
-<% provide( :submit_text, "Create this blog post" ) %>
+<%= render 'shared/error_messages', object: @blog_post %>
 
-<%= render 'errors' %>
-
-<%= render 'form' %>
+<%= render 'form', submit_text: "Create Blog Post" %>
