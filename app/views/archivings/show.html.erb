@@ -12,6 +12,6 @@
 
 <h1><%= @archiving.title %></h1>
 
-<p><%= @archiving.content %></p>
+<p><%= simple_format @archiving.content %></p>
 
 <%= render @documents %>

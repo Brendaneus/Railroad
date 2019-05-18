@@ -12,4 +12,4 @@
 
 <%= render 'upload' %>
 
-<p><%= @document.content if @document.content.present? %></p>
+<p><%= simple_format @document.content if @document.content.present? %></p>

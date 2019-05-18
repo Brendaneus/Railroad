@@ -10,7 +10,7 @@
 
 <h1><%= @forum_post.title %></h1>
 
-<p><%= @forum_post.content %></p>
+<p><%= simple_format @forum_post.content %></p>
 
 <% if @forum_post.edited? %>
 

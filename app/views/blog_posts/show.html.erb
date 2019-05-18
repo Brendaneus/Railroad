@@ -12,7 +12,7 @@
 
 <h2><%= @blog_post.subtitle %></h2>
 
-<p><%= @blog_post.content %></p>
+<p><%= simple_format @blog_post.content %></p>
 
 <% if @blog_post.edited? %>
 
