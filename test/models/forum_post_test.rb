@@ -15,12 +15,17 @@ class ForumPostTest < ActiveSupport::TestCase
 		assert @forum_comment.post
 	end
 
+	test "should dependent destroy comments" do
+		@forumpost.destroy
+		assert_raise(ActiveRecord::RecordNotFound) { @forum_comment.reload }
+	end
+
 	test "should associate with commenters" do
 		assert @forumpost.commenters
 		assert @user.commented_forum_posts
 	end
 
-	test "should require user" do
+	test "should require user on create" do
 		new_forumpost = ForumPost.new(title: "Test Post", content: "Sample Text")
 		assert_not new_forumpost.valid?
 		new_forumpost.user = @user

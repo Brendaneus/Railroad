@@ -4,8 +4,8 @@ class ForumPostsController < ApplicationController
 	before_action :require_authorize, only: [:edit, :update, :destroy]
 
 	def index
-		@forum_posts = ForumPost.includes(:user).non_stickies.order(created_at: :desc)
-		@sticky_posts = ForumPost.includes(:user).stickies.order(created_at: :desc)
+		@forum_posts = ForumPost.includes(:user, :comments).non_stickies.order(created_at: :desc)
+		@sticky_posts = ForumPost.includes(:user, :comments).stickies.order(created_at: :desc)
 	end
 
 	def show

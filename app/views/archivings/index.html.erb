@@ -6,12 +6,4 @@
 
 <% end %>
 
-<% if @archivings.empty? %>
-
-	<h2>There isn't anything here...</h2>
-
-<% else %>
-
-	<%= render @archivings %>
-
-<% end %>
+<%= (render @archivings) || (tag.h2 "There isn't anything here...") %>

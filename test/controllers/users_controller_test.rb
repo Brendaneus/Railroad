@@ -18,14 +18,14 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 		assert_response :success
 	end
 
-	test "should get new (signup)" do
+	test "should get new (signup_url)" do
 		get signup_url
 		assert_response :success
 	end
 
-	test "should post create (signup)" do
+	test "should post create" do
 		assert_difference 'User.count', 1 do
-			post signup_url, params: { user: { name: "New User", email: "new_user@test.org", password: "secret", password_confirmation: "secret" } }
+			post users_url, params: { user: { name: "New User", email: "new_user@test.org", password: "secret", password_confirmation: "secret" } }
 		end
 		assert flash[:success]
 	end
@@ -137,6 +137,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 		assert_no_difference 'User.count' do
 			delete user_url( @user_one )
 		end
+		assert_nothing_raised { @user_one.reload }
 		assert flash[:warning]
 		assert_redirected_to login_url
 
@@ -145,12 +146,14 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 		assert_no_difference 'User.count' do
 			delete user_url( @user_two )
 		end
+		assert_nothing_raised { @user_two.reload }
 		assert flash[:warning]
 		assert_redirected_to root_url
 
 		assert_difference 'User.count', -1 do
 			delete user_url( @user_one )
 		end
+		assert_raise(ActiveRecord::RecordNotFound) { @user_one.reload }
 		assert flash[:success]
 		assert_response :redirect
 		logout
@@ -160,6 +163,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 		assert_difference 'User.count', -1 do
 			delete user_url( @user_two )
 		end
+		assert_raise(ActiveRecord::RecordNotFound) { @user_two.reload }
 		assert flash[:success]
 		assert_response :redirect
 	end

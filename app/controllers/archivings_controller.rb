@@ -3,7 +3,7 @@ class ArchivingsController < ApplicationController
 	before_action :require_admin, except: [:index, :show]
 
 	def index
-		@archivings = Archiving.all
+		@archivings = Archiving.all.includes(:documents)
 	end
 
 	def show

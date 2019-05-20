@@ -3,94 +3,113 @@ require 'test_helper'
 class UserTest < ActiveSupport::TestCase
 	
 	def setup
-		@user = users(:one)
-		@user_too = users(:two)
+		@user_one = users(:one)
+		@user_two = users(:two)
 		@blogpost = blog_posts(:one)
 		@forumpost = forum_posts(:one)
 		@blog_comment = comments(:blogpost_one_one)
 		@forum_comment = comments(:forumpost_one_one)
 	end
 
+	test "should associate with forum posts" do
+		assert @user_one.forum_posts
+		assert @forumpost.user
+	end
+
+	test "should dependent unassign forum posts" do
+		@user_one.destroy
+		assert_nothing_raised { @forumpost.reload }
+		assert @forumpost.user.nil?
+	end
+
 	test "should associate with comments" do
-		assert @user.comments
+		assert @user_one.comments
 		assert @blog_comment.user
 	end
 
+	test "should dependent unassign comments" do
+		@user_one.destroy
+		assert_nothing_raised { @forum_comment.reload }
+		assert_nothing_raised { @blog_comment.reload }
+		assert @forum_comment.user.nil?
+		assert @blog_comment.user.nil?
+	end
+
 	test "should associate with blog post comments" do
-		assert @user.commented_blog_posts
+		assert @user_one.commented_blog_posts
 		assert @blogpost.commenters
 	end
 
 	test "should associate with forum post comments" do
-		assert @user.commented_forum_posts
+		assert @user_one.commented_forum_posts
 		assert @forumpost.commenters
 	end
 
 	test "should validate presence of name" do
-		@user.name = ""
-		assert_not @user.valid?
-		@user.name = "    "
-		assert_not @user.valid?
+		@user_one.name = ""
+		assert_not @user_one.valid?
+		@user_one.name = "    "
+		assert_not @user_one.valid?
 	end
 
 	test "should validate length of name (maximum: 32)" do
-		@user.name = "X"
-		assert @user.valid?
-		@user.name = "X" * 32
-		assert @user.valid?
-		@user.name = "X" * 33
-		assert_not @user.valid?
+		@user_one.name = "X"
+		assert @user_one.valid?
+		@user_one.name = "X" * 32
+		assert @user_one.valid?
+		@user_one.name = "X" * 33
+		assert_not @user_one.valid?
 	end
 
 	test "should validate uniqueness of name (case-insensitive)" do
-		@user.name = @user_too.name.downcase
-		assert_not @user.valid?
-		@user.name = @user_too.name.upcase
-		assert_not @user.valid?
+		@user_one.name = @user_two.name.downcase
+		assert_not @user_one.valid?
+		@user_one.name = @user_two.name.upcase
+		assert_not @user_one.valid?
 	end
 
 	test "should validate presence of email" do
-		@user.email = ""
-		assert_not @user.valid?
-		@user.email = "    "
-		assert_not @user.valid?
+		@user_one.email = ""
+		assert_not @user_one.valid?
+		@user_one.email = "    "
+		assert_not @user_one.valid?
 	end
 
 	# Needs a better validator or test suite?
 	test "should validate format of email (with regex)" do
 		["foobar", "foobar@invalid", "foobar.org", "foo bar@invalid.org", "foobar@invalid@domain.org", "foobar@invalid.org/file" ].each do |email|
-			@user.email = email
-			assert_not @user.valid?
+			@user_one.email = email
+			assert_not @user_one.valid?
 		end
 		["foobar@invalid.org", "foo-bar@invalid.org", "foo_bar@invalid.org", "foobar@invalid-domain.org", "foobar@invalid.domain.org"].each do |email|
-			@user.email = email
-			assert @user.valid?
+			@user_one.email = email
+			assert @user_one.valid?
 		end
 	end
 
 	test "should validate uniqueness of email (case-insensitive)" do
-		@user.email = @user_too.email.downcase
-		assert_not @user.valid?
-		@user.email = @user_too.email.upcase
-		assert_not @user.valid?
+		@user_one.email = @user_two.email.downcase
+		assert_not @user_one.valid?
+		@user_one.email = @user_two.email.upcase
+		assert_not @user_one.valid?
 	end
 
 	test "should validate has_secure_password (with confirmation)" do
-		assert_no_changes -> { @user.password_digest } do
-			@user.update_attributes(password: "foobar")
-			@user.reload
+		assert_no_changes -> { @user_one.password_digest } do
+			@user_one.update_attributes(password: "foobar")
+			@user_one.reload
 		end
-		@user.password = ""
+		@user_one.password = ""
 		
-		assert_no_changes -> { @user.password_digest } do
-			@user.update_attributes(password_confirmation: "foobar")
-			@user.reload
+		assert_no_changes -> { @user_one.password_digest } do
+			@user_one.update_attributes(password_confirmation: "foobar")
+			@user_one.reload
 		end
-		@user.password_confirmation = ""
+		@user_one.password_confirmation = ""
 
-		assert_changes -> { @user.password_digest } do
-			@user.update_attributes(password: "foobar", password_confirmation: "foobar")
-			@user.reload
+		assert_changes -> { @user_one.password_digest } do
+			@user_one.update_attributes(password: "foobar", password_confirmation: "foobar")
+			@user_one.reload
 		end
 	end
 

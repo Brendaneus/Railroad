@@ -1,17 +1,31 @@
-<div class="container<%= " motd" if blog_post.motd? %>">
-
-	<h2><%= link_to blog_post.title, blog_post_path( blog_post ) %></h2>
+<div class="<%= container_class(blog_post) %>">
+	<h2><%= link_to blog_post.title, blog_post %></h2>
 
 	<% if blog_post.subtitle %>
 
 		<h3><%= blog_post.subtitle %></h3>
 
 	<% end %>
+	
+	<% if blog_post.documents.any? %>
+	 	
+	 	<%= tag.h4 (blog_post.documents.length).to_s + " Document".pluralize(blog_post.documents.length), class: 'subtle' %>
 
-	<% if blog_post.edited? %>
+	 <% end %>
 
-		<h5 class="subtle">edited</h5>
+	<% if blog_post.comments.any? %>
+	 	
+	 	<%= tag.h4 (blog_post.comments.length).to_s + " Comment".pluralize(blog_post.comments.length), class: 'subtle' %>
 
-	<% end %>
+	 <% end %>
 
+	<h4 class="subtle">
+		Posted  on <%= blog_post.created_at.to_date %>.
+		
+		<% if blog_post.edited? %>
+
+			Last edited: <%= blog_post.updated_at.to_date %>.
+
+		<% end %>
+	</h4>
 </div>

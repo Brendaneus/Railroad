@@ -3,7 +3,7 @@ class BlogPostsController < ApplicationController
 	before_action :require_admin, except: [:index, :show]
 
 	def index
-		@blog_posts = BlogPost.all.order( created_at: :desc )
+		@blog_posts = BlogPost.all.includes(:documents, :comments).order( created_at: :desc )
 	end
 
 	def show

@@ -6,12 +6,4 @@
 
 <% end %>
 
-<% if @blog_posts.empty? %>
-
-	<h2>There isn't anything here...</h2>
-
-<% else %>
-
-	<%= render @blog_posts %>
-
-<% end %>
+<%= (render @blog_posts) || (tag.h2 "There isn't anything here...") %>

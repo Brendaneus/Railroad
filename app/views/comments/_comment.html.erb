@@ -9,7 +9,7 @@
 	<% else %>
 
 		<h4>
-			<%= (comment.user.present?) ? ( link_to comment.user.name, user_path(comment.user) ) : "Guest" %> wrote:
+			<%= safe_user_link_to comment.user %> wrote:
 		</h4>
 
 		<p><%= simple_format comment.content %></p>

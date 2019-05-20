@@ -1,0 +1,19 @@
+<div class="<%= container_class(forum_post) %>">
+	<h2><%= link_to forum_post.title, forum_post %></h2>
+
+	<% if forum_post.comments.any? %>
+	 	
+	 	<%= tag.h4 (forum_post.comments.length).to_s + " Comment".pluralize(forum_post.comments.length), class: 'subtle' %>
+
+	 <% end %>
+
+	<h4 class="subtle">
+		Posted by <%= safe_user_link_to forum_post.user %> on <%= forum_post.created_at.to_date %>.
+		
+		<% if forum_post.edited? %>
+
+			Last edited: <%= forum_post.updated_at.to_date %>.
+
+		<% end %>
+	</h4>
+</div>

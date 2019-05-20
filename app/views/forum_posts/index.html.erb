@@ -6,36 +6,6 @@
 
 <% end %>
 
-<% if @forum_posts.empty? %>
+<%= render partial: 'forum_post', collection: @sticky_posts %>
 
-	<h2>There isn't anything here...</h2>
-
-<% end %>
-
-<% @sticky_posts.each do |forum_post| %>
-
-	<div class="<%= (forum_post.owned_by? current_user) ? "owned " : (forum_post.admin?) ? "admin " : "" %>sticky <%= "motd " if forum_post.motd? %>container">
-		<h2><%= link_to forum_post.title, forum_post_path( forum_post ) %></h2>
-
-		<% if forum_post.edited? %>
-
-			<h5 class="subtle">edited</h5>
-
-		<% end %>
-	</div>
-
-<% end %>
-
-<% @forum_posts.each do |forum_post| %>
-
-	<div class="<%= (forum_post.owned_by? current_user) ? "owned " : (forum_post.admin?) ? "admin " : "" %><%= "motd " if forum_post.motd? %>container">
-		<h2><%= link_to forum_post.title, forum_post_path( forum_post ) %></h2>
-
-		<% if forum_post.edited? %>
-
-			<h5 class="subtle">edited</h5>
-
-		<% end %>
-	</div>
-
-<% end %>
+<%= (render @forum_posts) || (tag.h2 "There isn't anything here...") %>

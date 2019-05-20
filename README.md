@@ -2,44 +2,45 @@
 
 ## **PHASE ONE:** Create Architecture
 
-- [ ] **6.0 Release:**  Move old upload purging for document updates and deletes to callback stack
 
-- [ ] Fix Session Testing
+- [ ] **Trash Can Update**
+	- [ ] Add a 'Trash Can' archive for all deleted posts, comments, accounts (?), instead of just destroying the database entry ( just add an attribute )
+	- [ ] Update views to check first for trashed state
 
-- [ ] Move all Object html to object partials
+- [ ] **Users Update**
+	- [ ] Create RememberTokens table in database
+	- Includes user_id, remember_token, and session_name
+		- [ ] Controller
+		- [ ] Views
+	- [ ] Add avatars
+	- [ ] Add bio section
 
-- [ ] Move all error partials to shared directory
+- [ ] Add markup support to all content
+	- [ ] ...with preview tab
 
-- [ ] Clean up Comments forms with :model_name params
+- [ ] Add pagination
 
-- [ ] Clean up routes with _routing concerns_
+- [ ] **6.0 Release:**  Move old upload purging to _callback stack_(???) for document updates and deletes
 
-- [ ] Add in-view error handling (missing attachments, etc)
+- [ ] Clean up tests with helper methods
+	- Controller tests could use helper for repetetive checks
 
-- [ ] Minimize server load by reducing database queries
+- [ ] Fix Session Testing (remembered check)
 
-- [ ] Implement **FriendlyId**
+- [ ] Add document seeds
 
 - [ ] **Set seeded admin to require password change on first visit**
 
-- Models need fixed testing with `assert_changes` method in Users controller, Blog_Posts controller, Users model
+- [ ] Clean up routes with _routing concerns_
 
-- [ ] Add markup support
-	- [ ] Or at least newline
-	- [ ] ...with preview tab
-
-- [x] Add smart redirects from unknown paths
-	- [ ] ...and domains?
-
-- [ ] Add custom error pages
-
-- [ ] Create RememberTokens table in database
-	- Includes user_id, remember_token, and session_name
-	- [ ] Add Remembered Sessions routes
-
-- [ ] Add a 'Trash Can' archive for all deleted posts, comments, accounts (?), instead of just destroying the database entry ( just add an attribute )
+- [ ] Implement **FriendlyId**
 
 - [ ] **Bundle clean --force**
+
+- [ ] Add in-view error handling (missing attachments, etc)
+
+- Minimize server load by reducing database queries
+
 
 ## Nav Bar
 - [x] **TESTS**
@@ -53,20 +54,26 @@
 
 ## Home Pages
 - [x] **TESTS**
-- [ ] **Landing page**
+	- [x] Controller
+	- [ ] Integration
+
+- [x] **Landing page**
 	- [x] Redirect
-	- [ ] Content
+	- [x] Content
 - [ ] **Dashboard**
+	- [x] Content
 	- [ ] Graphic
 	- [ ] ???
 - [x] **About**
 	- [x] Description
-	- [ ] Styling
 - [ ] **Road Map**
 	- [ ] Plan
 	- [ ] Graphic?
 
 ## Users
+- **has_many Forum Posts**
+- **has_many Comments**
+
 - [ ] **TESTS**
 	- [x] Model
 		- [ ] Improve email regex tests
@@ -81,6 +88,8 @@
 - [ ] Add _MFA Multi-Factor Authentication_
 - [x] Confirm on destructive actions
 
+- [ ] Add bio, avatar, etc
+
 - [x] **index**
 - [x] **show**
 - [x] **new**
@@ -92,17 +101,17 @@
 	- [ ] MFA / EMAIL CONFIRM
 
 ## Blog
+- **has_many Documents**
+- **has_many Comments**
+
 - [ ] **TESTS**
 	- [x] Model
 	- [x] Controller
 	- [ ] Integration
 - [x] Document support
-- [ ] Add timestamps to page display
 - [x] Confirm on destructive actions
 
-- [ ] Share upload partial with documents
-
-- [ ] Fix the post control link sizing
+- [ ] Fix the post control link sizing (???)
 
 - [ ] **motd**
 - [x] **index**
@@ -118,6 +127,8 @@
 	- [ ] MFA / EMAIL CONFIRM
 
 ## Archive
+- **has_many Documents**
+
 - [ ] **TESTS**
 	- [x] Model
 	- [x] Controller
@@ -125,8 +136,6 @@
 - [x] Document support
 - [ ] Filter non-admins to proposals on _**database**_ actions
 - [x] Confirm on destructive actions
-
-- [ ] Share upload partial with documents
 
 - [x] **index**
 - [x] **show**
@@ -143,6 +152,8 @@
 - [ ] **destroy_proposal**
 
 ## Document
+- **belongs_to Article (Archiving or Blog Post)**
+
 - [ ] **TESTS**
 	- [x] Model
 		- [ ] Test for attachment presence (Unsupported, see below)
@@ -155,6 +166,8 @@
 - [ ] Confirm on destructive actions
 
 - Attachments are needed for fixtures, currently unsupported
+
+- [ ] Add create capabilities on Article create
 
 - [ ] _Find a better solution for server-side raw, hierarchic storage (S3 soon won't support, ActiveStorage will never support)_
 
@@ -173,6 +186,9 @@
 - [ ] **destroy_proposal**
 
 ## Forum
+- **belongs_to User (deletable)**
+- **has_many Comments**
+
 - [ ] **TESTS**
 	- [x] Model
 	- [x] Controller
@@ -189,13 +205,15 @@
 	- [ ] VERY EXPLICIT CONFIRM
 
 ## Comments
+- **belongs_to User (optional)**
+
 - [ ] **TESTS**
 	- [x] Model
 	- [x] Controller
 	- [ ] Integration
 - [x] Confirm on destructive actions
 
-- [ ] Fix formatting
+- [ ] Add layouts for comment renders in user show
 
 - [x] **create**
 - [x] **update**

@@ -3,7 +3,7 @@
 	<nav class="post_control">
 		<%= link_to "Edit Post", edit_forum_post_path( @forum_post ) %>
 
-		<%= link_to "Delete Post", forum_post_path( @forum_post ), method: :delete, data: { confirm: 'Really delete this post?'} %>
+		<%= link_to "Delete Post", @forum_post, method: :delete, data: { confirm: 'Really delete this post?'} %>
 	</nav>
 
 <% end %>
@@ -12,11 +12,15 @@
 
 <p><%= simple_format @forum_post.content %></p>
 
-<% if @forum_post.edited? %>
+<h4 class="subtle">
+	Posted by <%= safe_user_link_to @forum_post.user %> on <%= @forum_post.created_at.to_date %>.
+	
+	<% if @forum_post.edited? %>
 
-	<h4 class="subtle">This post has been edited.</h4>
+		Last edited on <%= @forum_post.updated_at.to_date %>.
 
-<% end %>
+	<% end %>
+</h4>
 
 <%= render 'comments/form', comment: @new_comment, form_url: forum_post_comments_path(@forum_post) %>
 

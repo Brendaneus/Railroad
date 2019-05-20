@@ -11,12 +11,9 @@ Rails.application.routes.draw do
 	post '/login',		to: 'sessions#create'
 	delete '/logout',	to: 'sessions#destroy'
 
-	# Sign up
-	get '/signup',		to: 'users#new'
-	post '/signup',		to: 'users#create'
-
 	# Users
-	resources :users, except: [:new, :create]
+	get '/signup',		to: 'users#new'
+	resources :users, except: :new
 
 	# Archive
 	resources :archivings, only: [:index, :create], path: 'archive'
