@@ -6,6 +6,14 @@
 
 <% end %>
 
-<%= render partial: 'forum_post', collection: @sticky_posts %>
+<% if @sticky_posts.any? || @forum_posts.any? %>
 
-<%= (render @forum_posts) || (tag.h2 "There isn't anything here...") %>
+	<%= render partial: 'forum_post', collection: @sticky_posts %>
+
+	<%= render @forum_posts %>
+
+<% else %>
+
+	<%= tag.h2 "There isn't anything here..." %>
+
+<% end %>
