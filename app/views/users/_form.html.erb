@@ -20,10 +20,12 @@
 		<%= f.password_field :password_confirmation %>
 	</div>
 
-	<div class="check_box">
-		<%= f.label :remember, "Remember on login?" %>
-		<%= f.check_box :remember %>
-	</div>
+	<% unless @user.persisted? %>
+		<div class="check_box">
+			<%= f.label :remember, "Remember on login?" %>
+			<%= f.check_box :remember %>
+		</div>
+	<% end %>
 
 	<%= f.submit submit_text, class: 'submit' %>
 

@@ -50,6 +50,26 @@ module DocumentsHelper
 		end
 	end
 
+	def trash_article_document_path(article, document)
+		if article.class == BlogPost
+			trash_blog_post_document_path(article, document)
+		elsif article.class == Archiving
+			trash_archiving_document_path(article, document)
+		else
+			raise "Error constructing Trash Document Path: Article type unknown"
+		end
+	end
+
+	def untrash_article_document_path(article, document)
+		if article.class == BlogPost
+			untrash_blog_post_document_path(article, document)
+		elsif article.class == Archiving
+			untrash_archiving_document_path(article, document)
+		else
+			raise "Error constructing Untrash Document Path: Article type unknown"
+		end
+	end
+
 	def articles_url(article)
 		if article.class == BlogPost
 			blog_posts_url

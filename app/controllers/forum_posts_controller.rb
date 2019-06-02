@@ -1,16 +1,35 @@
 class ForumPostsController < ApplicationController
 
 	before_action :require_login, except: [:index, :show]
-	before_action :require_authorize, only: [:edit, :update, :destroy]
+	before_action :require_authorize, only: [:edit, :update, :trash, :untrash]
+	before_action :require_admin, only: [:trashed, :destroy]
+	before_action :require_untrashed_user, except: [:index, :trashed, :show]
+	before_action :require_authorize_or_admin_for_trashed, only: :show
 
 	def index
-		@forum_posts = ForumPost.includes(:user, :comments).non_stickies.order(created_at: :desc)
-		@sticky_posts = ForumPost.includes(:user, :comments).stickies.order(created_at: :desc)
+		@forum_posts = ForumPost.non_trashed.includes(:user, :comments).non_stickies.order(created_at: :desc)
+		@sticky_posts = ForumPost.non_trashed.includes(:user, :comments).stickies.order(created_at: :desc)
+	end
+
+	def trashed
+		raise "I'M BROKEN FUCK"
+		if admin_user?
+			@forum_posts = ForumPost.trashed.includes(:user, :comments).order(updated_at: :desc)
+		else
+			@forum_posts = current_user.forum_posts.trashed.includes(:user, :comments).order(updated_at: :desc)
+		end
+		redirect_to root_url
 	end
 
 	def show
 		@forum_post = ForumPost.find( params[:id] )
-		@comments = @forum_post.comments.includes(:user).order(created_at: :desc)
+		if admin_user?
+			@comments = @forum_post.comments.includes(:user).order(created_at: :desc)
+		elsif logged_in?
+			@comments = @forum_post.comments.non_trashed_or_owned_by(current_user).includes(:user).order(created_at: :desc)
+		else
+			@comments = @forum_post.comments.non_trashed.includes(:user).order(created_at: :desc)
+		end
 		@new_comment = @forum_post.comments.build(user: current_user)
 	end
 
@@ -50,6 +69,32 @@ class ForumPostsController < ApplicationController
 		end
 	end
 
+	def trashed
+		@forum_posts = ForumPost.trashed.includes(:user, :comments)
+	end
+
+	def trash
+		@forum_post = ForumPost.find( params[:id] )
+		if @forum_post.update_columns(trashed: true)
+			flash[:success] = "The forum post has been successfully trashed."
+			redirect_to @forum_post
+		else
+			flash[:failure] = "There was a problem trashing the forum post."
+			redirect_back fallback_url: @forum_post
+		end
+	end
+
+	def untrash
+		@forum_post = ForumPost.find( params[:id] )
+		if @forum_post.update_columns(trashed: false)
+			flash[:success] = "The forum post has been successfully restored."
+			redirect_to @forum_post
+		else
+			flash[:failure] = "There was a problem restoring the forum post."
+			redirect_back fallback_url: @forum_post
+		end
+	end
+
 	def destroy
 		@forum_post = ForumPost.find( params[:id] )
 		if @forum_post.destroy
@@ -74,6 +119,13 @@ class ForumPostsController < ApplicationController
 			unless authorized_for? ForumPost.find( params[:id] ).user
 				flash[:warning] = "You aren't allowed to do that"
 				redirect_to forum_posts_path
+			end
+		end
+
+		def require_authorize_or_admin_for_trashed
+			unless ( authorized_for? ( forum_post = ForumPost.find(params[:id]) ).user ) || !forum_post.trashed? || admin_user?
+				flash[:warning] = "This forum post has been trashed and cannot be viewed."
+				redirect_back fallback_location: forum_posts_path
 			end
 		end
 

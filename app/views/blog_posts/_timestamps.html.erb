@@ -1,0 +1,15 @@
+<h4 class="subtle">
+	Posted on <%= blog_post.created_at.to_date %>.
+	
+	<% if blog_post.edited? %>
+
+		Last edited on <%= blog_post.updated_at.to_date %>.
+
+	<% end %>
+
+	<% if blog_post.trashed? %>
+
+		Currently trashed.
+
+	<% end %>
+</h4>

@@ -1,3 +1,7 @@
+<%= render 'heading', title_prefix: 'Editing ' %>
+
 <%= render 'shared/error_messages', object: @blog_post %>
+
+<%= render 'shared/timestamps', object: @blog_post %>
 
 <%= render 'form', submit_text: "Update Blog Post" %>

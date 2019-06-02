@@ -42,8 +42,16 @@ module SessionsHelper
 		!user.nil?
 	end
 
+	def trashed_user? ( user = current_user )
+		user && user.trashed?
+	end
+
+	def untrashed_user? ( user = current_user )
+		user && !user.trashed?
+	end
+
 	def authorized_for? ( target_user, user = current_user )
-		user && ( user == target_user || user.admin? )
+		user && ( user == target_user || ( user.admin? && !user.trashed? ) )
 	end
 
 	def admin_user? ( user = current_user )

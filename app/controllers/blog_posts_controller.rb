@@ -1,15 +1,29 @@
 class BlogPostsController < ApplicationController
 	
 	before_action :require_admin, except: [:index, :show]
+	before_action :require_untrashed_user, except: [:index, :trashed, :show]
+	before_action :require_admin_for_trashed, only: :show
 
 	def index
-		@blog_posts = BlogPost.all.includes(:documents, :comments).order( created_at: :desc )
+		@blog_posts = BlogPost.non_trashed.includes(:documents, :comments).order( created_at: :desc )
+	end
+
+	def trashed
+		@blog_posts = BlogPost.trashed.includes(:documents, :comments)
 	end
 
 	def show
 		@blog_post = BlogPost.find( params[:id] )
-		@documents = @blog_post.documents
-		@comments = @blog_post.comments.includes(:user).order(created_at: :desc)
+		if admin_user?
+			@documents = @blog_post.documents
+			@comments = @blog_post.comments.includes(:user).order(created_at: :desc)
+		elsif logged_in?
+			@documents = @blog_post.documents.non_trashed
+			@comments = @blog_post.comments.non_trashed_or_owned_by(current_user).includes(:user).order(created_at: :desc)
+		else
+			@documents = @blog_post.documents.non_trashed
+			@comments = @blog_post.comments.non_trashed.includes(:user).order(created_at: :desc)
+		end
 		@new_comment = @blog_post.comments.build
 	end
 
@@ -43,6 +57,28 @@ class BlogPostsController < ApplicationController
 		end
 	end
 
+	def trash
+		@blog_post = BlogPost.find( params[:id] )
+		if @blog_post.update_columns(trashed: true)
+			flash[:success] = "The blog post has been successfully trashed."
+			redirect_to @blog_post
+		else
+			flash[:failure] = "There was a problem trashing the blog post."
+			redirect_back fallback_location: @blog_post
+		end
+	end
+
+	def untrash
+		@blog_post = BlogPost.find( params[:id] )
+		if @blog_post.update_columns(trashed: false)
+			flash[:success] = "The blog post has been successfully restored."
+			redirect_to @blog_post
+		else
+			flash[:failure] = "There was a problem restoring the blog post."
+			redirect_back fallback_location: @blog_post
+		end
+	end
+
 	def destroy
 		@blog_post = BlogPost.find( params[:id] )
 		if @blog_post.destroy
@@ -58,6 +94,13 @@ class BlogPostsController < ApplicationController
 
 		def blog_post_params
 			params.require(:blog_post).permit( :title, :subtitle, :content, :motd )
+		end
+
+		def require_admin_for_trashed
+			unless admin_user? || !BlogPost.find( params[:id] ).trashed?
+				flash[:warning] = "This blog post has been trashed and cannot be viewed."
+				redirect_back fallback_location: blog_posts_path
+			end
 		end
 
 end

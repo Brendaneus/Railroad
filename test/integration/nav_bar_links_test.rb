@@ -1,8 +1,9 @@
 require 'test_helper'
 
 class NavBarLinksTest < ActionDispatch::IntegrationTest
+
 	def setup
-		@user = users(:one)
+		load_users
 		set_landing
 	end
 
@@ -19,15 +20,18 @@ class NavBarLinksTest < ActionDispatch::IntegrationTest
 	end
 
 	test "layout links with login" do
-		login_as @user
-		get root_url
-		assert_select "a[href=?]", root_path
-		assert_select "a[href=?]", blog_posts_path
-		assert_select "a[href=?]", archivings_path
-		assert_select "a[href=?]", forum_posts_path
-		assert_select "a[href=?]", users_path
-		assert_select "a[href=?]", about_path
-		assert_select "a[href=?]", user_path(@user)
-		assert_select "a[href=?]", logout_path
+		loop_users do |user|
+			login_as user
+			get root_url
+			assert_select "a[href=?]", root_path
+			assert_select "a[href=?]", blog_posts_path
+			assert_select "a[href=?]", archivings_path
+			assert_select "a[href=?]", forum_posts_path
+			assert_select "a[href=?]", users_path
+			assert_select "a[href=?]", about_path
+			assert_select "a[href=?]", user_path(user)
+			assert_select "a[href=?]", logout_path
+		end
 	end
+
 end

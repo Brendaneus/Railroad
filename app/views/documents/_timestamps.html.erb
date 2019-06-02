@@ -1,0 +1,15 @@
+<h4 class="subtle">
+	Created on <%= document.created_at.to_date %>.
+	
+	<% if document.edited? %>
+
+		Last edited: <%= document.updated_at.to_date %>.
+
+	<% end %>
+
+	<% if document.trashed? %>
+
+		Currently trashed.
+
+	<% end %>
+</h4>

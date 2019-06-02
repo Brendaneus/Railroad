@@ -3,218 +3,517 @@ require 'test_helper'
 class DocumentsControllerTest < ActionDispatch::IntegrationTest
 
 	def setup
-		@user = users(:one)
-		@admin = users(:admin)
-		@archiving_one = archivings(:one)
-		@blogpost_one = blog_posts(:one)
-		@archiving_one_image = documents(:archiving_one_image)
-		@blogpost_one_image = documents(:blogpost_one_image)
+		load_users
 	end
 
 	test "should get show" do
-		get archiving_document_url(@archiving_one, @archiving_one_image)
-		assert_response :success
-		get blog_post_document_url(@blogpost_one, @blogpost_one_image)
-		assert_response :success
-	end
-
-	test "should get new only for admins" do
 		# Guest
-		get new_archiving_document_url(@archiving_one)
-		assert flash[:warning]
-		assert_response :redirect
+		loop_documents(reload: true) do |document|
+			get article_document_url(document.article, document)
+			
+			if document.trashed?
+				assert_redirected_to article_url(document.article)
+			else
+				assert_response :success
 
-		get new_blog_post_document_url(@blogpost_one)
-		assert flash[:warning]
-		assert_response :redirect
+				assert_select 'div.admin.control', 0
+				assert_select 'a[href=?]', edit_article_document_path(document.article, document), 0
+				assert_select 'a[href=?]', trash_article_document_path(document.article, document), 0
+				assert_select 'a[href=?]', untrash_article_document_path(document.article, document), 0
+				assert_select 'a[href=?][data-method=delete]', article_document_path(document.article, document), 0
+			end
+		end
 
 		# User
-		login_as @user
-		get new_archiving_document_url(@archiving_one)
-		assert flash[:warning]
-		assert_response :redirect
+		loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |user|
+			login_as user
 
-		get new_blog_post_document_url(@blogpost_one)
-		assert flash[:warning]
-		assert_response :redirect
-		logout
+			loop_documents(reload: true) do |document|
+				get article_document_url(document.article, document)
+				unless !document.trashed? || user.admin?
+					assert flash[:warning]
+					assert_redirected_to article_url(document.article)
+				else
+					assert_response :success
 
-		# Admin
-		login_as @admin, password: 'admin'
-		get new_archiving_document_url(@archiving_one)
-		assert_response :success
-
-		get new_blog_post_document_url(@blogpost_one)
-		assert_response :success
+					if user.admin
+						assert_select 'div.admin.control' do
+							assert_select 'a[href=?]', edit_article_document_path(document.article, document), !user.trashed?
+							assert_select 'a[href=?]', trash_article_document_path(document.article, document), !document.trashed?
+							assert_select 'a[href=?]', untrash_article_document_path(document.article, document), document.trashed?
+							assert_select 'a[href=?][data-method=delete]', article_document_path(document.article, document), document.trashed? && !user.trashed?
+						end
+					else
+						assert_select 'div.admin.control', 0
+						assert_select 'a[href=?]', edit_article_document_path(document.article, document), 0
+						assert_select 'a[href=?]', trash_article_document_path(document.article, document), 0
+						assert_select 'a[href=?]', untrash_article_document_path(document.article, document), 0
+						assert_select 'a[href=?][data-method=delete]', article_document_path(document.article, document), 0
+					end
+				end
+			end
+		end
 	end
 
-	test "should post create only for admins" do
+	test "should get new only for [untrashed] admins" do
 		# Guest
-		assert_no_difference 'Document.count' do
-			post archiving_documents_url(@archiving_one), params: { document: { title: "Test Document", content: "Sample Text" } }
+		loop_archivings(reload: true) do |archiving|
+			get new_archiving_document_url(archiving)
+			assert flash[:warning]
+			assert_response :redirect
 		end
-		assert flash[:warning]
 
-		assert_no_difference 'Document.count' do
-			post blog_post_documents_url(@blogpost_one), params: { document: { title: "Test Document", content: "Sample Text" } }
+		loop_blog_posts(reload: true) do |blog_post|
+			get new_blog_post_document_url(blog_post)
+			assert flash[:warning]
+			assert_response :redirect
 		end
-		assert flash[:warning]
 
-		# User
-		login_as @user
-		assert_no_difference 'Document.count' do
-			post archiving_documents_url(@archiving_one), params: { document: { title: "Test Document", content: "Sample Text" } }
-		end
-		assert flash[:warning]
+		# Non-Admin
+		loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |user|
+			login_as user
 
-		assert_no_difference 'Document.count' do
-			post blog_post_documents_url(@blogpost_one), params: { document: { title: "Test Document", content: "Sample Text" } }
-		end
-		assert flash[:warning]
-		logout
+			loop_archivings do |archiving|
+				get new_archiving_document_url(archiving)
+				assert flash[:warning]
+				assert_response :redirect
+			end
 
-		# Admin
-		login_as @admin, password: 'admin'
-		assert_difference 'Document.count', 1 do
-			post archiving_documents_url(@archiving_one), params: { document: { title: "Test Document", content: "Sample Text" } }
-		end
-		assert flash[:success]
+			loop_blog_posts do |blog_post|
+				get new_blog_post_document_url(blog_post)
+				assert flash[:warning]
+				assert_response :redirect
+			end
 
-		assert_difference 'Document.count', 1 do
-			post blog_post_documents_url(@blogpost_one), params: { document: { title: "Test Document", content: "Sample Text" } }
+			logout
 		end
-		assert flash[:success]
+
+		# Admin, Trashed
+		loop_users( user_modifiers: {'trashed' => true, 'admin' => true} ) do |user|
+			login_as user
+
+			loop_archivings do |archiving|
+				get new_archiving_document_url(archiving)
+				assert flash[:warning]
+				assert_response :redirect
+			end
+
+			loop_blog_posts do |blog_post|
+				get new_blog_post_document_url(blog_post)
+				assert flash[:warning]
+				assert_response :redirect
+			end
+
+			logout
+		end
+
+		# Admin, UnTrashed
+		loop_users( user_modifiers: {'trashed' => false, 'admin' => true} ) do |user|
+			login_as user
+
+			loop_archivings do |archiving|
+				get new_archiving_document_url(archiving)
+				assert_response :success
+			end
+
+			loop_blog_posts do |blog_post|
+				get new_blog_post_document_url(blog_post)
+				assert_response :success
+			end
+
+			logout
+		end
 	end
 
-	test "should get edit only for admins" do
+	test "should post create only for [untrashed] admins" do
 		# Guest
-		get edit_archiving_document_url(@archiving_one, @archiving_one_image)
-		assert flash[:warning]
-		assert_response :redirect
+		loop_archivings(reload: true) do |archiving|
+			assert_no_difference 'Document.count' do
+				post archiving_documents_url(archiving), params: { document: { title: "Guest's New Archiving Document", content: "Sample Text" } }
+			end
+			assert flash[:warning]
+		end
 
-		get edit_blog_post_document_url(@blogpost_one, @blogpost_one_image)
-		assert flash[:warning]
-		assert_response :redirect
+		loop_blog_posts(reload: true) do |blog_post|
+			assert_no_difference 'Document.count' do
+				post blog_post_documents_url(blog_post), params: { document: { title: "Guest's New Blog Post Document", content: "Sample Text" } }
+			end
+			assert flash[:warning]
+		end
 
-		# User
-		login_as @user
-		get edit_archiving_document_url(@archiving_one, @archiving_one_image)
-		assert flash[:warning]
-		assert_response :redirect
+		# Non-Admin
+		loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |user|
+			login_as user
 
-		get edit_blog_post_document_url(@blogpost_one, @blogpost_one_image)
-		assert flash[:warning]
-		assert_response :redirect
-		logout
+			loop_archivings do |archiving|
+				assert_no_difference 'Document.count' do
+					post archiving_documents_url(archiving), params: { document: { title: user.name.possessive + " New Archiving Document", content: "Sample Text" } }
+				end
+				assert flash[:warning]
+				assert_response :redirect
+			end
 
-		# Admin
-		login_as @admin, password: 'admin'
-		get edit_archiving_document_url(@archiving_one, @archiving_one_image)
-		assert_response :success
+			loop_blog_posts do |blog_post|
+				assert_no_difference 'Document.count' do
+					post blog_post_documents_url(blog_post), params: { document: { title: user.name.possessive + " New Blog Post Document", content: "Sample Text" } }
+				end
+				assert flash[:warning]
+				assert_response :redirect
+			end
 
-		get edit_blog_post_document_url(@blogpost_one, @blogpost_one_image)
-		assert_response :success
+			logout
+		end
+
+		# Admin, Trashed
+		loop_users( user_modifiers: {'trashed' => true, 'admin' => true} ) do |user|
+			login_as user
+
+			loop_archivings do |archiving|
+				assert_no_difference 'Document.count' do
+					post archiving_documents_url(archiving), params: { document: { title: user.name.possessive + " New Archiving Document", content: "Sample Text" } }
+				end
+				assert flash[:warning]
+				assert_response :redirect
+			end
+
+			loop_blog_posts do |blog_post|
+				assert_no_difference 'Document.count' do
+					post blog_post_documents_url(blog_post), params: { document: { title: user.name.possessive + " New Blog Post Document", content: "Sample Text" } }
+				end
+				assert flash[:warning]
+				assert_response :redirect
+			end
+
+			logout
+		end
+
+		# Admin, UnTrashed
+		loop_users( user_modifiers: {'trashed' => false, 'admin' => true} ) do |user|
+			login_as user
+
+			loop_archivings do |archiving|
+				assert_difference 'Document.count', 1 do
+					post archiving_documents_url(archiving), params: { document: { title: user.name.possessive + " New Archiving Document", content: "Sample Text" } }
+				end
+				assert flash[:success]
+			end
+
+			loop_blog_posts do |blog_post|
+				assert_difference 'Document.count', 1 do
+					post blog_post_documents_url(blog_post), params: { document: { title: user.name.possessive + " New Blog Post Document", content: "Sample Text" } }
+				end
+				assert flash[:success]
+			end
+
+			logout
+		end
 	end
 
-	# Fix the assert_changes "NoMethodError" here
-	test "should patch update if admin" do
+	test "should get edit only for [untrashed] admins" do
 		# Guest
-		assert_no_changes -> { @archiving_one_image.title } do
-			patch archiving_document_url(@archiving_one, @archiving_one_image), params: { document: { title: "An Edited Doc" } }
-			@archiving_one_image.reload
+		loop_documents(reload: true) do |document|
+			get edit_article_document_url(document.article, document)
+			assert flash[:warning]
+			assert_response :redirect
 		end
-		assert flash[:warning]
-		assert_response :redirect
 
-		assert_no_changes -> { @blogpost_one_image.title } do
-			patch blog_post_document_url(@blogpost_one, @blogpost_one_image), params: { document: { title: "An Edited Doc" } }
-			@blogpost_one_image.reload
-		end
-		assert flash[:warning]
-		assert_response :redirect
+		# Non-Admin
+		loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |user|
+			login_as user
 
-		# User
-		login_as @user
-		assert_no_changes -> { @archiving_one_image.title } do
-			patch archiving_document_url(@archiving_one, @archiving_one_image), params: { document: { title: "An Edited Doc" } }
-			@archiving_one_image.reload
-		end
-		assert flash[:warning]
-		assert_response :redirect
+			loop_documents do |document|
+				get edit_article_document_url(document.article, document)
+				assert flash[:warning]
+				assert_response :redirect
+			end
 
-		assert_no_changes -> { @blogpost_one_image.title } do
-			patch blog_post_document_url(@blogpost_one, @blogpost_one_image), params: { document: { title: "An Edited Document" } }
-			@blogpost_one_image.reload
+			logout
 		end
-		assert flash[:warning]
-		assert_response :redirect
 
-		# Admin
-		login_as @admin, password: 'admin'
-		assert_changes -> { @archiving_one_image.title } do
-			patch archiving_document_url(@archiving_one, @archiving_one_image), params: { document: { title: "An Edited Document" } }
-			@archiving_one_image.reload
-		end
-		assert flash[:success]
-		assert_response :redirect
+		# Admin, Trashed
+		loop_users( user_modifiers: {'trashed' => true, 'admin' => true} ) do |user|
+			login_as user
 
-		assert_changes -> { @blogpost_one_image.title } do
-			patch blog_post_document_url(@blogpost_one, @blogpost_one_image), params: { document: { title: "An Edited Document" } }
-			@blogpost_one_image.reload
+			loop_documents do |document|
+				get edit_article_document_url(document.article, document)
+				assert flash[:warning]
+				assert_response :redirect
+			end
+
+			logout
 		end
-		assert flash[:success]
-		assert_response :redirect
+
+		# Admin, UnTrashed
+		loop_users( user_modifiers: {'trashed' => false, 'admin' => true} ) do |user|
+			login_as user
+
+			loop_documents do |document|
+				get edit_article_document_url(document.article, document)
+				assert_response :success
+			end
+
+			logout
+		end
 	end
 
-	test "should delete if admin" do
+	test "should patch update for [untrashed] admins" do
 		# Guest
-		assert_no_difference 'Document.count' do
-			delete archiving_document_url(@archiving_one, @archiving_one_image)
+		loop_documents(reload: true) do |document|
+			assert_no_changes -> { document.title } do
+				patch article_document_url(document.article, document), params: { document: { title: "Guest's Edited Blog Post" } }
+				document.reload
+			end
+			assert flash[:warning]
+			assert_response :redirect
 		end
-		assert_nothing_raised { @archiving_one_image.reload }
-		assert flash[:warning]
-		assert_response :redirect
 
-		assert_no_difference 'Document.count' do
-			delete blog_post_document_url(@blogpost_one, @blogpost_one_image)
-		end
-		assert_nothing_raised { @archiving_one_image.reload }
-		assert flash[:warning]
-		assert_response :redirect
-		logout
+		# Non-Admin
+		loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |user|
+			login_as user
 
-		# User
-		login_as @user
-		assert_no_difference 'Document.count' do
-			delete archiving_document_url(@archiving_one, @archiving_one_image)
-		end
-		assert_nothing_raised { @archiving_one_image.reload }
-		assert flash[:warning]
-		assert_response :redirect
+			loop_documents do |document, document_key|
+				assert_no_changes -> { document.title } do
+					patch article_document_url(document.article, document), params: { document: { title: user.name.possessive + " Edited " + document_key.split('_').map(&:capitalize).join(' ') } }
+					document.reload
+				end
+				assert flash[:warning]
+				assert_response :redirect
+			end
 
-		assert_no_difference 'Document.count' do
-			delete blog_post_document_url(@blogpost_one, @blogpost_one_image)
+			logout
 		end
-		assert_nothing_raised { @archiving_one_image.reload }
-		assert flash[:warning]
-		assert_response :redirect
-		logout
-		
-		# Admin
-		login_as @admin, password: 'admin'
-		assert_difference 'Document.count', -1 do
-			delete archiving_document_url(@archiving_one, @archiving_one_image)
-		end
-		assert_raise(ActiveRecord::RecordNotFound) { @archiving_one_image.reload }
-		assert flash[:success]
-		assert_response :redirect
 
-		assert_difference 'Document.count', -1 do
-			delete archiving_document_url(@blogpost_one, @blogpost_one_image)
+		# Admin, Trashed
+		loop_users( user_modifiers: {'trashed' => true, 'admin' => true} ) do |user|
+			login_as user
+
+			loop_documents do |document, document_key|
+				assert_no_changes -> { document.title } do
+					patch article_document_url(document.article, document), params: { document: { title: user.name.possessive + " Edited " + document_key.split('_').map(&:capitalize).join(' ') } }
+					document.reload
+				end
+				assert flash[:warning]
+				assert_response :redirect
+			end
+
+			logout
 		end
-		assert_raise(ActiveRecord::RecordNotFound) { @blogpost_one_image.reload }
-		assert flash[:success]
-		assert_response :redirect
+
+		# Admin, UnTrashed
+		loop_users( user_modifiers: {'trashed' => false, 'admin' => true} ) do |user|
+			login_as user
+
+			loop_documents do |document, document_key|
+				assert_changes -> { document.title } do
+					patch article_document_url(document.article, document), params: { document: { title: user.name.possessive + " Edited " + document_key.split('_').map(&:capitalize).join(' ') } }
+					document.reload
+				end
+				assert flash[:success]
+				assert_response :redirect
+			end
+
+			logout
+		end
 	end
+
+	test "should get trash update only for [untrashed] admins" do
+		# Guest
+		loop_documents(reload: true, document_modifiers: {'trashed' => false} ) do |document|
+			assert_no_changes -> { document.trashed }, from: false do
+				assert_no_changes -> { document.updated_at } do
+					get trash_article_document_url(document.article, document)
+					document.reload
+				end
+			end
+			assert flash[:warning]
+			assert_response :redirect
+		end
+
+		# Non-Admin
+		loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |user|
+			login_as user
+
+			loop_documents( document_modifiers: {'trashed' => false} ) do |document|
+				assert_no_changes -> { document.trashed }, from: false do
+					assert_no_changes -> { document.updated_at } do
+						get trash_article_document_url(document.article, document)
+						document.reload
+					end
+				end
+				assert flash[:warning]
+				assert_response :redirect
+			end
+
+			logout
+		end
+
+		# Admin, Trashed
+		loop_users( user_modifiers: {'trashed' => true, 'admin' => true} ) do |user|
+			login_as user
+
+			loop_documents( document_modifiers: {'trashed' => false} ) do |document|
+				assert_no_changes -> { document.trashed }, from: false do
+					assert_no_changes -> { document.updated_at } do
+						get trash_article_document_url(document.article, document)
+						document.reload
+					end
+				end
+				assert flash[:warning]
+				assert_response :redirect
+			end
+
+			logout
+		end
+
+		# Admin, UnTrashed
+		loop_users( user_modifiers: {'trashed' => false, 'admin' => true} ) do |user|
+			login_as user
+
+			loop_documents( document_modifiers: {'trashed' => false} ) do |document|
+				assert_changes -> { document.trashed }, from: false, to: true do
+					assert_no_changes -> { document.updated_at } do
+						get trash_article_document_url(document.article, document)
+						document.reload
+					end
+				end
+				assert flash[:success]
+				assert_response :redirect
+
+				document.update_columns(trashed: false)
+			end
+
+			logout
+		end
+	end
+
+	test "should get untrash update only for [untrashed] admins" do
+		# Guest
+		loop_documents( reload: true, document_modifiers: {'trashed' => true} ) do |document|
+			assert_no_changes -> { document.trashed }, from: true do
+				assert_no_changes -> { document.updated_at } do
+					get untrash_article_document_url(document.article, document)
+					document.reload
+				end
+			end
+			assert flash[:warning]
+			assert_response :redirect
+		end
+
+		# Non-Admin
+		loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |user|
+			login_as user
+
+			loop_documents( document_modifiers: {'trashed' => true} ) do |document|
+				assert_no_changes -> { document.trashed }, from: true do
+					assert_no_changes -> { document.updated_at } do
+						get untrash_article_document_url(document.article, document)
+						document.reload
+					end
+				end
+				assert flash[:warning]
+				assert_response :redirect
+			end
+
+			logout
+		end
+
+		# Admin, Trashed
+		loop_users( user_modifiers: {'trashed' => true, 'admin' => true} ) do |user|
+			login_as user
+
+			loop_documents( document_modifiers: {'trashed' => true} ) do |document|
+				assert_no_changes -> { document.trashed }, from: true do
+					assert_no_changes -> { document.updated_at } do
+						get untrash_article_document_url(document.article, document)
+						document.reload
+					end
+				end
+				assert flash[:warning]
+				assert_response :redirect
+			end
+
+			logout
+		end
+
+		# Admin, UnTrashed
+		loop_users( user_modifiers: {'trashed' => false, 'admin' => true} ) do |user|
+			login_as user
+
+			loop_documents( document_modifiers: {'trashed' => true} ) do |document|
+				assert_changes -> { document.trashed }, from: true, to: false do
+					assert_no_changes -> { document.updated_at } do
+						get untrash_article_document_url(document.article, document)
+						document.reload
+					end
+				end
+				assert flash[:success]
+				assert_response :redirect
+
+				document.update_columns(trashed: true)
+			end
+
+			logout
+		end
+	end
+
+	# test "should delete destroy only for [untrashed] admin" do
+	# 	# Guest
+	# 	loop_documents(reload: true) do |document|
+	# 		assert_no_difference 'Document.count' do
+	# 			delete article_document_url(document.article, document)
+	# 		end
+	# 		assert_nothing_raised { document.reload }
+	# 		assert flash[:warning]
+	# 		assert_response :redirect
+	# 	end
+
+	# 	# Non-Admin
+	# 	loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |user|
+	# 		login_as user
+
+	# 		loop_documents do |document|
+	# 			assert_no_difference 'Document.count' do
+	# 				delete article_document_url(document.article, document)
+	# 			end
+	# 			assert_nothing_raised { document.reload }
+	# 			assert flash[:warning]
+	# 			assert_response :redirect
+	# 		end
+
+	# 		logout
+	# 	end
+
+	# 	# Admin, Trashed
+	# 	loop_users( user_modifiers: {'trashed' => true, 'admin' => true} ) do |user|
+	# 		login_as user
+
+	# 		loop_documents do |document|
+	# 			assert_no_difference 'Document.count' do
+	# 				delete article_document_url(document.article, document)
+	# 			end
+	# 			assert_nothing_raised { document.reload }
+	# 			assert flash[:warning]
+	# 			assert_response :redirect
+	# 		end
+
+	# 		logout
+	# 	end
+
+	# 	# Admin, UnTrashed
+	# 	loop_users( user_modifiers: {'trashed' => false, 'admin' => true} ) do |user, user_key|
+	# 		login_as user
+
+	# 		loop_documents( document_numbers: [user_key.split('_').last] ) do |document|
+	# 			assert_difference 'Document.count', -1 do
+	# 				delete article_document_url(document.article, document)
+	# 			end
+	# 			assert_raise(ActiveRecord::RecordNotFound) { document.reload }
+	# 			assert flash[:success]
+	# 			assert_response :redirect
+	# 		end
+
+	# 		logout
+	# 	end
+	# end
 
 end

@@ -3,298 +3,404 @@ require 'test_helper'
 class CommentsControllerTest < ActionDispatch::IntegrationTest
 
 	def setup
-		@admin = users(:admin)
-		@user_one = users(:one)
-		@user_two = users(:two)
-		@blog_post = blog_posts(:one)
-		@forum_post = forum_posts(:one)
-		@blog_comment_guest = comments(:blogpost_one_guest)
-		@blog_comment_one = comments(:blogpost_one_one)
-		@blog_comment_two = comments(:blogpost_one_two)
-		@forum_comment_guest = comments(:forumpost_one_guest)
-		@forum_comment_one = comments(:forumpost_one_one)
-		@forum_comment_two = comments(:forumpost_one_two)
+		load_users
 	end
 
-	test "should post create" do
+	test "should post create only for guests and untrashed users" do
 		# Guest
-		assert_difference 'Comment.count', 1 do
-			post blog_post_comments_url(@blog_post), params: { comment: { content: "Test Comment" } }
+		loop_blog_posts(reload: true) do |blog_post|
+			assert_difference 'Comment.count', 1 do
+				post blog_post_comments_url(blog_post), params: { comment: { content: "Guest's New " + blog_post.title + " Comment" } }
+			end
+			assert flash[:success]
+			assert_response :redirect
 		end
-		assert flash[:success]
-		assert_redirected_to blog_post_url(@blog_post)
 
-		assert_difference 'Comment.count', 1 do
-			post forum_post_comments_url(@forum_post), params: { comment: { content: "Test Comment" } }
+		loop_forum_posts(reload: true) do |forum_post|
+			assert_difference 'Comment.count', 1 do
+				post forum_post_comments_url(forum_post), params: { comment: { content: "Guest's New " + forum_post.title + " Comment" } }
+			end
+			assert flash[:success]
+			assert_response :redirect
 		end
-		assert flash[:success]
-		assert_redirected_to forum_post_url(@forum_post)
 
-		# user
-		login_as @user_one
-		assert_difference 'Comment.count', 1 do
-			post blog_post_comments_url(@blog_post), params: { comment: { content: "Test Comment" } }
-		end
-		assert flash[:success]
-		assert_redirected_to blog_post_url(@blog_post)
+		# User, Trashed
+		loop_users( user_modifiers: {'trashed' => true, 'admin' => nil} ) do |user|
+			login_as user
 
-		assert_difference 'Comment.count', 1 do
-			post forum_post_comments_url(@forum_post), params: { comment: { content: "Test Comment" } }
-		end
-		assert flash[:success]
-		assert_redirected_to forum_post_url(@forum_post)
-		logout
-		
-		# Admin
-		login_as @admin, password: "admin"
-		assert_difference 'Comment.count', 1 do
-			post blog_post_comments_url(@blog_post), params: { comment: { content: "Test Comment" } }
-		end
-		assert flash[:success]
-		assert_redirected_to blog_post_url(@blog_post)
+			loop_blog_posts do |blog_post|
+				assert_no_difference 'Comment.count' do
+					post blog_post_comments_url(blog_post), params: { comment: { content: user.name.possessive + " New " + blog_post.title + " Comment" } }
+				end
+				assert flash[:warning]
+				assert_response :redirect
+			end
 
-		assert_difference 'Comment.count', 1 do
-			post forum_post_comments_url(@forum_post), params: { comment: { content: "Test Comment" } }
+			loop_forum_posts do |forum_post|
+				assert_no_difference 'Comment.count' do
+					post forum_post_comments_url(forum_post), params: { comment: { content: user.name.possessive + " New " + forum_post.title + " Comment" } }
+				end
+				assert flash[:warning]
+				assert_response :redirect
+			end
+
+			logout
 		end
-		assert flash[:success]
-		assert_redirected_to forum_post_url(@forum_post)
+
+		# User, UnTrashed
+		loop_users( user_modifiers: {'trashed' => false, 'admin' => nil} ) do |user|
+			login_as user
+
+			loop_blog_posts do |blog_post|
+				assert_difference 'Comment.count', 1 do
+					post blog_post_comments_url(blog_post), params: { comment: { content: user.name.possessive + " New " + blog_post.title + " Comment" } }
+				end
+				assert flash[:success]
+				assert_response :redirect
+			end
+
+			loop_forum_posts do |forum_post|
+				assert_difference 'Comment.count', 1 do
+					post forum_post_comments_url(forum_post), params: { comment: { content: user.name.possessive + " New " + forum_post.title + " Comment" } }
+				end
+				assert flash[:success]
+				assert_response :redirect
+			end
+
+			logout
+		end
 	end
 
-	test "should patch update only if authenticated or admin" do
+	test "should patch update only for [untrashed] authorized users" do
 		# Guest
-		assert_no_changes -> { @blog_comment_guest.content } do
-			patch blog_post_comment_url(@blog_post, @blog_comment_guest), params: { comment: { content: "Updated Comment" } }
-			@blog_comment_guest.reload
+		loop_comments(reload: true, guest_users: false) do |comment|
+			assert_no_changes -> { comment.content } do
+				patch post_comment_url(comment.post, comment), params: { comment: { content: "Guest's Updated " + comment.content } }
+				comment.reload
+			end
+			assert flash[:warning]
+			assert_response :redirect
 		end
-		assert flash[:warning]
-		assert_redirected_to login_url
 
-		assert_no_changes -> { @forum_comment_guest.content } do
-			patch forum_post_comment_url(@forum_post, @forum_comment_guest), params: { comment: { content: "Updated Comment" } }
-			@forum_comment_guest.reload
-		end
-		assert flash[:warning]
-		assert_redirected_to login_url
+		# User, Trashed
+		loop_users( user_modifiers: {'trashed' => true, 'admin' => nil} ) do |user, user_key|
+			login_as user
 
-		assert_no_changes -> { @blog_comment_one.content } do
-			patch blog_post_comment_url(@blog_post, @blog_comment_one), params: { comment: { content: "Updated Comment" } }
-			@blog_comment_one.reload
-		end
-		assert flash[:warning]
-		assert_redirected_to login_url
+			# Owned
+			loop_comments(guest_users: false) do |comment|
+				assert_no_changes -> { comment.content } do
+					patch post_comment_url(comment.post, comment), params: { comment: { content: user.name.possessive + " Updated " + comment.content } }
+					comment.reload
+				end
+				assert flash[:warning]
+				assert_response :redirect
+			end
 
-		assert_no_changes -> { @forum_comment_one.content } do
-			patch forum_post_comment_url(@forum_post, @forum_comment_one), params: { comment: { content: "Updated Comment" } }
-			@forum_comment_one.reload
+			logout
 		end
-		assert flash[:warning]
-		assert_redirected_to login_url
 
-		# user 2 (not authenticated)
-		login_as @user_two
-		assert_no_changes -> { @blog_comment_guest.content } do
-			patch blog_post_comment_url(@blog_post, @blog_comment_guest), params: { comment: { content: "Updated Comment" } }
-			@blog_comment_guest.reload
-		end
-		assert flash[:warning]
-		assert_redirected_to login_url
+		# Non-Admin, UnTrashed
+		loop_users( user_modifiers: {'trashed' => false, 'admin' => false} ) do |user, user_key|
+			login_as user
 
-		assert_no_changes -> { @forum_comment_guest.content } do
-			patch forum_post_comment_url(@forum_post, @forum_comment_guest), params: { comment: { content: "Updated Comment" } }
-			@forum_comment_guest.reload
-		end
-		assert flash[:warning]
-		assert_redirected_to login_url
+			# Owned
+			loop_comments( only: {user: user_key}, guest_users: false ) do |comment|
+				assert_changes -> { comment.content } do
+					patch post_comment_url(comment.post, comment), params: { comment: { content: user.name.possessive + " Updated " + comment.content } }
+					comment.reload
+				end
+				assert flash[:success]
+				assert_response :redirect
+			end
 
-		assert_no_changes -> { @blog_comment_one.content } do
-			patch blog_post_comment_url(@blog_post, @blog_comment_one), params: { comment: { content: "Updated Comment" } }
-			@blog_comment_one.reload
-		end
-		assert flash[:warning]
-		assert_redirected_to login_url
+			# Unowned
+			loop_comments( except: {user: user_key}, guest_users: false ) do |comment|
+				assert_no_changes -> { comment.content } do
+					patch post_comment_url(comment.post, comment), params: { comment: { content: user.name.possessive + " Updated " + comment.content } }
+					comment.reload
+				end
+				assert flash[:warning]
+				assert_response :redirect
+			end
 
-		assert_no_changes -> { @forum_comment_one.content } do
-			patch forum_post_comment_url(@forum_post, @forum_comment_one), params: { comment: { content: "Updated Comment" } }
-			@forum_comment_one.reload
+			logout
 		end
-		assert flash[:warning]
-		assert_redirected_to login_url
-		logout
 
-		# User 1
-		login_as @user_one
-		assert_no_changes -> { @blog_comment_guest.content } do
-			patch blog_post_comment_url(@blog_post, @blog_comment_guest), params: { comment: { content: "Updated Comment" } }
-			@blog_comment_guest.reload
-		end
-		assert flash[:warning]
-		assert_redirected_to login_url
+		# Admin, UnTrashed
+		loop_users( user_modifiers: {'trashed' => false, 'admin' => true} ) do |user, user_key|
+			login_as user
 
-		assert_no_changes -> { @forum_comment_guest.content } do
-			patch forum_post_comment_url(@forum_post, @forum_comment_guest), params: { comment: { content: "Updated Comment" } }
-			@forum_comment_guest.reload
-		end
-		assert flash[:warning]
-		assert_redirected_to login_url
+			loop_comments(guest_users: false) do |comment|
+				assert_changes -> { comment.content } do
+					patch post_comment_url(comment.post, comment), params: { comment: { content: user.name.possessive + " Updated " + comment.content } }
+					comment.reload
+				end
+				assert flash[:success]
+				assert_response :redirect
+			end
 
-		assert_changes -> { @blog_comment_one.content } do
-			patch blog_post_comment_url(@blog_post, @blog_comment_one), params: { comment: { content: "Updated Comment" } }
-			@blog_comment_one.reload
+			logout
 		end
-		assert flash[:success]
-		assert_redirected_to blog_post_url(@blog_post)
-
-		assert_changes -> { @forum_comment_one.content } do
-			patch forum_post_comment_url(@forum_post, @forum_comment_one), params: { comment: { content: "Updated Comment" } }
-			@forum_comment_one.reload
-		end
-		assert flash[:success]
-		assert_redirected_to forum_post_url(@forum_post)
-		logout
-
-		# Admin
-		login_as @admin, password: 'admin'
-		assert_changes -> { @blog_comment_guest.content } do
-			patch blog_post_comment_url(@blog_post, @blog_comment_guest), params: { comment: { content: "Updated Comment" } }
-			@blog_comment_guest.reload
-		end
-		assert flash[:success]
-		assert_redirected_to blog_post_url(@blog_post)
-
-		assert_changes -> { @forum_comment_guest.content } do
-			patch forum_post_comment_url(@forum_post, @forum_comment_guest), params: { comment: { content: "Updated Comment" } }
-			@forum_comment_guest.reload
-		end
-		assert flash[:success]
-		assert_redirected_to forum_post_url(@forum_post)
-
-		assert_changes -> { @blog_comment_two.content } do
-			patch blog_post_comment_url(@blog_post, @blog_comment_two), params: { comment: { content: "Updated Comment" } }
-			@blog_comment_two.reload
-		end
-		assert flash[:success]
-		assert_redirected_to blog_post_url(@blog_post)
-
-		assert_changes -> { @forum_comment_two.content } do
-			patch forum_post_comment_url(@forum_post, @forum_comment_two), params: { comment: { content: "Updated Comment" } }
-			@forum_comment_two.reload
-		end
-		assert flash[:success]
-		assert_redirected_to forum_post_url(@forum_post)
-		logout
 	end
 
-	test "should delete destroy only if authorized" do
+	test "should get trash update only for authorized users or untrashed admins" do
 		# Guest
-		assert_no_difference 'Comment.count' do
-			delete blog_post_comment_url(@blog_post, @blog_comment_guest), params: { comment: { content: "Updated Comment" } }
+		loop_comments( reload: true, comment_modifiers: {'trashed' => false} ) do |comment|
+			assert_no_changes -> { comment.trashed }, from: false do
+				assert_no_changes -> { comment.updated_at } do
+					get trash_post_comment_url(comment.post, comment)
+					comment.reload
+				end
+			end
+			assert flash[:warning]
+			assert_response :redirect
 		end
-		assert_nothing_raised { @blog_comment_guest.reload }
-		assert flash[:warning]
-		assert_redirected_to login_url
 
-		assert_no_difference 'Comment.count' do
-			delete forum_post_comment_url(@forum_post, @forum_comment_guest), params: { comment: { content: "Updated Comment" } }
-		end
-		assert_nothing_raised { @forum_comment_guest.reload }
-		assert flash[:warning]
-		assert_redirected_to login_url
+		# User
+		loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |user, user_key|
+			login_as user
 
-		assert_no_difference 'Comment.count' do
-			delete blog_post_comment_url(@blog_post, @blog_comment_one), params: { comment: { content: "Updated Comment" } }
-		end
-		assert flash[:warning]
+			# Owned
+			loop_comments( only: {user: user_key}, comment_modifiers: {'trashed' => false} ) do |comment|
+				assert_changes -> { comment.trashed }, from: false, to: true do
+					assert_no_changes -> { comment.updated_at } do
+						get trash_post_comment_url(comment.post, comment)
+						comment.reload
+					end
+				end
+				assert flash[:success]
+				assert_response :redirect
 
-		assert_no_difference 'Comment.count' do
-			delete forum_post_comment_url(@forum_post, @forum_comment_one), params: { comment: { content: "Updated Comment" } }
-		end
-		assert flash[:warning]
+				comment.update_columns(trashed: false)
+			end
 
-		# user 2 (not authenticated)
-		login_as @user_two
-		assert_no_difference 'Comment.count' do
-			delete blog_post_comment_url(@blog_post, @blog_comment_guest), params: { comment: { content: "Updated Comment" } }
-		end
-		assert_nothing_raised { @blog_comment_guest.reload }
-		assert flash[:warning]
-		assert_redirected_to login_url
+			# Unowned
+			loop_comments( except: {user: user_key}, comment_modifiers: {'trashed' => false} ) do |comment|
+				assert_no_changes -> { comment.trashed }, from: false do
+					assert_no_changes -> { comment.updated_at } do
+						get trash_post_comment_url(comment.post, comment)
+						comment.reload
+					end
+				end
+				assert flash[:warning]
+				assert_response :redirect
+			end
 
-		assert_no_difference 'Comment.count' do
-			delete forum_post_comment_url(@forum_post, @forum_comment_guest), params: { comment: { content: "Updated Comment" } }
+			logout
 		end
-		assert_nothing_raised { @forum_comment_guest.reload }
-		assert flash[:warning]
-		assert_redirected_to login_url
 
-		assert_no_difference 'Comment.count' do
-			delete blog_post_comment_url(@blog_post, @blog_comment_one), params: { comment: { content: "Updated Comment" } }
-		end
-		assert flash[:warning]
+		# Admin, Trashed
+		loop_users( user_modifiers: {'trashed' => true, 'admin' => true} ) do |user, user_key|
+			login_as user
 
-		assert_no_difference 'Comment.count' do
-			delete forum_post_comment_url(@forum_post, @forum_comment_one), params: { comment: { content: "Updated Comment" } }
-		end
-		assert flash[:warning]
-		logout
+			# Owned
+			loop_comments( only: {user: user_key}, comment_modifiers: {'trashed' => false} ) do |comment|
+				assert_changes -> { comment.trashed }, from: false, to: true do
+					assert_no_changes -> { comment.updated_at } do
+						get trash_post_comment_url(comment.post, comment)
+						comment.reload
+					end
+				end
+				assert flash[:success]
+				assert_response :redirect
 
-		# User 1
-		login_as @user_one
-		assert_no_difference 'Comment.count' do
-			delete blog_post_comment_url(@blog_post, @blog_comment_guest), params: { comment: { content: "Updated Comment" } }
-		end
-		assert_nothing_raised { @blog_comment_guest.reload }
-		assert flash[:warning]
-		assert_redirected_to login_url
+				comment.update_columns(trashed: false)
+			end
 
-		assert_no_difference 'Comment.count' do
-			delete forum_post_comment_url(@forum_post, @forum_comment_guest), params: { comment: { content: "Updated Comment" } }
-		end
-		assert_nothing_raised { @forum_comment_guest.reload }
-		assert flash[:warning]
-		assert_redirected_to login_url
+			# Unowned
+			loop_comments( except: {user: user_key}, comment_modifiers: {'trashed' => false} ) do |comment|
+				assert_no_changes -> { comment.trashed }, from: false do
+					assert_no_changes -> { comment.updated_at } do
+						get trash_post_comment_url(comment.post, comment)
+						comment.reload
+					end
+				end
+				assert flash[:warning]
+				assert_response :redirect
+			end
 
-		assert_difference 'Comment.count', -1 do
-			delete blog_post_comment_url(@blog_post, @blog_comment_one), params: { comment: { content: "Updated Comment" } }
+			logout
 		end
-		assert flash[:success]
 
-		assert_difference 'Comment.count', -1 do
-			delete forum_post_comment_url(@forum_post, @forum_comment_one), params: { comment: { content: "Updated Comment" } }
-		end
-		assert flash[:success]
-		logout
+		# Admin, UnTrashed
+		loop_users( user_modifiers: {'trashed' => false, 'admin' => true} ) do |user, user_key|
+			login_as user
 
-		# Admin
-		login_as @admin, password: 'admin'
-		assert_difference 'Comment.count', -1 do
-			delete blog_post_comment_url(@blog_post, @blog_comment_guest), params: { comment: { content: "Updated Comment" } }
-		end
-		assert_raise(ActiveRecord::RecordNotFound) { @blog_comment_guest.reload }
-		assert flash[:success]
-		assert_redirected_to blog_post_url(@blog_post)
+			loop_comments( comment_modifiers: {'trashed' => false} ) do |comment|
+				assert_changes -> { comment.trashed }, from: false, to: true do
+					assert_no_changes -> { comment.updated_at } do
+						get trash_post_comment_url(comment.post, comment)
+						comment.reload
+					end
+				end
+				assert flash[:success]
+				assert_response :redirect
 
-		assert_difference 'Comment.count', -1 do
-			delete forum_post_comment_url(@forum_post, @forum_comment_guest), params: { comment: { content: "Updated Comment" } }
-		end
-		assert_raise(ActiveRecord::RecordNotFound) { @forum_comment_guest.reload }
-		assert flash[:success]
-		assert_redirected_to forum_post_url(@forum_post)
+				comment.update_columns(trashed: false)
+			end
 
-		login_as @admin, password: 'admin'
-		assert_difference 'Comment.count', -1 do
-			delete blog_post_comment_url(@blog_post, @blog_comment_two), params: { comment: { content: "Updated Comment" } }
+			logout
 		end
-		assert_raise(ActiveRecord::RecordNotFound) { @blog_comment_two.reload }
-		assert flash[:success]
-		assert_redirected_to blog_post_url(@blog_post)
+	end
 
-		assert_difference 'Comment.count', -1 do
-			delete forum_post_comment_url(@forum_post, @forum_comment_two), params: { comment: { content: "Updated Comment" } }
+	test "should get untrash update only for authorized users or untrashed admins" do
+		# Guest
+		loop_comments( reload: true, comment_modifiers: {'trashed' => true} ) do |comment|
+			assert_no_changes -> { comment.trashed }, from: true do
+				assert_no_changes -> { comment.updated_at } do
+					get untrash_post_comment_url(comment.post, comment)
+					comment.reload
+				end
+			end
+			assert flash[:warning]
+			assert_response :redirect
 		end
-		assert flash[:success]
-		assert_raise(ActiveRecord::RecordNotFound) { @forum_comment_two.reload }
-		assert_redirected_to forum_post_url(@forum_post)
-		logout
+
+		# User
+		loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |user, user_key|
+			login_as user
+
+			# Owned
+			loop_comments( only: {user: user_key}, comment_modifiers: {'trashed' => true} ) do |comment|
+				assert_changes -> { comment.trashed }, from: true, to: false do
+					assert_no_changes -> { comment.updated_at } do
+						get untrash_post_comment_url(comment.post, comment)
+						comment.reload
+					end
+				end
+				assert flash[:success]
+				assert_response :redirect
+
+				comment.update_columns(trashed: true)
+			end
+
+			# Unowned
+			loop_comments( except: {user: user_key}, comment_modifiers: {'trashed' => true} ) do |comment|
+				assert_no_changes -> { comment.trashed }, from: true do
+					assert_no_changes -> { comment.updated_at } do
+						get untrash_post_comment_url(comment.post, comment)
+						comment.reload
+					end
+				end
+				assert flash[:warning]
+				assert_response :redirect
+			end
+
+			logout
+		end
+
+		# Admin, Trashed
+		loop_users( user_modifiers: {'trashed' => true, 'admin' => true} ) do |user, user_key|
+			login_as user
+
+			# Owned
+			loop_comments( only: {user: user_key}, comment_modifiers: {'trashed' => true} ) do |comment|
+				assert_changes -> { comment.trashed }, from: true, to: false do
+					assert_no_changes -> { comment.updated_at } do
+						get untrash_post_comment_url(comment.post, comment)
+						comment.reload
+					end
+				end
+				assert flash[:success]
+				assert_response :redirect
+
+				comment.update_columns(trashed: true)
+			end
+
+			# Unowned
+			loop_comments( except: {user: user_key}, comment_modifiers: {'trashed' => true} ) do |comment|
+				assert_no_changes -> { comment.trashed }, from: true do
+					assert_no_changes -> { comment.updated_at } do
+						get untrash_post_comment_url(comment.post, comment)
+						comment.reload
+					end
+				end
+				assert flash[:warning]
+				assert_response :redirect
+			end
+
+			logout
+		end
+
+		# Admin, UnTrashed
+		loop_users( user_modifiers: {'trashed' => false, 'admin' => true} ) do |user, user_key|
+			login_as user
+
+			loop_comments( comment_modifiers: {'trashed' => true} ) do |comment|
+				assert_changes -> { comment.trashed }, from: true, to: false do
+					assert_no_changes -> { comment.updated_at } do
+						get untrash_post_comment_url(comment.post, comment)
+						comment.reload
+					end
+				end
+				assert flash[:success]
+				assert_response :redirect
+
+				comment.update_columns(trashed: true)
+			end
+
+			logout
+		end
+	end
+
+	test "should delete destroy only for [untrashed] admin" do
+		# Guest
+		loop_forum_posts(reload: true) do |forum_post|
+			assert_no_difference 'ForumPost.count' do
+				delete forum_post_url(forum_post)
+			end
+			assert_nothing_raised { forum_post.reload }
+			assert flash[:warning]
+			assert_response :redirect
+		end
+
+		# Non-Admin
+		loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |user|
+			login_as user
+
+			loop_forum_posts do |forum_post|
+				assert_no_difference 'ForumPost.count' do
+					delete forum_post_url(forum_post)
+				end
+				assert_nothing_raised { forum_post.reload }
+				assert flash[:warning]
+				assert_response :redirect
+			end
+
+			logout
+		end
+
+		# Admin, Trashed
+		loop_users( user_modifiers: {'trashed' => true, 'admin' => true} ) do |user|
+			login_as user
+
+			loop_forum_posts do |forum_post|
+				assert_no_difference 'ForumPost.count' do
+					delete forum_post_url(forum_post)
+				end
+				assert_nothing_raised { forum_post.reload }
+				assert flash[:warning]
+				assert_response :redirect
+			end
+
+			logout
+		end
+
+		# Admin, UnTrashed
+		loop_users( user_modifiers: {'trashed' => false, 'admin' => true} ) do |user, user_key|
+			login_as user
+
+			loop_forum_posts( forum_numbers: [user_key.split('_').last] ) do |forum_post|
+				assert_difference 'ForumPost.count', -1 do
+					delete forum_post_url(forum_post)
+				end
+				assert_raise(ActiveRecord::RecordNotFound) { forum_post.reload }
+				assert flash[:success]
+				assert_response :redirect
+			end
+
+			logout
+		end
 	end
 
 end

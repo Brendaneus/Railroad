@@ -3,15 +3,22 @@ module ApplicationHelper
 	include DebugHelper
 	include SessionsHelper
 
-	def container_class(post)
+	def container_class(object)
 		class_attr = ""
 
-		if post.class == ForumPost
-			class_attr += "owned " if post.owned_by? current_user
-			class_attr += "admin " if post.admin?
-			class_attr += "sticky " if post.sticky?
+		class_attr += "trashed " if object.trashed?
+
+		if (object.class == ForumPost) || (object.class == BlogPost)
+			if object.class == ForumPost
+				class_attr += "admin " if object.admin?
+				class_attr += "sticky " if object.sticky?
+			end
+			class_attr += "motd " if object.motd?
 		end
-		class_attr += "motd " if post.motd?
+
+		if (object.class == ForumPost) || (object.class == Comment)
+			class_attr += "owned " if object.owned_by? current_user
+		end
 
 		class_attr += "container"
 	end
@@ -20,7 +27,7 @@ module ApplicationHelper
 		if user.nil?
 			"Guest"
 		else
-			link_to user.name, user
+			link_to ( (user == current_user) ? "You" : user.name ), user
 		end
 	end
 

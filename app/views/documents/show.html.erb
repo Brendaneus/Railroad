@@ -1,15 +1,21 @@
-<% if admin_user? %>
+<% if admin_user? && untrashed_user? %>
 
-	<nav class="admin post_control">
+	<div class="admin control">
 		<%= link_to "Edit Document", edit_article_document_path( @article, @document ) %>
 
-		<%= link_to "Delete Document", article_document_path( @article, @document ), method: :delete, data: { confirm: 'Really delete this document?'} %>
-	</nav>
+		<%= link_to "Trash Document", trash_article_document_path( @article, @document ) unless @document.trashed? %>
+
+		<%= link_to "Restore Document", untrash_article_document_path( @article, @document ) if @document.trashed? %>
+
+		<%= link_to "Delete Document", article_document_path( @article, @document ), method: :delete, data: { confirm: 'Really delete this document?'} if @document.trashed? %>
+	</div>
 
 <% end %>
 
-<h1><%= link_to(@article.title, @article) + ": " + @document.title %></h1>
+<%= render 'heading' %>
 
 <%= render 'upload' %>
 
 <p><%= simple_format @document.content if @document.content.present? %></p>
+
+<%= render 'shared/timestamps', object: @document %>

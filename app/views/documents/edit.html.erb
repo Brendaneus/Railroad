@@ -1,3 +1,7 @@
+<%= render 'heading', title_prefix: 'Editing ' %>
+
 <%= render 'shared/error_messages', object: @document %>
+
+<%= render 'shared/timestamps', object: @document %>
 
 <%= render 'form' %>

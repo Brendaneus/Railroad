@@ -1,27 +1,50 @@
-admin:
-  user: admin
-  title: "Admin Forum Post"
-  content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-  sticky: true
-  motd: true
+<% user_numbers = ['one', 'two'] %>
+<% user_modifiers = ['trashed', 'admin'] %>
+<% forum_numbers = ['one', 'two'] %>
+<% forum_modifiers = ['trashed', 'sticky', 'motd'] %>
 
-one:
-  user: one
-  title: "Forum Post One"
-  content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-  sticky: false
-  motd: false
+<% id = 1 %>
+<% user_id = 1 %>
 
-two:
-  user: two
-  title: "Forum Post Two"
-  content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-  sticky: false
-  motd: false
+<% user_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a %>
+<% user_modifier_states_sets.map! { |user_modifier_states| user_modifiers.zip(user_modifier_states).to_h } %>
+<% user_modifier_states_sets.reverse.each do |user_modifier_states| %>
 
-three:
-  user: one
-  title: "Forum Post Three"
-  content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-  sticky: false
-  motd: false
+  <% user_numbers.each do |user_number| %>
+
+    <% user_ref = "" %>
+    <% user_modifier_states.each do |user_modifier, state| %>
+      <% user_ref += (user_modifier + "_") if state %>
+    <% end %>
+    <% user_ref += "user_" + user_number %>
+
+    <% forum_modifier_states_sets = [true, false].repeated_permutation(forum_modifiers.count).to_a %>
+    <% forum_modifier_states_sets.map! { |forum_modifier_states| forum_modifiers.zip(forum_modifier_states).to_h } %>
+    <% forum_modifier_states_sets.reverse.each do |forum_modifier_states| %>
+
+      <% forum_numbers.each do |forum_number| %>
+
+        <% forum_ref = "" %>
+        <% forum_modifier_states.each do |forum_modifier, state| %>
+          <% forum_ref += (forum_modifier + "_") if state %>
+        <% end %>
+        <% forum_ref += "forum_post_" + forum_number %>
+
+<%= user_ref + '_' + forum_ref %>:
+  id: <%= id %>
+  user_id: <%= user_id %>
+  title: <%= (user_ref + "_" + forum_ref).split("_").map(&:capitalize).join(" ") %>
+  content: "Lorem ipsum"
+  motd: <%= forum_modifier_states['motd'] %>
+  sticky: <%= forum_modifier_states['sticky'] %>
+  trashed: <%= forum_modifier_states['trashed'] %>
+
+        <% id += 1 %>
+      <% end %>
+
+    <% end %>
+
+    <% user_id += 1 %>
+  <% end %>
+
+<% end %>

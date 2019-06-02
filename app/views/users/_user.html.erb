@@ -1,3 +1,5 @@
-<div>
+<div class="<%= container_class(user) %>">
 	<h2><%= link_to user.name, user %></h2>
+
+	<%= render 'shared/timestamps', object: user, create_alias: "Joined" %>
 </div>

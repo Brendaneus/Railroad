@@ -3,7 +3,9 @@ class DocumentsController < ApplicationController
 	include DocumentsHelper
 
 	before_action :require_admin, except: [:index, :show]
+	before_action :require_untrashed_user, except: [:index, :trashed, :show]
 	before_action :set_article
+	before_action :require_admin_for_trashed, only: :show
 
 	def show
 		set_article
@@ -46,6 +48,28 @@ class DocumentsController < ApplicationController
 		end
 	end
 
+	def trash
+		@document = Document.find( params[:id] )
+		if @document.update_columns(trashed: true)
+			flash[:success] = "The document has been successfully trashed."
+			redirect_to article_document_path(@article, @document)
+		else
+			flash[:failure] = "There was a problem trashing the document."
+			redirect_back fallback_url: article_document_path(@article, @document)
+		end
+	end
+
+	def untrash
+		@document = Document.find( params[:id] )
+		if @document.update_columns(trashed: false)
+			flash[:success] = "The document has been successfully restored."
+			redirect_to article_document_path(@article, @document)
+		else
+			flash[:failure] = "There was a problem restoring the document."
+			redirect_back fallback_url: article_document_path(@article, @document)
+		end
+	end
+
 	def destroy
 		set_article
 		@document = Document.find( params[:id] )
@@ -54,7 +78,7 @@ class DocumentsController < ApplicationController
 			redirect_to article_path( @article )
 		else
 			flash[:error] = "There was a problem deleting this document."
-			redirect_to document_path( @document )
+			redirect_to article_document_path( @article, @document )
 		end
 	end
 
@@ -73,6 +97,13 @@ class DocumentsController < ApplicationController
 			rescue
 				flash[:error] = "There was a problem finding the article for this document."
 				redirect_back fallback_location: root_path
+			end
+		end
+
+		def require_admin_for_trashed
+			unless admin_user? || !Document.find( params[:id] ).trashed?
+				flash[:warning] = "This document has been trashed and cannot be viewed."
+				redirect_to article_path( @article )
 			end
 		end
 

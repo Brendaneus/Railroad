@@ -1,3 +1,7 @@
 <%= render 'shared/error_messages', object: @forum_post %>
 
+<%= render 'heading', title_prefix: "Editing " %>
+
+<%= render 'shared/timestamps', object: @forum_post %>
+
 <%= render 'form', submit_text: "Update Forum Post" %>

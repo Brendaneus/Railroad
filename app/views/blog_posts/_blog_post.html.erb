@@ -19,13 +19,5 @@
 
 	 <% end %>
 
-	<h4 class="subtle">
-		Posted  on <%= blog_post.created_at.to_date %>.
-		
-		<% if blog_post.edited? %>
-
-			Last edited: <%= blog_post.updated_at.to_date %>.
-
-		<% end %>
-	</h4>
+	<%= render 'shared/timestamps', object: blog_post %>
 </div>

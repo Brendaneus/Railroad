@@ -3,59 +3,168 @@ require 'test_helper'
 class CommentTest < ActiveSupport::TestCase
 
 	def setup
-		@user = users(:one)
-		@admin = users(:admin)
-		@blog_post = blog_posts(:one)
-		@forum_post = forum_posts(:one)
-		@blog_comment = comments(:blogpost_one_one)
-		@blog_admin_comment = comments(:blogpost_one_admin)
-		@forum_comment = comments(:forumpost_one_one)
+		load_comments( blog_modifiers: {'trashed' => false},
+			blog_numbers: ['one'],
+			poster_modifiers: {'admin' => false, 'trashed' => false},
+			poster_numbers: ['one'],
+			forum_modifiers: {'motd' => false, 'sticky' => false, 'trashed' => false},
+			forum_numbers: ['one'],
+			user_modifiers: {'admin' => false, 'trashed' => false},
+			user_numbers: ['one'] )
 	end
 
 	test "should associate with blog posts" do
-		assert @blog_comment.post
-		assert @blog_post.comments
+		loop_comments( reload: true,
+			poster_modifiers: {}, poster_numbers: [] ) do |comment, comment_key, user_key, blog_post_key|
+			assert comment.post ==
+				load_blog_posts( flat_array: true,
+					only: {blog_post: blog_post_key} ).first
+		end
 	end
 
 	test "should associate with forum posts" do
-		assert @forum_comment.post
-		assert @forum_post.comments
+		loop_comments( reload: true,
+			blog_modifiers: {}, blog_numbers: [] ) do |comment, comment_key, user_key, forum_post_key, poster_key|
+			assert comment.post ==
+				load_forum_posts( flat_array: true,
+					only: {user: poster_key, forum_post: forum_post_key} ).first
+		end
 	end
 
 	test "should associate with user" do
-		assert @blog_comment.user
-		assert @user.comments
+		loop_comments(reload: true ) do |comment, comment_key, user_key|
+			assert comment.user ==
+				load_users(flat_array: true,
+					only: {user: user_key} ).first
+		end
 	end
 
 	test "should not require user" do
-		@blog_comment.user = nil
-		assert @blog_comment.valid?
+		@comments['blog_post_one']['user_one']['comment_one'].user = nil
+		assert @comments['blog_post_one']['user_one']['comment_one'].valid?
 	end
 
 	test "should validate presence of content" do
-		@blog_comment.content = ""
-		assert_not @blog_comment.valid?
-		@blog_comment.content = "    "
-		assert_not @blog_comment.valid?
+		@comments['blog_post_one']['user_one']['comment_one'].content = ""
+		assert_not @comments['blog_post_one']['user_one']['comment_one'].valid?
+
+		@comments['blog_post_one']['user_one']['comment_one'].content = "    "
+		assert_not @comments['blog_post_one']['user_one']['comment_one'].valid?
 	end
 
 	test "should validate length of content (maximum: 512)" do
-		@blog_comment.content = "X"
-		assert @blog_comment.valid?
-		@blog_comment.content = "X" * 512
-		assert @blog_comment.valid?
-		@blog_comment.content = "X" * 513
-		assert_not @blog_comment.valid?
+		@comments['blog_post_one']['user_one']['comment_one'].content = "X"
+		assert @comments['blog_post_one']['user_one']['comment_one'].valid?
+
+		@comments['blog_post_one']['user_one']['comment_one'].content = "X" * 512
+		assert @comments['blog_post_one']['user_one']['comment_one'].valid?
+
+		@comments['blog_post_one']['user_one']['comment_one'].content = "X" * 513
+		assert_not @comments['blog_post_one']['user_one']['comment_one'].valid?
+	end
+
+	test "should default trashed as false" do
+		load_users( user_modifiers: {'trashed' => false},
+			user_numbers: ['one'] )
+		load_blog_posts( blog_modifiers: {'trashed' => false},
+			blog_numbers: ['one'] )
+		load_forum_posts( user_modifiers: {'trashed' => false},
+			user_numbers: ['one'],
+			forum_modifiers: {'trashed' => false},
+			forum_numbers: ['one'] )
+
+		new_blog_post_comment = @users['user_one'].comments.create!(post: @blog_posts['blog_post_one'], content: "Lorem Ipsum")
+		assert_not new_blog_post_comment.trashed?
+
+		new_forum_post_comment = @users['user_one'].comments.create!(post: @forum_posts['user_one']['forum_post_one'], content: "Lorem Ipsum")
+		assert_not new_forum_post_comment.trashed?
+	end
+
+	test "should scope trashed posts" do
+		assert Comment.trashed == Comment.where(trashed: true)
+	end
+
+	test "should scope non-trashed posts" do
+		assert Comment.non_trashed == Comment.where(trashed: false)
+	end
+
+	test "should scope owned or non-trashed posts" do
+		loop_users(reload: true) do |user|
+			assert Comment.non_trashed_or_owned_by(user) == Comment.where(trashed: false).or(user.comments)
+		end
 	end
 
 	test "should check if user is owner" do
-		assert @blog_comment.owned_by? @user
-		assert_not @blog_comment.owned_by? @admin
+		loop_comments(reload: true) do |comment, comment_key, user_key|
+			loop_users( reload: true, only: {user: user_key} ) do |user|
+				assert comment.owned_by? user
+			end
+			loop_users( reload: true, except: {user: user_key} ) do |user|
+				assert_not comment.owned_by? user
+			end
+		end
 	end
 
 	test "should check if owner is admin" do
-		assert @blog_admin_comment.admin?
-		assert_not @blog_comment.admin?
+		loop_comments( reload: true,
+			user_modifiers: {'trashed' => nil, 'admin' => true},
+			guest_users: false ) do |comment|
+			assert comment.admin?
+		end
+
+		loop_comments( reload: true,
+			user_modifiers: {'trashed' => nil, 'admin' => false},
+			guest_users: false ) do |comment|
+			assert_not comment.admin?
+		end
+	end
+
+	test "should check if owner trashed" do
+		loop_comments( reload: true,
+			user_modifiers: {'trashed' => true, 'admin' => nil},
+			guest_users: false ) do |comment|
+			assert comment.owner_trashed?
+		end
+
+		loop_comments( reload: true,
+			user_modifiers: {'trashed' => false, 'admin' => nil},
+			guest_users: false ) do |comment|
+			assert_not comment.owner_trashed?
+		end
+	end
+
+	test "should check if post trashed" do
+		loop_comments( reload: true,
+			blog_modifiers: {'trashed' => true, 'motd' => nil},
+			forum_modifiers: {'trashed' => true, 'sticky' => nil, 'motd' => nil},
+			guest_users: false ) do |comment|
+			assert comment.post_trashed?
+		end
+
+		loop_comments( reload: true,
+			blog_modifiers: {'trashed' => false, 'motd' => nil},
+			forum_modifiers: {'trashed' => false, 'sticky' => nil, 'motd' => nil},
+			guest_users: false ) do |comment|
+			assert_not comment.post_trashed?
+		end
+	end
+
+	test "should check if post owner trashed" do
+		loop_comments( reload: true,
+			blog_modifiers: {}, blog_numbers: [],
+			poster_modifiers: {'trashed' => true, 'admin' => nil},
+			guest_users: false ) do |comment|
+			# p comment.content
+			assert comment.post_owner_trashed?
+		end
+
+		loop_comments( reload: true,
+			blog_modifiers: {}, blog_numbers: [],
+			poster_modifiers: {'trashed' => false, 'admin' => nil},
+			guest_users: false ) do |comment|
+			# p comment.content
+			assert_not comment.post_owner_trashed?
+		end
 	end
 
 end

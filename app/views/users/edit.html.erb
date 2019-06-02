@@ -1,3 +1,7 @@
 <%= render 'shared/error_messages', object: @user %>
 
+<%= render 'heading', title_prefix: "Editing " %>
+
+<%= render 'shared/timestamps', object: @user %>
+
 <%= render 'form', submit_text: "Update Account" %>

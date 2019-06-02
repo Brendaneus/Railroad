@@ -1,73 +1,200 @@
-# Blog
-blogpost_one_admin:
-  post_type: 'BlogPost'
-  post: one
-  user: admin
-  content: "Sample Text"
+<% blog_numbers = ['one', 'two'] %>
+<% blog_modifiers = ['trashed', 'motd'] %>
+<% forum_numbers = ['one', 'two'] %>
+<% forum_modifiers = ['trashed', 'sticky', 'motd'] %>
+<% user_numbers = ['one', 'two'] %>
+<% user_modifiers = ['trashed', 'admin'] %>
+<% comment_numbers = ['one', 'two'] %>
+<% comment_modifiers = ['trashed'] %>
 
-blogpost_one_guest:
-  post_type: 'BlogPost'
-  post: one
-  user:
-  content: "Sample Text"
+<% id = 1 %>
+<% blog_post_id = 1 %>
+<% guest_ref = 'guest_user' %>
 
-blogpost_one_one:
-  post_type: 'BlogPost'
-  post: one
-  user: one
-  content: "Sample Text"
+<% blog_modifier_states_sets = [true, false].repeated_permutation(blog_modifiers.count).to_a %>
+<% blog_modifier_states_sets.map! { |blog_modifier_states| blog_modifiers.zip(blog_modifier_states).to_h } %>
+<% blog_modifier_states_sets.reverse.each do |blog_modifier_states| %>
 
-blogpost_one_two:
-  post_type: 'BlogPost'
-  post: one
-  user: two
-  content: "Sample Text"
+  <% blog_numbers.each do |blog_number| %>
 
-blogpost_two_one:
-  post_type: 'BlogPost'
-  post: two
-  user: one
-  content: "Sample Text"
+    <% blog_ref = "" %>
+    <% blog_modifier_states.each do |blog_modifier, state| %>
+      <% blog_ref += (blog_modifier + "_") if state %>
+    <% end %>
+    <% blog_ref += "blog_post_" + blog_number %>
 
-blogpost_two_two:
-  post_type: 'BlogPost'
-  post: two
-  user: two
-  content: "Sample Text"
+    <% user_id = 1 %>
 
-# Forum
-forumpost_one_admin:
-  post_type: 'ForumPost'
-  post: one
-  user: admin
-  content: "Sample Text"
+    <% user_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a %>
+    <% user_modifier_states_sets.map! { |user_modifier_states| user_modifiers.zip(user_modifier_states).to_h } %>
+    <% user_modifier_states_sets.reverse.each do |user_modifier_states| %>
 
-forumpost_one_guest:
-  post_type: 'ForumPost'
-  post: one
-  user:
-  content: "Sample Text"
+      <% user_numbers.each do |user_number| %>
 
-forumpost_one_one:
-  post_type: 'ForumPost'
-  post: one
-  user: one
-  content: "Sample Text"
+        <% user_ref = "" %>
+        <% user_modifier_states.each do |user_modifier, state| %>
+          <% user_ref += (user_modifier + "_") if state %>
+        <% end %>
+        <% user_ref += "user_" + user_number %>
 
-forumpost_one_two:
-  post_type: 'ForumPost'
-  post: one
-  user: two
-  content: "Sample Text"
+        <% comment_modifier_states_sets = [true, false].repeated_permutation(comment_modifiers.count).to_a %>
+        <% comment_modifier_states_sets.map! { |comment_modifier_states| comment_modifiers.zip(comment_modifier_states).to_h } %>
+        <% comment_modifier_states_sets.reverse.each do |comment_modifier_states| %>
 
-forumpost_two one:
-  post_type: 'ForumPost'
-  post: two
-  user: one
-  content: "Sample Text"
+          <% comment_numbers.each do |comment_number| %>
 
-forumpost_two two:
-  post_type: 'ForumPost'
-  post: two
-  user: two
-  content: "Sample Text"
+            <% comment_ref = "" %>
+            <% comment_modifier_states.each do |comment_modifier, state| %>
+              <% comment_ref += (comment_modifier + "_") if state %>
+            <% end %>
+            <% comment_ref += "comment_" + comment_number %>
+
+<%= blog_ref + '_' + user_ref + '_' + comment_ref %>:
+  id: <%= id %>
+  user_id: <%= user_id %>
+  post_type: "BlogPost"
+  post_id: <%= blog_post_id %>
+  content: <%= (blog_ref + '_' + user_ref + '_' + comment_ref).split('_').map(&:capitalize).join(' ') %>
+  trashed: <%= comment_modifier_states['trashed'] %>
+
+            <% id += 1 %>
+          <% end %>
+
+        <% end %>
+
+        <% user_id += 1 %>
+      <% end %>
+
+    <% end %>
+
+    <% comment_modifier_states_sets = [true, false].repeated_permutation(comment_modifiers.count).to_a %>
+    <% comment_modifier_states_sets.map! { |comment_modifier_states| comment_modifiers.zip(comment_modifier_states).to_h } %>
+    <% comment_modifier_states_sets.reverse.each do |comment_modifier_states| %>
+
+      <% comment_numbers.each do |comment_number| %>
+
+        <% comment_ref = "" %>
+        <% comment_modifier_states.each do |comment_modifier, state| %>
+          <% comment_ref += (comment_modifier + "_") if state %>
+        <% end %>
+        <% comment_ref += "comment_" + comment_number %>
+
+<%= blog_ref + '_' + guest_ref + '_' + comment_ref %>:
+  id: <%= id %>
+  post_type: "BlogPost"
+  post_id: <%= blog_post_id %>
+  content: <%= (blog_ref + '_' + guest_ref + '_' + comment_ref).split('_').map(&:capitalize).join(' ') %>
+  trashed: <%= comment_modifier_states['trashed'] %>
+
+        <% id += 1 %>
+      <% end %>
+
+    <% end %>
+
+    <% blog_post_id += 1 %>
+  <% end %>
+
+<% end %>
+
+<% forum_post_id = 1 %>
+
+<% poster_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a %>
+<% poster_modifier_states_sets.map! { |poster_modifier_states| user_modifiers.zip(poster_modifier_states).to_h } %>
+<% poster_modifier_states_sets.reverse.each do |poster_modifier_states| %>
+
+  <% user_numbers.each do |poster_number| %>
+
+    <% poster_ref = "" %>
+    <% poster_modifier_states.each do |poster_modifier, state| %>
+      <% poster_ref += (poster_modifier + "_") if state %>
+    <% end %>
+    <% poster_ref += "user_" + poster_number %>
+
+    <% forum_modifier_states_sets = [true, false].repeated_permutation(forum_modifiers.count).to_a %>
+    <% forum_modifier_states_sets.map! { |forum_modifier_states| forum_modifiers.zip(forum_modifier_states).to_h } %>
+    <% forum_modifier_states_sets.reverse.each do |forum_modifier_states| %>
+
+      <% forum_numbers.each do |forum_number| %>
+
+        <% forum_ref = "" %>
+        <% forum_modifier_states.each do |forum_modifier, state| %>
+          <% forum_ref += (forum_modifier + "_") if state %>
+        <% end %>
+        <% forum_ref += "forum_post_" + forum_number %>
+
+        <% user_id = 1 %>
+
+        <% user_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a %>
+        <% user_modifier_states_sets.map! { |user_modifier_states| user_modifiers.zip(user_modifier_states).to_h } %>
+        <% user_modifier_states_sets.reverse.each do |user_modifier_states| %>
+
+          <% user_numbers.each do |user_number| %>
+
+            <% user_ref = "" %>
+            <% user_modifier_states.each do |user_modifier, state| %>
+              <% user_ref += (user_modifier + "_") if state %>
+            <% end %>
+            <% user_ref += "user_" + user_number %>
+            
+            <% comment_modifier_states_sets = [true, false].repeated_permutation(comment_modifiers.count).to_a %>
+            <% comment_modifier_states_sets.map! { |comment_modifier_states| comment_modifiers.zip(comment_modifier_states).to_h } %>
+            <% comment_modifier_states_sets.reverse.each do |comment_modifier_states| %>
+
+              <% comment_numbers.each do |comment_number| %>
+
+                <% comment_ref = "" %>
+                <% comment_modifier_states.each do |comment_modifier, state| %>
+                  <% comment_ref += (comment_modifier + "_") if state %>
+                <% end %>
+                <% comment_ref += "comment_" + comment_number %>
+
+<%= poster_ref + '_' + forum_ref + '_' + user_ref + '_' + comment_ref %>:
+  id: <%= id %>
+  user_id: <%= user_id %>
+  post_type: "ForumPost"
+  post_id: <%= forum_post_id %>
+  content: <%= (poster_ref + '_' + forum_ref + '_' + user_ref + '_' + comment_ref).split('_').map(&:capitalize).join(' ') %>
+  trashed: <%= comment_modifier_states['trashed'] %>
+
+                <% id += 1 %>
+              <% end %>
+
+            <% end %>
+
+            <% user_id += 1 %>
+          <% end %>
+
+        <% end %>
+
+        <% comment_modifier_states_sets = [true, false].repeated_permutation(comment_modifiers.count).to_a %>
+        <% comment_modifier_states_sets.map! { |comment_modifier_states| comment_modifiers.zip(comment_modifier_states).to_h } %>
+        <% comment_modifier_states_sets.reverse.each do |comment_modifier_states| %>
+
+          <% comment_numbers.each do |comment_number| %>
+
+            <% comment_ref = "" %>
+            <% comment_modifier_states.each do |comment_modifier, state| %>
+              <% comment_ref += (comment_modifier + "_") if state %>
+            <% end %>
+            <% comment_ref += "comment_" + comment_number %>
+
+<%= poster_ref + '_' + forum_ref + '_' + guest_ref + '_' + comment_ref %>:
+  id: <%= id %>
+  post_type: "ForumPost"
+  post_id: <%= forum_post_id %>
+  content: <%= (poster_ref + '_' + forum_ref + '_' + guest_ref + '_' + comment_ref).split('_').map(&:capitalize).join(' ') %>
+  trashed: <%= comment_modifier_states['trashed'] %>
+
+            <% id += 1 %>
+          <% end %>
+
+        <% end %>
+
+        <% forum_post_id += 1 %>
+      <% end %>
+
+    <% end %>
+
+  <% end %>
+
+<% end %>

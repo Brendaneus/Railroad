@@ -1,17 +1,29 @@
-admin:
-  name: "Admin"
-  email: "admin@telepathy.dev"
-  password_digest: <%= User.digest('admin') %>
-  admin: true
+<% user_numbers = ['one', 'two'] %>
+<% user_modifiers = ['trashed', 'admin'] %>
 
-one:
-  name: "Test User"
-  email: "test@example.org"
-  password_digest: <%= User.digest('password') %>
-  admin: false
+<% id = 1 %>
 
-two:
-  name: "Test User Too"
-  email: "test_too@example.org"
+<% user_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a %>
+<% user_modifier_states_sets.map! { |user_modifier_states| user_modifiers.zip(user_modifier_states).to_h } %>
+<% user_modifier_states_sets.reverse.each do |user_modifier_states| %>
+
+  <% user_numbers.each do |user_number| %>
+
+    <% user_ref = "" %>
+    <% user_modifier_states.each do |user_modifier, state| %>
+      <% user_ref += (user_modifier + "_") if state %>
+    <% end %>
+    <% user_ref += "user_" + user_number %>
+
+<%= user_ref %>:
+  id: <%= id %>
+  name: <%= user_ref.split("_").map(&:capitalize).join(" ") %>
+  email: <%= user_ref + "@example.com" %>
   password_digest: <%= User.digest('password') %>
-  admin: false
+  admin: <%= user_modifier_states['admin'] %>
+  trashed: <%= user_modifier_states['trashed'] %>
+
+    <% id += 1 %>
+  <% end %>
+
+<% end %>

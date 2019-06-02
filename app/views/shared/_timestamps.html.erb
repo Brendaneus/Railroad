@@ -1,0 +1,15 @@
+<h4 class="subtle">
+	<%= ( (create_alias ||= nil) || "Posted" ) + ( (owned ||= nil) ? " by " : "" ) %><% safe_user_link_to(object.user) if owned %> on <%= object.created_at.to_date %>.
+	
+	<% if object.edited? %>
+
+		Last edited on <%= object.updated_at.to_date %>.
+
+	<% end %>
+
+	<% if object.trashed? %>
+
+		Currently trashed.
+
+	<% end %>
+</h4>

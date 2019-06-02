@@ -40,6 +40,26 @@ module CommentsHelper
 		end
 	end
 
+	def trash_post_comment_path(post, comment)
+		if post.class == BlogPost
+			trash_blog_post_comment_path(post, comment)
+		elsif post.class == ForumPost
+			trash_forum_post_comment_path(post, comment)
+		else
+			raise "Error constructing Trash Post Comment Path: Post type unknown"
+		end
+	end
+
+	def untrash_post_comment_path(post, comment)
+		if post.class == BlogPost
+			untrash_blog_post_comment_path(post, comment)
+		elsif post.class == ForumPost
+			untrash_forum_post_comment_path(post, comment)
+		else
+			raise "Error constructing Untrash Post Comment Path: Post type unknown"
+		end
+	end
+
 	def posts_url(post)
 		if post.class == BlogPost
 			blog_posts_url
@@ -77,6 +97,26 @@ module CommentsHelper
 			forum_post_comment_url(post, comment)
 		else
 			raise "Error constructing Post Comment Url: Post type unknown"
+		end
+	end
+
+	def trash_post_comment_url(post, comment)
+		if post.class == BlogPost
+			trash_blog_post_comment_url(post, comment)
+		elsif post.class == ForumPost
+			trash_forum_post_comment_url(post, comment)
+		else
+			raise "Error constructing Trash Post Comment Url: Post type unknown"
+		end
+	end
+
+	def untrash_post_comment_url(post, comment)
+		if post.class == BlogPost
+			untrash_blog_post_comment_url(post, comment)
+		elsif post.class == ForumPost
+			untrash_forum_post_comment_url(post, comment)
+		else
+			raise "Error constructing Untrash Post Comment Url: Post type unknown"
 		end
 	end
 

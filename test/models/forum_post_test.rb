@@ -3,75 +3,107 @@ require 'test_helper'
 class ForumPostTest < ActiveSupport::TestCase
 
 	def setup
-		@user = users(:one)
-		@admin = users(:admin)
-		@forumpost = forum_posts(:one)
-		@forumpost_admin = forum_posts(:admin)
-		@forum_comment = comments(:forumpost_one_one)
+		load_forum_posts( user_modifiers: {}, user_numbers: ['one'],
+			forum_modifiers: {}, forum_numbers: ['one'] )
 	end
 
 	test "should associate with comments" do
-		assert @forumpost.comments
-		assert @forum_comment.post
+		loop_forum_posts(reload: true) do |forum_post, forum_post_key, poster_key|
+			assert forum_post.comments ==
+				load_comments( flat_array: true,
+					blog_modifiers: {}, blog_numbers: [],
+					only: {poster: poster_key, forum_post: forum_post_key} )
+		end
 	end
 
 	test "should dependent destroy comments" do
-		@forumpost.destroy
-		assert_raise(ActiveRecord::RecordNotFound) { @forum_comment.reload }
+		load_comments( blog_modifiers: {}, blog_numbers: [] )
+
+		loop_forum_posts(reload: true) do |forum_post, forum_post_key, poster_key|
+			forum_post.destroy
+
+			assert_raise(ActiveRecord::RecordNotFound) { forum_post.reload }
+
+			loop_comments( blog_modifiers: {}, blog_numbers: [],
+				only: {poster: poster_key, forum_post: forum_post_key} ) do |comment|
+				assert_raise(ActiveRecord::RecordNotFound) { comment.reload }
+			end
+		end
 	end
 
 	test "should associate with commenters" do
-		assert @forumpost.commenters
-		assert @user.commented_forum_posts
+		loop_forum_posts(reload: true) do |forum_post, forum_post_key, poster_key|
+			assert forum_post.commenters == load_users(flat_array: true)
+		end
 	end
 
 	test "should require user on create" do
-		new_forumpost = ForumPost.new(title: "Test Post", content: "Sample Text")
-		assert_not new_forumpost.valid?
-		new_forumpost.user = @user
-		assert new_forumpost.valid?
+		load_users( user_modifiers: {}, user_numbers: ['one'] )
+
+		@forum_posts['user_one']['new_forum_post'] = ForumPost.new(title: "New Forum Post", content: "Sample Text")
+		assert_not @forum_posts['user_one']['new_forum_post'].valid?
+
+		@forum_posts['user_one']['new_forum_post'].user = @users['user_one']
+		assert @forum_posts['user_one']['new_forum_post'].valid?
 	end
 
 	test "should validate title presence" do
-		@forumpost.title = ""
-		assert_not @forumpost.valid?
-		@forumpost.title = "    "
-		assert_not @forumpost.valid?
+		@forum_posts['user_one']['forum_post_one'].title = ""
+		assert_not @forum_posts['user_one']['forum_post_one'].valid?
+
+		@forum_posts['user_one']['forum_post_one'].title = "    "
+		assert_not @forum_posts['user_one']['forum_post_one'].valid?
 	end
 
 	test "should validate title length (maximum: 64)" do
-		@forumpost.title = "X"
-		assert @forumpost.valid?
-		@forumpost.title = "X" * 64
-		assert @forumpost.valid?
-		@forumpost.title = "X" * 65
-		assert_not @forumpost.valid?
+		@forum_posts['user_one']['forum_post_one'].title = "X"
+		assert @forum_posts['user_one']['forum_post_one'].valid?
+
+		@forum_posts['user_one']['forum_post_one'].title = "X" * 64
+		assert @forum_posts['user_one']['forum_post_one'].valid?
+
+		@forum_posts['user_one']['forum_post_one'].title = "X" * 65
+		assert_not @forum_posts['user_one']['forum_post_one'].valid?
 	end
 
 	test "should validate content presence" do
-		@forumpost.content = ""
-		assert_not @forumpost.valid?
-		@forumpost.content = "    "
-		assert_not @forumpost.valid?
+		@forum_posts['user_one']['forum_post_one'].content = ""
+		assert_not @forum_posts['user_one']['forum_post_one'].valid?
+
+		@forum_posts['user_one']['forum_post_one'].content = "    "
+		assert_not @forum_posts['user_one']['forum_post_one'].valid?
 	end
 
 	test "should validate content length (maximum: 4096)" do
-		@forumpost.content = "X"
-		assert @forumpost.valid?
-		@forumpost.content = "X" * 4096
-		assert @forumpost.valid?
-		@forumpost.content = "X" * 4097
-		assert_not @forumpost.valid?
+		@forum_posts['user_one']['forum_post_one'].content = "X"
+		assert @forum_posts['user_one']['forum_post_one'].valid?
+
+		@forum_posts['user_one']['forum_post_one'].content = "X" * 4096
+		assert @forum_posts['user_one']['forum_post_one'].valid?
+
+		@forum_posts['user_one']['forum_post_one'].content = "X" * 4097
+		assert_not @forum_posts['user_one']['forum_post_one'].valid?
 	end
 
 	test "should default motd as false" do
-		new_forumpost = @user.forum_posts.create!(title: "A Sample Post", content: "Lorem Ipsum")
-		assert_not new_forumpost.motd?
+		load_users( user_modifiers: {}, user_numbers: ['one'] )
+		
+		@forum_posts['user_one']['new_forum_post'] = @users['user_one'].forum_posts.create!(title: "New Forum Post", content: "Lorem Ipsum")
+		assert_not @forum_posts['user_one']['new_forum_post'].motd?
 	end
 
 	test "should default sticky as false" do
-		new_forumpost = @user.forum_posts.create!(title: "A Sample Post", content: "Lorem Ipsum")
-		assert_not new_forumpost.sticky?
+		load_users( user_modifiers: {}, user_numbers: ['one'] )
+		
+		@forum_posts['user_one']['new_forum_post'] = @users['user_one'].forum_posts.create!(title: "New Forum Post", content: "Lorem Ipsum")
+		assert_not @forum_posts['user_one']['new_forum_post'].sticky?
+	end
+
+	test "should default trashed as false" do
+		load_users( user_modifiers: {}, user_numbers: ['one'] )
+		
+		@forum_posts['user_one']['new_forum_post'] = @users['user_one'].forum_posts.create!(title: "New Forum Post", content: "Lorem Ipsum")
+		assert_not @forum_posts['user_one']['new_forum_post'].trashed?
 	end
 
 	test "should scope motd posts" do
@@ -86,20 +118,54 @@ class ForumPostTest < ActiveSupport::TestCase
 		assert ForumPost.non_stickies == ForumPost.where(sticky: false)
 	end
 
+	test "should scope trashed posts" do
+		assert ForumPost.trashed == ForumPost.where(trashed: true)
+	end
+
+	test "should scope non-trashed posts" do
+		assert ForumPost.non_trashed == ForumPost.where(trashed: false)
+	end
+
 	test "should check for edits" do
-		assert_not @forumpost.edited?
-		@forumpost.updated_at = Time.now + 1
-		assert @forumpost.edited?
+		assert_not @forum_posts['user_one']['forum_post_one'].edited?
+
+		@forum_posts['user_one']['forum_post_one'].updated_at = Time.now + 1
+		assert @forum_posts['user_one']['forum_post_one'].edited?
 	end
 
 	test "should check if user is owner" do
-		assert @forumpost.owned_by? @user
-		assert_not @forumpost.owned_by? @admin
+		loop_forum_posts(reload: true) do |forum_post, forum_post_key, user_key|
+			loop_users(reload: true, only: {user: user_key} ) do |user|
+				assert forum_post.owned_by? user
+			end
+			loop_users( reload: true, except: {user: user_key} ) do |user|
+				assert_not forum_post.owned_by? user
+			end
+		end
 	end
 
 	test "should check if owner is admin" do
-		assert @forumpost_admin.admin?
-		assert_not @forumpost.admin?
+		loop_forum_posts(reload: true,
+			user_modifiers: {'trashed' => nil, 'admin' => true} ) do |forum_post|
+			assert forum_post.admin?
+		end
+
+		loop_forum_posts(reload: true,
+			user_modifiers: {'trashed' => nil, 'admin' => false} ) do |forum_post|
+			assert_not forum_post.admin?
+		end
+	end
+
+	test "should check if owner is trashed" do
+		loop_forum_posts( reload: true,
+			user_modifiers: {'trashed' => true, 'admin' => nil} ) do |forum_post|
+			assert forum_post.owner_trashed?
+		end
+
+		loop_forum_posts( reload: true,
+			user_modifiers: {'trashed' => false, 'admin' => nil} ) do |forum_post|
+			assert_not forum_post.owner_trashed?
+		end
 	end
 
 end

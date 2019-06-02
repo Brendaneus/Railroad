@@ -1,7 +1,28 @@
-one:
-  title: "Blog Post One"
-  content: "Lorem Ipsum"
+<% blog_numbers = ['one', 'two'] %>
+<% blog_modifiers = ['trashed', 'motd'] %>
 
-two:
-  title: "Blog Post Two"
-  content: "Lorem Ipsum"
+<% id = 1 %>
+
+<% blog_modifier_states_sets = [true, false].repeated_permutation(blog_modifiers.count).to_a %>
+<% blog_modifier_states_sets.map! { |blog_modifier_states| blog_modifiers.zip(blog_modifier_states).to_h } %>
+<% blog_modifier_states_sets.reverse.each do |blog_modifier_states| %>
+
+  <% blog_numbers.each do |blog_number| %>
+
+    <% blog_ref = "" %>
+    <% blog_modifier_states.each do |blog_modifier, state| %>
+      <% blog_ref += (blog_modifier + "_") if state %>
+    <% end %>
+    <% blog_ref += "blog_post_" + blog_number %>
+
+<%= blog_ref %>:
+  id: <%= id %>
+  title: <%= blog_ref.split("_").map(&:capitalize).join(" ") %>
+  content: "Lorem ipsum"
+  motd: <%= blog_modifier_states['motd'] %>
+  trashed: <%= blog_modifier_states['trashed'] %>
+
+    <% id += 1 %>
+  <% end %>
+
+<% end %>

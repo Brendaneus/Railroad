@@ -1,4 +1,4 @@
-<div class="document container">
+<div class="<%= container_class(document) %>">
 	
 	<h2><%= link_to document.title, article_document_path( document.article, document ) %></h2>
 	
@@ -27,5 +27,7 @@
 		<p>This document is missing its attachment.</p>
 
 	<% end %>
+
+	<%= render 'shared/timestamps', object: document %>
 	
 </div>

@@ -7,13 +7,5 @@
 
 	 <% end %>
 
-	<h4 class="subtle">
-		Posted by <%= safe_user_link_to forum_post.user %> on <%= forum_post.created_at.to_date %>.
-		
-		<% if forum_post.edited? %>
-
-			Last edited: <%= forum_post.updated_at.to_date %>.
-
-		<% end %>
-	</h4>
+	<%= render 'shared/timestamps', object: forum_post, owned: true %>
 </div>

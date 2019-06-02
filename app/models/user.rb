@@ -2,26 +2,29 @@ class User < ApplicationRecord
 
 	attr_accessor :remember_token
 
-	has_many :forum_posts
-	has_many :comments
-	has_many :commented_blog_posts, through: :comments,
+	has_many :forum_posts, dependent: :destroy
+	has_many :comments, dependent: :destroy
+	has_many :commented_blog_posts, -> { distinct },
+									through: :comments,
 									source: :post,
 									source_type: 'BlogPost'
-	has_many :commented_forum_posts, through: :comments,
+	has_many :commented_forum_posts, -> { distinct },
+									 through: :comments,
 									 source: :post,
 									 source_type: 'ForumPost'
 
+	scope :trashed, -> { User.where(trashed: true) }
+	scope :non_trashed, -> { User.where(trashed: false) }
+
 	validates :name, presence: true,
 					 uniqueness: { case_sensitive: false },
-					 length: { maximum: 32 }
+					 length: { maximum: 64 }
 	VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i
 	validates :email, presence: true,
 					  uniqueness: { case_sensitive: false },
 					  format: { with: VALID_EMAIL_REGEX }
 	has_secure_password
 	validate :none_or_both_passwords, on: [:create, :update]
-
-	before_destroy :unassign_posts_and_comments
 
 
 	def self.new_token
@@ -59,21 +62,16 @@ class User < ApplicationRecord
 		User.digest(token) == digest
 	end
 
+	def edited?
+		updated_at != created_at
+	end
+
 
 	private
 
 		def none_or_both_passwords
 			if password.present? && password_confirmation.nil?
 				errors.add(:password_confirmation, "must be present to confirm password")
-			end
-		end
-
-		def unassign_posts_and_comments
-			forum_posts.each do |forum_post|
-				forum_post.update(user: nil)
-			end
-			comments.each do |comment|
-				comment.update(user: nil)
 			end
 		end
 	

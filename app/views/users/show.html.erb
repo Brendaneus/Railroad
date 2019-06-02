@@ -1,25 +1,31 @@
-<% if authorized_for? @user %>
+<% if (authorized_for? @user) %>
 
-	<div class="<%= ( admin_user? ) ? "admin " : "" %>account_control">
+	<div class="<%= ( admin_user? ) ? "admin " : "" %>control">
 		<%= link_to "Edit Profile", edit_user_path( @user ) %>
 
-		<%= link_to "Delete Profile", @user, method: :delete %>
+		<%= link_to "Trash Profile", trash_user_path( @user ) unless @user.trashed? %>
+
+		<%= link_to "Restore Profile", untrash_user_path( @user ) if @user.trashed? %>
+
+		<%= link_to "Delete Profile", @user, method: :delete if admin_user? %>
 	</div>
 
 <% end %>
 
-<h1><%= @user.name.possessive %> Account</h1>
+<main>
+	<%= render 'heading' %>
 
-<h3><%= @user.email %></h3>
+	<%= render 'shared/timestamps', object: @user %>
 
-<% if @user.forum_posts.any? %>
+	<% if @user.forum_posts.any? %>
 
-	<%= render @user.forum_posts %>
+		<%= render @user.forum_posts %>
 
-<% end %>
+	<% end %>
 
-<%# if @user.comments.any? %>
+	<%# if @user.comments.any? %>
 
-	<%#= render @user.comments %>
+		<%#= render @user.comments %>
 
-<%# end %>
+	<%# end %>
+</main>

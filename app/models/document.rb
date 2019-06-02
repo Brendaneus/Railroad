@@ -3,6 +3,9 @@ class Document < ApplicationRecord
 	belongs_to :article, polymorphic: true
 	has_one_attached :upload
 
+	scope :trashed, -> { Document.where(trashed: true) }
+	scope :non_trashed, -> { Document.where(trashed: false) }
+
 	validates_presence_of :local_id, unless: :new_record?
 	validate :unique_local_id, unless: :new_record?
 	# validates :upload, attached: true # Currently unsupported by ActiveStorage
@@ -17,6 +20,14 @@ class Document < ApplicationRecord
 
 	def edited?
 		self.created_at != self.updated_at
+	end
+
+	def trashed?
+		trashed
+	end
+
+	def article_trashed?
+		article.trashed?
 	end
 
 

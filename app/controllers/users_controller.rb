@@ -1,11 +1,18 @@
 class UsersController < ApplicationController
 	include SessionsHelper # :create, :destroy
 
-	before_action :require_login, only: [:edit, :update, :destroy]
-	before_action :require_authorize, only: [:edit, :update, :destroy]
+	before_action :require_login, only: [:trashed, :edit, :update, :trash, :untrash, :destroy]
+	before_action :require_authorize, only: [:edit, :update, :trash, :untrash]
+	before_action :require_admin, only: [:trashed, :destroy]
+	before_action :require_untrashed_user, only: [:destroy]
+	before_action :require_admin_for_trashed, only: :show
 
 	def index
-		@users = User.all.order( admin: :desc )
+		@users = User.non_trashed.order( admin: :desc )
+	end
+
+	def trashed
+		@users = User.trashed.order( admin: :desc )
 	end
 
 	def show
@@ -13,6 +20,7 @@ class UsersController < ApplicationController
 	end
 
 	def new
+		flash.now[:warning] = "Already logged in!  Creating a new account will relog your session." if logged_in?
 		@user = User.new
 	end
 
@@ -38,10 +46,32 @@ class UsersController < ApplicationController
 		@user = User.find( params[:id] )
 		if @user.update( user_params )
 			flash[:success] = "The account changes have been saved."
-			redirect_to user_path( @user )
+			redirect_to @user
 		else
 			flash.now[:failure] = "There was a problem updating this profile."
 			render :edit
+		end
+	end
+
+	def trash
+		@user = User.find( params[:id] )
+		if @user.update_columns(trashed: true)
+			flash[:success] = "The user has been successfully trashed."
+			redirect_to @user
+		else
+			flash[:failure] = "There was a problem trashing the user."
+			redirect_back fallback_url: @user
+		end
+	end
+
+	def untrash
+		@user = User.find( params[:id] )
+		if @user.update_columns(trashed: false)
+			flash[:success] = "The user has been successfully restored."
+			redirect_to @user
+		else
+			flash[:failure] = "There was a problem restoring the user."
+			redirect_back fallback_url: @user
 		end
 	end
 
@@ -57,7 +87,7 @@ class UsersController < ApplicationController
 			end
 		else
 			flash[:failure] = "There was a problem deleting this account."
-			redirect_to user_path( @user )
+			redirect_to @user
 		end
 	end
 
@@ -72,6 +102,13 @@ class UsersController < ApplicationController
 			unless authorized_for? User.find( params[:id] )
 				flash[:warning] = "You aren't allowed to do that"
 				redirect_to root_path
+			end
+		end
+
+		def require_admin_for_trashed
+			unless admin_user? || !User.find( params[:id] ).trashed? || authorized_for?( User.find(params[:id]) )
+				flash[:warning] = "This user has been trashed and cannot be viewed."
+				redirect_back fallback_location: users_path
 			end
 		end
 		

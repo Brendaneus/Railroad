@@ -1,19 +1,25 @@
-<div class="container">
+<div class="<%= container_class(comment) %>">
 
-	<% if admin_user? || (comment.owned_by? current_user) %>
+	<h4>
+		<%= safe_user_link_to(comment.user) %> wrote:
+	</h4>
+
+	<% if untrashed_user? && ( admin_user? || comment.owned_by?(current_user) ) %>
 
 		<%= render 'comments/form', comment: comment, form_url: post_comment_path(comment.post, comment) %>
-		
-		<%= link_to "Delete", post_comment_path(comment.post, comment.id), method: :delete, data: { confirm: 'Really delete this comment?'} %>
+
+		<%= link_to "Delete", post_comment_path(comment.post, comment.id), method: :delete, data: { confirm: 'Really delete this comment?'} if admin_user? && comment.trashed? %>
+
+		<%= link_to "Trash", trash_post_comment_path(comment.post, comment.id) unless comment.trashed? %>
+
+		<%= link_to "Restore", untrash_post_comment_path(comment.post, comment.id) if comment.trashed? %>
 
 	<% else %>
-
-		<h4>
-			<%= safe_user_link_to comment.user %> wrote:
-		</h4>
 
 		<p><%= simple_format comment.content %></p>
 
 	<% end %>
+
+	<%= render 'shared/timestamps', object: comment %>
 
 </div>

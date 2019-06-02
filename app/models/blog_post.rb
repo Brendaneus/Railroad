@@ -2,9 +2,12 @@ class BlogPost < ApplicationRecord
 
 	has_many :documents, as: :article, dependent: :destroy
 	has_many :comments, as: :post, dependent: :destroy
-	has_many :commenters, through: :comments,
+	has_many :commenters, -> { distinct },
+						  through: :comments,
 						  source: :user
 	
+	scope :trashed, -> { BlogPost.where(trashed: true) }
+	scope :non_trashed, -> { BlogPost.where(trashed: false) }
 	scope :motds, -> { BlogPost.where(motd: true) }
 
 	validates :title, presence: true,

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_05_11_192725) do
+ActiveRecord::Schema.define(version: 2019_05_20_185357) do
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -38,6 +38,7 @@ ActiveRecord::Schema.define(version: 2019_05_11_192725) do
     t.text "content"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "trashed", default: false
   end
 
   create_table "blog_posts", force: :cascade do |t|
@@ -47,6 +48,7 @@ ActiveRecord::Schema.define(version: 2019_05_11_192725) do
     t.boolean "motd", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "trashed", default: false
   end
 
   create_table "comments", force: :cascade do |t|
@@ -56,6 +58,7 @@ ActiveRecord::Schema.define(version: 2019_05_11_192725) do
     t.text "content"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "trashed", default: false
     t.index ["post_type", "post_id"], name: "index_comments_on_post_type_and_post_id"
     t.index ["user_id"], name: "index_comments_on_user_id"
   end
@@ -68,6 +71,7 @@ ActiveRecord::Schema.define(version: 2019_05_11_192725) do
     t.text "content"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "trashed", default: false
     t.index ["article_type", "article_id"], name: "index_documents_on_article_type_and_article_id"
     t.index ["local_id"], name: "index_documents_on_local_id"
   end
@@ -80,6 +84,7 @@ ActiveRecord::Schema.define(version: 2019_05_11_192725) do
     t.boolean "sticky", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "trashed", default: false
     t.index ["user_id"], name: "index_forum_posts_on_user_id"
   end
 
@@ -91,6 +96,7 @@ ActiveRecord::Schema.define(version: 2019_05_11_192725) do
     t.boolean "admin", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "trashed", default: false
   end
 
 end

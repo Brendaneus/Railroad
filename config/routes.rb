@@ -13,26 +13,67 @@ Rails.application.routes.draw do
 
 	# Users
 	get '/signup',		to: 'users#new'
-	resources :users, except: :new
+	resources :users, except: :new do
+		get :trashed, on: :collection
+		member do
+			get :trash
+			get :untrash
+		end
+	end
 
 	# Archive
 	resources :archivings, only: [:index, :create], path: 'archive'
 	resources :archivings, except: [:index, :create], path: 'archives', model_name: 'Archiving' do
-		resources :documents, except: :index
+		get :trashed, on: :collection
+		member do
+			get :trash
+			get :untrash
+		end
+		resources :documents, except: :index do
+			member do
+				get :trash
+				get :untrash
+			end
+		end
 	end
 
 	# Blog
 	resources :blog_posts, only: [:index, :create], path: 'blog'
 	resources :blog_posts, except: [:index, :create], path: 'blogs', model_name: 'BlogPost' do
-		resources :documents, except: :index
-		resources :comments, only: [:create, :update, :destroy]
+		get :trashed, on: :collection
+		member do
+			get :trash
+			get :untrash
+		end
+		resources :documents, except: :index do
+			member do
+				get :trash
+				get :untrash
+			end
+		end
+		resources :comments, only: [:create, :update, :destroy] do
+			member do
+				get :trash
+				get :untrash
+			end
+		end
 		get '/motd',	to: 'blog_posts#motd'
 	end
 
 	# Forum
 	resources :forum_posts, only: [:index, :create], path: 'forum'
 	resources :forum_posts, except: [:index, :create], path: 'forums', model_name: 'ForumPost' do
-		resources :comments, only: [:create, :update, :destroy]
+		get :trashed, on: :collection
+		member do
+			get :trash
+			get :untrash
+		end
+		resources :comments, only: [:create, :update, :destroy]do
+			member do
+				get :trash
+				get :untrash
+			end
+		end
 		get '/motd',	to: 'forum_posts#motd'
 	end
 

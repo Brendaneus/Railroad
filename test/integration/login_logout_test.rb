@@ -3,36 +3,41 @@ require 'test_helper'
 class LoginLogoutTest < ActionDispatch::IntegrationTest
 
 	def setup
-		@user = users(:one)
-		@admin = users(:admin)
-		set_landing
+		load_users
 	end
 
 	test "should pass login with valid password" do
-		login_as @user
-		assert sessioned?
-		assert_not remembered?
+		loop_users do |user|
+			login_as user
+			assert sessioned?
+			assert_not remembered?
 
-		assert flash[:success]
-		assert_redirected_to root_url
+			assert flash[:success]
+			assert_redirected_to root_url
+		end
 	end
 
 	test "should fail login with invalid password" do
-		login_as @user, password: 'foobar_password'
-		assert_not logged_in?
+		loop_users do |user|
+			login_as user, password: 'invalid_password'
+			assert_not logged_in?
 
-		assert flash[:failure]
-		assert_response :success
+			assert flash[:failure]
+			assert_response :success
+		end
 	end
 
 	# test "should remember user login when chosen" do
-	# 	login_as @user, remember: "1"
-	# 	assert sessioned?
-	# 	print "digest in test: #{@user.remember_digest} "
-	# 	assert remembered?
+	# 	loop_users do |user|
+	# 		login_as user, remember: "1"
+	# 		assert sessioned?
+	# 		p "digest in test:"
+	# 		p user.remember_digest
+	# 		assert remembered?
 
-	# 	assert flash[:success]
-	# 	assert_redirected_to root_url
+	# 		assert flash[:success]
+	# 		assert_redirected_to root_url
+	# 	end
 	# end
 
 end

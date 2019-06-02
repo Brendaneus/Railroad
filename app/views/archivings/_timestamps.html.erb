@@ -1,0 +1,15 @@
+<h4 class="subtle">
+	Posted on <%= archiving.created_at.to_date %>.
+	
+	<% if archiving.edited? %>
+
+		Last edited on <%= archiving.updated_at.to_date %>.
+
+	<% end %>
+
+	<% if archiving.trashed? %>
+
+		Currently trashed.
+
+	<% end %>
+</h4>

@@ -1,27 +1,25 @@
 <% if authorized_for? @forum_post.user %>
 
-	<nav class="post_control">
-		<%= link_to "Edit Post", edit_forum_post_path( @forum_post ) %>
+	<div class="<%= ( admin_user? ) ? "admin " : "" %>control">
+		<%= link_to "Edit Post", edit_forum_post_path( @forum_post ) if untrashed_user? %>
 
-		<%= link_to "Delete Post", @forum_post, method: :delete, data: { confirm: 'Really delete this post?'} %>
-	</nav>
+		<%= link_to "Trash Post", trash_forum_post_path( @forum_post ) unless @forum_post.trashed? %>
+
+		<%= link_to "Restore Post", untrash_forum_post_path( @forum_post ) if @forum_post.trashed? %>
+
+		<%= link_to "Delete Post", @forum_post, method: :delete, data: { confirm: 'Really delete this post?'} if @forum_post.trashed? && admin_user? && untrashed_user? %>
+	</div>
 
 <% end %>
 
-<h1><%= @forum_post.title %></h1>
+<main>
+	<%= render 'heading' %>
 
-<p><%= simple_format @forum_post.content %></p>
+	<p><%= simple_format @forum_post.content %></p>
 
-<h4 class="subtle">
-	Posted by <%= safe_user_link_to @forum_post.user %> on <%= @forum_post.created_at.to_date %>.
-	
-	<% if @forum_post.edited? %>
+	<%= render 'shared/timestamps', object: @forum_post %>
 
-		Last edited on <%= @forum_post.updated_at.to_date %>.
+	<%= render 'comments/form', comment: @new_comment, form_url: forum_post_comments_path(@forum_post) %>
 
-	<% end %>
-</h4>
-
-<%= render 'comments/form', comment: @new_comment, form_url: forum_post_comments_path(@forum_post) %>
-
-<%= render @comments %>
+	<%= render @comments %>
+</main>

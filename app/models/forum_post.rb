@@ -2,9 +2,12 @@ class ForumPost < ApplicationRecord
 
 	belongs_to :user, optional: true
 	has_many :comments, as: :post, dependent: :destroy
-	has_many :commenters, through: :comments,
+	has_many :commenters, -> { distinct },
+						  through: :comments,
 						  source: :user
 
+	scope :trashed, -> { ForumPost.where(trashed: true) }
+	scope :non_trashed, -> { ForumPost.where(trashed: false) }
 	scope :motds, -> { ForumPost.where(motd: true) }
 	scope :stickies, -> { ForumPost.where(sticky: true) }
 	scope :non_stickies, -> { ForumPost.where(sticky: false) }
@@ -25,6 +28,10 @@ class ForumPost < ApplicationRecord
 
 	def edited?
 		self.created_at != self.updated_at
+	end
+
+	def owner_trashed?
+		user.trashed?
 	end
 
 

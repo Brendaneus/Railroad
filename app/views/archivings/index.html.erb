@@ -1,9 +1,13 @@
 <% if admin_user? %>
 
-	<nav class="admin post_control">
-		<%= link_to "New Archiving", new_archiving_path %>
-	</nav>
+	<div class="admin control">
+		<%= link_to "Trashed Archivings", trashed_archivings_path %>
+
+		<%= link_to "New Archiving", new_archiving_path if untrashed_user? %>
+	</div>
 
 <% end %>
 
-<%= (render @archivings) || (tag.h2 "There isn't anything here...") %>
+<main>
+	<%= (render @archivings) || (tag.h2 "There isn't anything here...") %>
+</main>

@@ -1,9 +1,13 @@
 <% if admin_user? %>
 
-	<nav class="admin post_control">
-		<%= link_to "New Post", new_blog_post_path %>
-	</nav>
+	<div class="admin control">
+		<%= link_to "Trashed Posts", trashed_blog_posts_path %>
+
+		<%= link_to "New Post", new_blog_post_path unless trashed_user? %>
+	</div>
 
 <% end %>
 
-<%= (render @blog_posts) || (tag.h2 "There isn't anything here...") %>
+<main>
+	<%= (render @blog_posts) || (tag.h2 "There isn't anything here...") %>
+</main>

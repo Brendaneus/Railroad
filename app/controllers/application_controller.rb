@@ -18,8 +18,15 @@ class ApplicationController < ActionController::Base
 
 	def require_login
 		unless logged_in?
-			flash[:warning] = "You must be logged in go there."
+			flash[:warning] = "You must be logged in to go there."
 			redirect_to login_path
+		end
+	end
+
+	def require_untrashed_user
+		if trashed_user?
+			flash[:warning] = "Your account is inactive.  You must visit your profile page to reactivate before continuing."
+			redirect_back fallback_location: current_user
 		end
 	end
 

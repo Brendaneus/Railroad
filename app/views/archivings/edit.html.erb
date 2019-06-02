@@ -1,3 +1,7 @@
+<%= render 'heading', title_prefix: 'Editing ' %>
+
 <%= render 'shared/error_messages', object: @archiving %>
+
+<%= render 'shared/timestamps', object: @archiving %>
 
 <%= render 'form', submit_text: "Update Archiving" %>

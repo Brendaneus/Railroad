@@ -1,71 +1,103 @@
-blogpost_one_image:
-  article: one (BlogPost)
-  local_id: 1
-  title: "Image One"
-  content: "Lorem Ipsum"
+<% archiving_numbers = ['one', 'two'] %>
+<% archiving_modifiers = ['trashed'] %>
+<% blog_numbers = ['one', 'two'] %>
+<% blog_modifiers = ['trashed', 'motd'] %>
+<% document_numbers = ['one', 'two', 'three'] %>
+<% document_modifiers = ['trashed'] %>
 
-blogpost_one_audio:
-  article: one (BlogPost)
-  local_id: 2
-  title: "Audoc One"
-  content: "Lorem Ipsum"
+<% id = 1 %>
+<% archiving_id = 1 %>
 
-blogpost_one_video:
-  article: one (BlogPost)
-  local_id: 3
-  title: "Vidoc One"
-  content: "Lorem Ipsum"
+<% archiving_modifier_states_sets = [true, false].repeated_permutation(archiving_modifiers.count).to_a %>
+<% archiving_modifier_states_sets.map! { |archiving_modifier_states| archiving_modifiers.zip(archiving_modifier_states).to_h } %>
+<% archiving_modifier_states_sets.reverse.each do |archiving_modifier_states| %>
 
-blogpost_two_image:
-  article: two (BlogPost)
-  local_id: 1
-  title: "Image One"
-  content: "Lorem Ipsum"
+  <% archiving_numbers.each do |archiving_number| %>
 
-blogpost_two_audio:
-  article: two (BlogPost)
-  local_id: 2
-  title: "Audoc One"
-  content: "Lorem Ipsum"
+    <% archiving_ref = "" %>
+    <% archiving_modifier_states.each do |archiving_modifier, state| %>
+      <% archiving_ref += (archiving_modifier + "_") if state %>
+    <% end %>
+    <% archiving_ref += "archiving_" + archiving_number %>
 
-blogpost_two_video:
-  article: two (BlogPost)
-  local_id: 3
-  title: "Vidoc One"
-  content: "Lorem Ipsum"
+    <% local_id = 1 %>
 
-archiving_one_image:
-  article: one (Archiving)
-  local_id: 1
-  title: "Image One"
-  content: "Lorem Ipsum"
+    <% document_modifier_states_sets = [true, false].repeated_permutation(document_modifiers.count).to_a %>
+    <% document_modifier_states_sets.map! { |document_modifier_states| document_modifiers.zip(document_modifier_states).to_h } %>
+    <% document_modifier_states_sets.reverse.each do |document_modifier_states| %>
 
-archiving_one_audio:
-  article: one (Archiving)
-  local_id: 2
-  title: "Audoc One"
-  content: "Lorem Ipsum"
+      <% document_numbers.each do |document_number| %>
 
-archiving_one_video:
-  article: one (Archiving)
-  local_id: 3
-  title: "Vidoc One"
-  content: "Lorem Ipsum"
+        <% document_ref = "" %>
+        <% document_modifier_states.each do |document_modifier, state| %>
+          <% document_ref += (document_modifier + "_") if state %>
+        <% end %>
+        <% document_ref += "document_" + document_number %>
 
-archiving_two_image:
-  article: two (Archiving)
-  local_id: 1
-  title: "Image One"
-  content: "Lorem Ipsum"
+<%= archiving_ref + '_' + document_ref %>:
+  id: <%= id %>
+  local_id: <%= local_id %>
+  article_type: 'Archiving'
+  article_id: <%= archiving_id %>
+  title: <%= (archiving_ref + '_' + document_ref).split('_').map(&:capitalize).join(' ') %>
+  content: "Lorem ipsum"
+  trashed: <%= document_modifier_states['trashed'] %>
 
-archiving_two_audio:
-  article: two (Archiving)
-  local_id: 2
-  title: "Audoc One"
-  content: "Lorem Ipsum"
+        <% local_id += 1 %>
+        <% id += 1 %>
+      <% end %>
 
-archiving_two_video:
-  article: two (Archiving)
-  local_id: 3
-  title: "Vidoc One"
-  content: "Lorem Ipsum"
+    <% end %>
+
+    <% archiving_id += 1 %>
+  <% end %>
+
+<% end %>
+
+<% blog_post_id = 1 %>
+
+<% blog_modifier_states_sets = [true, false].repeated_permutation(blog_modifiers.count).to_a %>
+<% blog_modifier_states_sets.map! { |blog_modifier_states| blog_modifiers.zip(blog_modifier_states).to_h } %>
+<% blog_modifier_states_sets.reverse.each do |blog_modifier_states| %>
+
+  <% blog_numbers.each do |blog_number| %>
+
+    <% blog_post_ref = "" %>
+    <% blog_modifier_states.each do |blog_modifier, state| %>
+      <% blog_post_ref += (blog_modifier + "_") if state %>
+    <% end %>
+    <% blog_post_ref += "blog_post_" + blog_number %>
+
+    <% local_id = 1 %>
+
+    <% document_modifier_states_sets = [true, false].repeated_permutation(document_modifiers.count).to_a %>
+    <% document_modifier_states_sets.map! { |document_modifier_states| document_modifiers.zip(document_modifier_states).to_h } %>
+    <% document_modifier_states_sets.reverse.each do |document_modifier_states| %>
+
+      <% document_numbers.each do |document_number| %>
+
+        <% document_ref = "" %>
+        <% document_modifier_states.each do |document_modifier, state| %>
+          <% document_ref += (document_modifier + "_") if state %>
+        <% end %>
+        <% document_ref += "document_" + document_number %>
+
+<%= blog_post_ref + '_' + document_ref %>:
+  id: <%= id %>
+  local_id: <%= local_id %>
+  article_type: 'BlogPost'
+  article_id: <%= blog_post_id %>
+  title: <%= (blog_post_ref + '_' + document_ref).split('_').map(&:capitalize).join(' ') %>
+  content: "Lorem ipsum"
+  trashed: <%= document_modifier_states['trashed'] %>
+
+        <% local_id += 1 %>
+        <% id += 1 %>
+      <% end %>
+
+    <% end %>
+
+    <% blog_post_id += 1 %>
+  <% end %>
+
+<% end %>

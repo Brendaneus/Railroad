@@ -48,6 +48,9 @@ nav {
 	&.sticky {
 		border: medium solid orange;
 	}
+	&.trashed {
+		background: #ddd;
+	}
 }
 
 
@@ -65,23 +68,9 @@ form {
 	}
 }
 
-/* Blog & Post Control */
+/* Model Control */
 
-.post_control {
-	display: inline-block;
-	padding: 5px;
-	border: thin solid blue;
-	background-color: #eef;
-	&.admin {
-		border: thin solid red;
-		background-color: #fee;
-	}
-}
-
-
-/* Account Control */
-
-.account_control {
+.control {
 	display: inline-block;
 	padding: 5px;
 	border: thin solid blue;
