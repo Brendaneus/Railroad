@@ -1,5 +1,7 @@
-<div class="<%= container_class(user) %>">
-	<h2><%= link_to user.name, user %></h2>
+<%= link_to user, class: container_class(user) do %>
+	<%= render 'avatar', user: user, size: :thumb %>
+
+	<h2><%= user.name %></h2>
 
 	<%= render 'shared/timestamps', object: user, create_alias: "Joined" %>
-</div>
+<% end %>

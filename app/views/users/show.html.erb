@@ -15,6 +15,10 @@
 <main>
 	<%= render 'heading' %>
 
+	<%= render 'avatar', user: @user %>
+
+	<p><%= simple_format @user.bio %></p>
+
 	<%= render 'shared/timestamps', object: @user %>
 
 	<% if @user.forum_posts.any? %>

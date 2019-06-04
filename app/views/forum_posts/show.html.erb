@@ -16,8 +16,10 @@
 	<%= render 'heading' %>
 
 	<p><%= simple_format @forum_post.content %></p>
+	
+	<%= render 'shared/details', object: @forum_post %>
 
-	<%= render 'shared/timestamps', object: @forum_post %>
+	<%= render 'shared/timestamps', object: @forum_post, owned: true %>
 
 	<%= render 'comments/form', comment: @new_comment, form_url: forum_post_comments_path(@forum_post) %>
 

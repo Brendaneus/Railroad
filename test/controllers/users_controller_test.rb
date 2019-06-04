@@ -111,7 +111,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 			assert_redirected_to users_url
 		end
 
-		# User
+		# Non-Admin
 		loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |logged_user|
 			login_as logged_user
 
@@ -163,7 +163,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 			logout
 		end
 
-		# User
+		# Admin
 		loop_users( user_modifiers: {'trashed' => nil, 'admin' => true} ) do |logged_user|
 			login_as logged_user
 

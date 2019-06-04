@@ -1,27 +1,48 @@
-<% if @document.upload.attached? %>
+<% size ||= nil %>
 
-	<% if @document.upload.image? %>
+<% if document.upload.attached? %>
 
-		<%= image_tag url_for(@document.upload) %>
+	<% if document.upload.image? %>
 
-	<% elsif @document.upload.audio? %>
+		<% if size == :thumb %>
+			<%= image_tag document.upload.variant(resize: "60x60"), class: "upload thumb" %>
+		<% else %>
+			<%= image_tag url_for(document.upload), class: "upload" %>
+		<% end %>
 
-		<%= audeo_tag url_for(@document.upload), controls: true %>
+	<% elsif document.upload.audio? %>
 
-	<% elsif @document.upload.video? %>
+		<% if size == :thumb %>
+			<%= image_tag "document_audio_thumb.png", class: "upload thumb" %>
+		<% else %>
+			<%= audio_tag url_for(document.upload), controls: true, class: "upload" %>
+		<% end %>
 
-		<%= video_tag url_for(@document.upload), controls: true %>
+	<% elsif document.upload.video? %>
+
+		<% if size == :thumb %>
+			<%= image_tag "document_video_thumb.png", class: "upload thumb" %>
+			<%#= image_tag document.upload.preview(resize: "60x60"), class: "upload thumb" %>
+		<% else %>
+			<%= video_tag url_for(document.upload), controls: true, class: "upload" %>
+		<% end %>
 
 	<% else %>
 
-		<p>file detected: Unknown Filetype</p>
-
-		<%= link_to url_for(@document.upload) %>
+		<% if size == :thumb %>
+			<%= image_tag "document_unknown_thumb.png", class: "upload thumb" %>
+		<% else %>
+			<%= link_to url_for(document.upload), "File detected: Unknown Filetype", class: "upload" %>
+		<% end %>
 
 	<% end %>
 
 <% else %>
 
-	<p>This document is missing its attachment.</p>
+	<% if size == :thumb %>
+		<%= image_tag "document_missing_thumb.png", class: "upload thumb" %>
+	<% else %>
+		<p>This document is missing its attachment.</p>
+	<% end %>
 
 <% end %>

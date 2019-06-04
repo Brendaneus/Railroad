@@ -1,11 +1,9 @@
-<div class="<%= container_class(archiving) %>">
-	<h2><%= link_to archiving.title, archiving %></h2>
+<%= link_to archiving, class: container_class(archiving) do %>
+	<%= render archiving.documents, size: :thumb %>
 
-	<% if archiving.documents.any? %>
-		
-		<%= tag.h4 (archiving.documents.length).to_s + " Document".pluralize(archiving.documents.length), class: 'subtle' %>
+	<h2><%= archiving.title %></h2>
 
-	<% end %>
+	<%= render 'shared/details', object: archiving %>
 
 	<%= render 'shared/timestamps', object: archiving %>
-</div>
+<% end %>

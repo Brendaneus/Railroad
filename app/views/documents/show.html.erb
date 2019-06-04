@@ -14,7 +14,7 @@
 
 <%= render 'heading' %>
 
-<%= render 'upload' %>
+<%= render 'upload', document: @document %>
 
 <p><%= simple_format @document.content if @document.content.present? %></p>
 

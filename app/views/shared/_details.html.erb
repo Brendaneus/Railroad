@@ -1,0 +1,17 @@
+<% if ( [Archiving, BlogPost].include?(object.class) && object.documents.any? ) || ( [BlogPost, ForumPost].include?(object.class) && object.comments.any? ) %>
+	
+	<h4 class="subtle right">
+		<% if [Archiving, BlogPost].include?(object.class) && object.documents.any? %>
+			
+			<%= (object.documents.length).to_s + " Document".pluralize(object.documents.length) %>
+
+		<% end %>
+
+		<% if [BlogPost, ForumPost].include?(object.class) && object.comments.any? %>
+			
+			<%= (object.comments.length).to_s + " Comment".pluralize(object.comments.length) %>
+
+		<% end %>
+	</h4>
+
+<% end %>

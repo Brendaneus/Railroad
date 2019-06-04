@@ -1,11 +1,9 @@
-<div class="<%= container_class(forum_post) %>">
-	<h2><%= link_to forum_post.title, forum_post %></h2>
+<%= link_to forum_post, class: container_class(forum_post) do %>
+	<%#= render 'users/avatar', user: forum_post.user, size: :thumb %>
 
-	<% if forum_post.comments.any? %>
-	 	
-	 	<%= tag.h4 (forum_post.comments.length).to_s + " Comment".pluralize(forum_post.comments.length), class: 'subtle' %>
+	<h2><%= forum_post.title %></h2>
 
-	 <% end %>
+	<%= render 'shared/details', object: forum_post %>
 
 	<%= render 'shared/timestamps', object: forum_post, owned: true %>
-</div>
+<% end %>

@@ -1,0 +1,33 @@
+<% size ||= nil %>
+
+<% if user.nil? %>
+
+	<% if size == :icon %>
+			<%= link_to image_tag("guest_avatar_icon.png"), user, class: "avatar" %>
+	<% elsif size == :thumb %>
+			<%= image_tag "guest_avatar_thumb.png", class: "avatar" %>
+	<% else %>
+			<%= image_tag "guest_avatar.png", class: "avatar" %>
+	<% end %>
+
+<% elsif user.avatar.attached? %>
+
+	<% if size == :icon %>
+			<%= link_to image_tag( user.avatar.variant(resize: "30x30") ), user, class: "avatar" %>
+	<% elsif size == :thumb %>
+			<%= image_tag user.avatar.variant(resize: "60x60"), class: "avatar" %>
+	<% else %>
+			<%= image_tag url_for(user.avatar), class: "avatar" %>
+	<% end %>
+
+<% else %>
+
+	<% if size == :icon %>
+			<%= link_to image_tag("default_avatar_icon.png"), user, class: "avatar" %>
+	<% elsif size == :thumb %>
+			<%= image_tag "default_avatar_thumb.png", class: "avatar" %>
+	<% else %>
+			<%= image_tag "default_avatar.png", class: "avatar" %>
+	<% end %>
+
+<% end %>

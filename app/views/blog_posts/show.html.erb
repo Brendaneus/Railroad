@@ -19,6 +19,8 @@
 
 	<p><%= simple_format @blog_post.content %></p>
 
+	<%= render 'shared/details', object: @blog_post %>
+
 	<%= render 'shared/timestamps', object: @blog_post %>
 
 	<%= render @documents %>

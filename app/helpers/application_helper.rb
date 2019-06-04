@@ -3,6 +3,21 @@ module ApplicationHelper
 	include DebugHelper
 	include SessionsHelper
 
+	def s3_service
+		service = ActiveStorage::Blob.service
+		return unless service.class.to_s == 'ActiveStorage::Service::S3Service'
+
+		service
+	end
+
+	def set_document_bucket
+		s3_service.set_bucket Rails.application.credentials.dig(Rails.env.to_sym, :aws, :bucket, :documents)
+	end
+
+	def set_avatar_bucket
+		s3_service.set_bucket Rails.application.credentials.dig(Rails.env.to_sym, :aws, :bucket, :avatars)
+	end
+
 	def container_class(object)
 		class_attr = ""
 

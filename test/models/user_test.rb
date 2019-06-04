@@ -150,6 +150,17 @@ class UserTest < ActiveSupport::TestCase
 		end
 	end
 
+	test "should validate bio length [if present] (maximum: 2048)" do
+		@users['user_one'].bio = "X"
+		assert @users['user_one'].valid?
+
+		@users['user_one'].bio = "X" * 2048
+		assert @users['user_one'].valid?
+
+		@users['user_one'].bio = "X" * 2049
+		assert_not @users['user_one'].valid?
+	end
+
 	test "should default trashed as false" do
 		@users['new_user'] = User.create!(name: "New User", email: "new_user@example.org", password: "secret", password_confirmation: "secret")
 		assert_not @users['new_user'].trashed?

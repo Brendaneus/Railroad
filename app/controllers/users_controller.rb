@@ -6,6 +6,7 @@ class UsersController < ApplicationController
 	before_action :require_admin, only: [:trashed, :destroy]
 	before_action :require_untrashed_user, only: [:destroy]
 	before_action :require_admin_for_trashed, only: :show
+	before_action :set_avatar_bucket, unless: -> { Rails.env.test? }
 
 	def index
 		@users = User.non_trashed.order( admin: :desc )
@@ -44,6 +45,7 @@ class UsersController < ApplicationController
 
 	def update
 		@user = User.find( params[:id] )
+		@user.avatar.purge if params[:purge_avatar] || ( params[:user][:avatar] && @user.avatar.attached? )
 		if @user.update( user_params )
 			flash[:success] = "The account changes have been saved."
 			redirect_to @user
@@ -95,7 +97,7 @@ class UsersController < ApplicationController
 	private
 
 		def user_params
-			params.require(:user).permit( :name, :email, :password, :password_confirmation )
+			params.require(:user).permit( :name, :email, :password, :password_confirmation, :avatar )
 		end
 
 		def require_authorize
@@ -111,5 +113,5 @@ class UsersController < ApplicationController
 				redirect_back fallback_location: users_path
 			end
 		end
-		
+
 end

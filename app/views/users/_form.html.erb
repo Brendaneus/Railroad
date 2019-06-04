@@ -21,11 +21,34 @@
 	</div>
 
 	<% unless @user.persisted? %>
+
 		<div class="check_box">
 			<%= f.label :remember, "Remember on login?" %>
 			<%= f.check_box :remember %>
 		</div>
+
 	<% end %>
+
+	<div>
+		<%= f.label :avatar %>
+		<%= f.file_field :avatar, direct_upload: true,accept: 'image/png,image/gif,image/jpeg' %>
+	</div>
+
+	<%= render 'avatar', user: @user if @user.persisted? %>
+
+	<% if @user.avatar.attached? %>
+
+		<div class="check_box">
+			<%= label_tag :purge_avatar %>
+			<%= check_box_tag :purge_avatar %>
+		</div>
+
+	<% end %>
+
+	<div>
+		<%= f.label :bio %>
+		<%= f.text_area :bio %>
+	</div>
 
 	<%= f.submit submit_text, class: 'submit' %>
 

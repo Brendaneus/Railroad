@@ -6,6 +6,7 @@ class DocumentsController < ApplicationController
 	before_action :require_untrashed_user, except: [:index, :trashed, :show]
 	before_action :set_article
 	before_action :require_admin_for_trashed, only: :show
+	before_action :set_document_bucket, unless: -> { Rails.env.test? }
 
 	def show
 		set_article
@@ -19,7 +20,6 @@ class DocumentsController < ApplicationController
 
 	def create
 		set_article
-		@document.upload.purge if params[:purge_upload]
 		@document = @article.documents.build(document_params)
 		if @document.save
 			flash[:success] = "The document has been successfully created."
@@ -38,7 +38,7 @@ class DocumentsController < ApplicationController
 	def update
 		set_article
 		@document = Document.find( params[:id] )
-		@document.upload.purge if ( params[:document][:upload] && @document.upload.attached? )
+		@document.upload.purge if params[:purge_upload] || ( params[:document][:upload] && @document.upload.attached? )
 		if @document.update_attributes(document_params)
 			flash[:success] = "The document has been successfully updated."
 			redirect_to article_document_path(@article, @document)

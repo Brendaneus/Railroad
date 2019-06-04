@@ -1,5 +1,5 @@
 <h4 class="subtle">
-	<%= ( (create_alias ||= nil) || "Posted" ) + ( (owned ||= nil) ? " by " : "" ) %><% safe_user_link_to(object.user) if owned %> on <%= object.created_at.to_date %>.
+	<%= ( (create_alias ||= nil) || "Posted" ) + ( (owned ||= nil) ? " by #{object.user.name}" : "" ) %> on <%= object.created_at.to_date %>.
 	
 	<% if object.edited? %>
 

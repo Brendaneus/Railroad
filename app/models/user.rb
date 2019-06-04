@@ -12,6 +12,7 @@ class User < ApplicationRecord
 									 through: :comments,
 									 source: :post,
 									 source_type: 'ForumPost'
+	has_one_attached :avatar
 
 	scope :trashed, -> { User.where(trashed: true) }
 	scope :non_trashed, -> { User.where(trashed: false) }
@@ -25,6 +26,8 @@ class User < ApplicationRecord
 					  format: { with: VALID_EMAIL_REGEX }
 	has_secure_password
 	validate :none_or_both_passwords, on: [:create, :update]
+	validate -> { bio_length_if_present(maximum: 2048) }
+	validates :avatar, content_type: ["image/png", "image/jpeg", "image/gif"]
 
 
 	def self.new_token
@@ -43,7 +46,8 @@ class User < ApplicationRecord
 		unless new_record?
 			update_attribute( :remember_digest, remember_digest )
 		end
-		# puts "digest in model: #{remember_digest} "
+
+		return remember_token
 	end
 
 	def forget
@@ -59,7 +63,8 @@ class User < ApplicationRecord
 	def authenticates? attribute, token
 		digest = send("#{attribute}_digest")
 		return false if digest.nil?
-		User.digest(token) == digest
+		BCrypt::Password.new(digest)
+		BCrypt::Password.new(digest).is_password?(token)
 	end
 
 	def edited?
@@ -72,6 +77,17 @@ class User < ApplicationRecord
 		def none_or_both_passwords
 			if password.present? && password_confirmation.nil?
 				errors.add(:password_confirmation, "must be present to confirm password")
+			end
+		end
+
+		def bio_length_if_present(maximum: nil, minimum: nil)
+			if bio.present?
+				if maximum && bio.length > maximum
+					errors.add(:bio, "must not exceed #{maximum} characters")
+				end
+				if minimum && bio.length > minimum
+					errors.add(:bio, "must be at least #{minimum} characters")
+				end
 			end
 		end
 	

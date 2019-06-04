@@ -19,6 +19,8 @@
 
 	<p><%= simple_format @archiving.content %></p>
 
+	<%= render 'shared/details', object: @archiving %>
+
 	<%= render 'shared/timestamps', object: @archiving %>
 
 	<%= render @documents %>

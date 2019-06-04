@@ -1,15 +1,15 @@
-<% if @blog_recents.any? %>
+<% if @blog_posts.any? %>
 	
 	<h1>Recent on the Blog</h1>
 
-	<%= (render partial: 'blog_posts/blog_post', collection: @blog_recents) if @blog_recents.any? %>
+	<%= render @blog_posts if @blog_posts.any? %>
 
 <% end %>
 
-<% if @forum_recents.any? %>
+<% if @forum_posts.any? %>
 	
 	<h1>Recent on the Forums</h1>
 
-	<%= (render partial: 'forum_posts/forum_post', collection: @forum_recents) if @forum_recents.any? %>
+	<%= render @forum_posts if @forum_posts.any? %>
 
 <% end %>

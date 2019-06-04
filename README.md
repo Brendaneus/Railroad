@@ -4,30 +4,6 @@
 
 
 - [x] **Trash Can Update**
-	- [x] Add a 'Trash Can' archive for all deleted posts, comments, accounts (?), instead of just destroying the database entry ( just add an attribute )
-	- [x] Trash feature visibility
-		- [x] Archivings
-		- [x] BlogPosts
-		- [x] ForumPosts
-			- [x] Owner link (?)
-		- [x] Documents
-		- [x] Comments
-			- [ ] Owner link (?)
-		- [x] Users
-	- [x] Test for not changing update_at on trash/untrash action
-		- Against otherwise changing when other actions perform updates
-		- [x] Archivings
-		- [x] BlogPosts
-		- [x] ForumPosts
-		- [x] Documents
-		- [x] Comments
-		- [x] Users
-	- [x] Test filtering non-authorized from trashed contents
-		- [x] Archivings
-		- [x] BlogPosts
-		- [x] ForumPosts
-		- [x] Documents
-		- [x] Users
 	- [ ] Trash All Action for Users (???)
 
 - [ ] **Users Update**
@@ -35,8 +11,26 @@
 	- Includes user_id, remember_token, and session_name
 		- [ ] Controller
 		- [ ] Views
-	- [ ] Add avatars
-	- [ ] Add bio section
+			- [ ] Document previews
+				- [ ] Video Preview
+				- [x] Dashboard
+				- [x] Archivings
+				- [x] BlogPosts
+			- [ ] Users
+				- [x] Index
+					- [x] Avatar
+				- [ ] Show
+					- [x] Avatar
+					- [x] Bio
+					- [ ] Sessions
+	- NOT POSSIBLE: In-view bucket-switching
+	- CANNED: NavBar User Icon
+	- [ ] **Future Update:**
+		- [ ] Add custom crop editing
+
+- [ ] Add sample files to fixtures
+
+- [ ] Mirror upload database
 
 - [ ] **Suggests Update**
 
@@ -45,16 +39,26 @@
 	- [ ] Add User Trashed tab support
 	- [ ] Add Comment and Document Indexes and Trashed Tabs
 
+- [ ] **Forums Update**
+	- [ ] Add markup support to all content
+		- [ ] ...with preview tab
+	- [ ] Add Multiple Attachment support
+
 - [ ] Change redirects in before_filters
 
 - [ ] Add Guest-Mode option to layout
 
-- [ ] Add markup support to all content
-	- [ ] ...with preview tab
 
 - [ ] Add pagination
 
 - [ ] **6.0 Release:**  Move old upload purging to _callback stack_(???) for document updates and deletes
+	- [ ] **6.1 Release:**
+		- [ ] Replace multi-bucket hack with ActiveStorage native support
+			- [ ] Avatar persistence + navbar
+		- [ ] Documents -- uploads
+		- [ ] Users -- avatars
+		- Remove initializer
+		- Remove ApplicationController method
 
 - [ ] Clean up tests
 	- [ ] Speed up all tests
@@ -112,6 +116,7 @@
 			- [ ] DRY/Speed-Up/Clean in a second pass
 		- [ ] Controller - 00:00:12
 			- [ ] DRY/Speed-Up/Clean in a second pass
+	- [ ] Fix Login/Logout Testing
 
 - [ ] Fix Session Testing (remembered check)
 

@@ -1,5 +1,7 @@
 <div class="<%= container_class(comment) %>">
 
+	<%#= render 'users/avatar', user: comment.user, size: :icon %>
+
 	<h4>
 		<%= safe_user_link_to(comment.user) %> wrote:
 	</h4>

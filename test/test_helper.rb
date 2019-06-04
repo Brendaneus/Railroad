@@ -36,7 +36,7 @@ class ActiveSupport::TestCase
 	end
 
 	def remembered?
-		if ( user_id = decode_cookie(:user_id) )
+		if user_id = decode_cookie(:user_id)
 			user = User.find(user_id)
 			if ( remember_token = decode_cookie(:remember_token) )
 				user.authenticates? :remember, remember_token
@@ -45,11 +45,12 @@ class ActiveSupport::TestCase
 	end
 
 	def decode_cookie key
-		if ( cookie = cookies[key] )
+		if ( cookie = cookies[key] ).present?
 			Base64.decode64( cookies[key].split('--').first ).chomp('"').reverse.chomp('"').reverse
 		end
 	end
 
+	# URL AND PATH HELPERS
 
 	def article_url(article)
 		if article.class == BlogPost

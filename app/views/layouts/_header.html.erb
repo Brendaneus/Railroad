@@ -16,9 +16,11 @@
 	<div class="status_control">
 		<% if logged_in? %>
 		
+			<%= link_to "Log out", logout_path, method: :delete %>
+
 			<%= link_to current_user.name, user_path( current_user ), class: "account_link" %>
 
-			<%= link_to "Log out", logout_path, method: :delete %>
+			<%#= render 'users/avatar', user: current_user, size: :icon, link: true %>
 		
 		<% else %>
 		

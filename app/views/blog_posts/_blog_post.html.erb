@@ -1,23 +1,9 @@
-<div class="<%= container_class(blog_post) %>">
-	<h2><%= link_to blog_post.title, blog_post %></h2>
+<%= link_to blog_post, class: container_class(blog_post) do %>
+	<%= render blog_post.documents, size: :thumb %>
 
-	<% if blog_post.subtitle %>
+	<h2><%= blog_post.title %></h2>
 
-		<h3><%= blog_post.subtitle %></h3>
-
-	<% end %>
-	
-	<% if blog_post.documents.any? %>
-	 	
-	 	<%= tag.h4 (blog_post.documents.length).to_s + " Document".pluralize(blog_post.documents.length), class: 'subtle' %>
-
-	 <% end %>
-
-	<% if blog_post.comments.any? %>
-	 	
-	 	<%= tag.h4 (blog_post.comments.length).to_s + " Comment".pluralize(blog_post.comments.length), class: 'subtle' %>
-
-	 <% end %>
+	<%= render 'shared/details', object: blog_post %>
 
 	<%= render 'shared/timestamps', object: blog_post %>
-</div>
+<% end %>

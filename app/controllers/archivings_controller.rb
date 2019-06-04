@@ -3,6 +3,7 @@ class ArchivingsController < ApplicationController
 	before_action :require_admin, except: [:index, :show]
 	before_action :require_untrashed_user, except: [:index, :show, :trashed]
 	before_action :require_admin_for_trashed, only: :show
+	before_action :set_document_bucket, unless: -> { Rails.env.test? }
 
 	def index
 		@archivings = Archiving.non_trashed.includes(:documents)

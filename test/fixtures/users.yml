@@ -20,6 +20,7 @@
   name: <%= user_ref.split("_").map(&:capitalize).join(" ") %>
   email: <%= user_ref + "@example.com" %>
   password_digest: <%= User.digest('password') %>
+  bio: <%= "Hi, my name is " + user_ref.split("_").map(&:capitalize).join(" ") %>
   admin: <%= user_modifier_states['admin'] %>
   trashed: <%= user_modifier_states['trashed'] %>
 

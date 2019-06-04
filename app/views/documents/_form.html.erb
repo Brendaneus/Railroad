@@ -5,7 +5,16 @@
 		<%= f.text_field :title %>
 	</div>
 
-	<%= render 'upload' if @document.persisted? %>
+	<%= render 'upload', document: @document if @document.persisted? %>
+
+	<% if @document.upload.attached? %>
+
+		<div class="check_box">
+			<%= label_tag :purge_upload %>
+			<%= check_box_tag :purge_upload %>
+		</div>
+
+	<% end %>
 
 	<div>
 		<%= f.label :upload %>

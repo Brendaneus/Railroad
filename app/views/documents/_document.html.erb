@@ -1,33 +1,17 @@
-<div class="<%= container_class(document) %>">
-	
-	<h2><%= link_to document.title, article_document_path( document.article, document ) %></h2>
-	
-	<% if document.upload.attached? %>
+<% unless (size ||= nil) %>
 
-		<% if document.upload.image? %>
+	<%= link_to article_document_path(document.article, document), class: container_class(document) do %>
+			
+		<h2><%= document.title %></h2>
+		
+		<%= render 'documents/upload', document: document %>
 
-			<%= image_tag url_for(document.upload) %>
-
-		<% elsif document.upload.audio? %>
-
-			<%= audeo_tag url_for(document.upload), controls: true %>
-
-		<% elsif document.upload.video? %>
-
-			<%= video_tag url_for(document.upload), controls: true %>
-
-		<% else %>
-
-			<%= link_to "File Detected: Unknown Filetype", url_for(document.upload) %>
-
-		<% end %>
-
-	<% else %>
-
-		<p>This document is missing its attachment.</p>
+		<%= render 'shared/timestamps', object: document %>
 
 	<% end %>
 
-	<%= render 'shared/timestamps', object: document %>
+<% else %>
+
+	<%= render 'documents/upload', document: document, size: size %>
 	
-</div>
+<% end %>
