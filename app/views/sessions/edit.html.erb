@@ -1,3 +1,5 @@
 <%= render 'shared/error_messages', object: @session %>
 
 <%= render 'form', form_path: user_session_path(@user, @session), submit_text: "Update Session" %>
+
+<%= render 'shared/timestamps', object: @session, create_alias: "Created" %>

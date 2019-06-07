@@ -6,6 +6,7 @@ class SessionsController < ApplicationController
 	before_action :require_authorize_or_admin, only: [:index, :show]
 	before_action :require_authorize_or_untrashed_admin, only: [:edit, :update, :destroy]
 	before_action :set_user, except: [:new_login, :login, :logout]
+	after_action :mark_activity, only: [:login, :create, :update, :destroy], if: :logged_in?
 
 	def index
 		@sessions = @user.sessions
@@ -38,9 +39,9 @@ class SessionsController < ApplicationController
 
 	def update
 		@session = Session.find( params[:id] )
+		@session.ip = request.remote_ip if params[:save_ip]
+		@session.ip = nil if params[:remove_ip]
 		if @session.update(session_params)
-			@session.ip = request.remote_ip if params[:save_ip]
-			@session.ip = nil if params[:remove_ip]
 			flash[:success] = "Your session has been successfully updated."
 			redirect_to user_session_path(@user, @session)
 		else
@@ -76,6 +77,7 @@ class SessionsController < ApplicationController
 				if @session.save
 					if remembered?
 						if current_session.destroy
+							@current_session = nil
 							flash[:alert] = "Your old session has been removed."
 						else
 							flash[:warning] = "There was a problem removing your old session."

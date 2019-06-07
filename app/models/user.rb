@@ -1,6 +1,7 @@
 class User < ApplicationRecord
 
 	include Digestable
+	include Editable
 
 	attr_accessor :remember_token
 
@@ -35,10 +36,6 @@ class User < ApplicationRecord
 
 	def authorized? ( user )
 		self == user || admin?
-	end
-
-	def edited?
-		updated_at != created_at
 	end
 
 

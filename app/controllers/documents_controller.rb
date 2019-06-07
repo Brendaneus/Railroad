@@ -7,6 +7,7 @@ class DocumentsController < ApplicationController
 	before_action :set_article
 	before_action :require_admin_for_trashed, only: :show
 	before_action :set_document_bucket, unless: -> { Rails.env.test? }
+	after_action :mark_activity, only: [:trash, :untrash, :create, :update, :destroy], if: :logged_in?
 
 	def show
 		set_article

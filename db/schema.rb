@@ -93,6 +93,9 @@ ActiveRecord::Schema.define(version: 2019_06_05_132831) do
     t.string "name"
     t.string "ip"
     t.string "remember_digest"
+    t.datetime "last_active"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
@@ -105,6 +108,7 @@ ActiveRecord::Schema.define(version: 2019_06_05_132831) do
     t.datetime "updated_at", null: false
     t.boolean "trashed", default: false
     t.text "bio"
+    t.datetime "last_active"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"

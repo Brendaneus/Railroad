@@ -5,8 +5,11 @@ class CreateSessions < ActiveRecord::Migration[6.0]
       t.string :name
       t.string :ip
       t.string :remember_digest
+      t.timestamp :last_active
+      t.timestamps
     end
 
-    remove_column :users, :remember_digest
+    remove_column :users, :remember_digest, :string
+    add_column :users, :last_active, :timestamp
   end
 end

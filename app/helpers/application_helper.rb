@@ -22,10 +22,10 @@ module ApplicationHelper
 		class_attr = ""
 
 		class_attr += "trashed " if (object.class != Session) && object.trashed?
+		class_attr += "admin " if object.respond_to?(:admin?) && object.admin?
 
 		if (object.class == ForumPost) || (object.class == BlogPost)
 			if object.class == ForumPost
-				class_attr += "admin " if object.admin?
 				class_attr += "sticky " if object.sticky?
 			end
 			class_attr += "motd " if object.motd?
@@ -33,6 +33,10 @@ module ApplicationHelper
 
 		if (object.class == ForumPost) || (object.class == Comment)
 			class_attr += "owned " if object.owned_by? current_user
+		end
+
+		if ( (object.class == User) && logged_in_as?(object) ) || ( (object.class == Session) && remembered_as?(object) )
+			class_attr += "current "
 		end
 
 		class_attr += "container"

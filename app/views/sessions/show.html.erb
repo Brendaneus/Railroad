@@ -11,3 +11,5 @@
 <h2><%= link_to @user.name.possessive, @user %> <%= link_to "Sessions:", user_sessions_path(@user) %> <%= @session.name %></h2>
 
 <%= tag.h3 "Last IP Connected: " + @session.ip if @session.ip.present? %>
+
+<%= render 'shared/timestamps', object: @session, activity: true %>

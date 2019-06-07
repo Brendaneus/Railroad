@@ -17,7 +17,7 @@
 
 	<p><%= simple_format @forum_post.content %></p>
 	
-	<%= render 'shared/details', object: @forum_post %>
+	<%= render 'shared/details', object: @forum_post, new_comment: true %>
 
 	<%= render 'shared/timestamps', object: @forum_post, owned: true %>
 

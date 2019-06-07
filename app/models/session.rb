@@ -1,6 +1,7 @@
 class Session < ApplicationRecord
 
 	include Digestable
+	include Editable
 
 	attr_accessor :remember_token
 

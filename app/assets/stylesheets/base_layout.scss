@@ -102,6 +102,9 @@ nav {
 			background: #222;
 		}
 	}
+	&.current {
+		border: thick solid skyblue;
+	}
 }
 
 

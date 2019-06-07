@@ -1,5 +1,8 @@
 class ForumPost < ApplicationRecord
 
+	include Editable
+	include Ownable
+
 	belongs_to :user, optional: true
 	has_many :comments, as: :post, dependent: :destroy
 	has_many :commenters, -> { distinct },
@@ -17,22 +20,6 @@ class ForumPost < ApplicationRecord
 	validates :content, presence: true,
 						length: { maximum: 4096 }
 	validate :has_user, on: :create
-
-	def owned_by? some_user
-		user && user == some_user
-	end
-
-	def admin?
-		user && user.admin?
-	end
-
-	def edited?
-		self.created_at != self.updated_at
-	end
-
-	def owner_trashed?
-		user.trashed?
-	end
 
 
 	private

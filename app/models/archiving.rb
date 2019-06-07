@@ -1,5 +1,7 @@
 class Archiving < ApplicationRecord
 	
+	include Editable
+	
 	has_many :documents, as: :article, dependent: :destroy
 
 	scope :trashed, -> { where(trashed: true) }
@@ -11,9 +13,5 @@ class Archiving < ApplicationRecord
 	validates :content, presence: true,
 						length: { maximum: 4096 }
 
-
-	def edited?
-		self.created_at != self.updated_at
-	end
 
 end

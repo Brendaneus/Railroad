@@ -1,5 +1,7 @@
 class Document < ApplicationRecord
 
+	include Editable
+	
 	belongs_to :article, polymorphic: true
 	has_one_attached :upload
 
@@ -16,14 +18,6 @@ class Document < ApplicationRecord
 
 	before_create :auto_increment_local_id
 
-
-	def edited?
-		self.created_at != self.updated_at
-	end
-
-	def trashed?
-		trashed
-	end
 
 	def article_trashed?
 		article.trashed?

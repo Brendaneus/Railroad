@@ -1,5 +1,8 @@
 class Comment < ApplicationRecord
 
+	include Editable
+	include Ownable
+	
 	belongs_to :post, polymorphic: true
 	belongs_to :user, optional: true
 
@@ -10,17 +13,6 @@ class Comment < ApplicationRecord
 	validates :content, presence: true,
 						length: { maximum: 512 }
 
-	def owned_by? some_user
-		!user.nil? && ( user == some_user )
-	end
-
-	def admin?
-		user && user.admin?
-	end
-
-	def owner_trashed?
-		user.trashed?
-	end
 
 	def post_trashed?
 		post.trashed?
@@ -32,10 +24,6 @@ class Comment < ApplicationRecord
 
 	def owner_or_post_trashed?
 		user_trashed? || post_trashed?
-	end
-
-	def edited?
-		updated_at != created_at
 	end
 
 end

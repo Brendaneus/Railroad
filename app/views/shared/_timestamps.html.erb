@@ -1,13 +1,26 @@
 <h4 class="subtle">
-	<%= ( (create_alias ||= nil) || "Posted" ) + ( (owned ||= nil) ? " by #{object.user.name}" : "" ) %> on <%= object.created_at.to_date %>.
-	
-	<% if object.edited? %>
+	<% if (activity ||= nil) %>
 
-		Last edited on <%= object.updated_at.to_date %>.
+		Last active: <%= (object.last_active.present?) ? object.last_active.to_datetime.to_formatted_s(:long_ordinal) : "Never" %>
+
+	<% else %>
+			
+		<%= ( (create_alias ||= nil) || "Posted" ) + ( (owned ||= nil) ? " by #{object.user.name}" : "" ) %>
+		on
+
+		<%= (date_time ||= nil) ? object.created_at.to_datetime.to_formatted_s(:long_ordinal) : object.created_at.to_date %>.
+		
+		<% if object.edited? %>
+
+			Last <%= (edit_alias ||= nil) || "edited" %>
+			on
+			<%= (date_time ||= nil) ? object.updated_at.to_datetime.to_formatted_s(:long_ordinal) : object.updated_at.to_date %>.
+
+		<% end %>
 
 	<% end %>
 
-	<% if object.trashed? %>
+	<% if (object.class != Session) && object.trashed? %>
 
 		Currently trashed.
 

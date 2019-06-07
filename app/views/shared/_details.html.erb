@@ -7,9 +7,9 @@
 
 		<% end %>
 
-		<% if [BlogPost, ForumPost].include?(object.class) && object.comments.any? %>
-			
-			<%= (object.comments.length).to_s + " Comment".pluralize(object.comments.length) %>
+		<% if [BlogPost, ForumPost].include?(object.class) && object.comments.any?(&:persisted?) %>
+
+			<%= ( object.comments.length - ((new_comment ||= nil) ? 1 : 0 ) ).to_s + " Comment".pluralize(object.comments.length) %>
 
 		<% end %>
 	</h4>

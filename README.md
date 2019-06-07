@@ -12,6 +12,7 @@
 	- [ ] DELAYED: In-view bucket-switching
 	- [ ] **Future Update:**
 		- [ ] Add custom crop editing
+	- [ ] **Add helper tests (auto-logs, etc?)**
 
 - [ ] **Suggests Update**
 	- [ ] Archives
@@ -39,7 +40,8 @@
 			- [ ] New
 			- [ ] Edit
 
-- [ ] Uniformalize all icons
+- [ ] Put redundant model code into concerns
+	- Posts' titles and content
 
 - [ ] Add sample files to fixtures
 
@@ -62,9 +64,6 @@
 - [ ] Change redirects in before_filters
 
 - [ ] Add Guest-Mode option to layout
-
-- [ ] Put redundant model code into concerns
-	- Posts' titles and content
 
 - [ ] Add pagination
 
@@ -220,6 +219,7 @@
 	- [x] Model
 		- [ ] Add Token & Digest support
 	- [x] Controller
+		- [ ] Add helper tests (auto-logs, etc?)
 
 - [x] **index**
 - [x] **show**

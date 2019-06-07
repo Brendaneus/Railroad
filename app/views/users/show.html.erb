@@ -25,7 +25,7 @@
 
 	<p><%= simple_format @user.bio %></p>
 
-	<%= render 'shared/timestamps', object: @user %>
+	<%= render 'shared/timestamps', object: @user, activity: true %>
 
 	<% if @user.forum_posts.any? %>
 

@@ -85,4 +85,11 @@ class SessionTest < ActiveSupport::TestCase
 		raise "TODO"
 	end
 
+	test "should check if edited" do
+		assert_not @sessions['user_one']['session_one'].edited?
+
+		@sessions['user_one']['session_one'].update(name: "Changed name")
+		assert @sessions['user_one']['session_one'].edited?
+	end
+
 end

@@ -6,6 +6,7 @@ class ForumPostsController < ApplicationController
 	before_action :require_untrashed_user, except: [:index, :trashed, :show]
 	before_action :require_authorize_or_admin_for_trashed, only: :show
 	before_action :set_avatar_bucket, unless: -> { Rails.env.test? }
+	after_action :mark_activity, only: [:trash, :untrash, :create, :update, :destroy], if: :logged_in?
 
 	def index
 		@forum_posts = ForumPost.non_trashed.includes(:user, :comments).non_stickies.order(created_at: :desc)

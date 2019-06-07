@@ -19,7 +19,7 @@
 
 	<p><%= simple_format @blog_post.content %></p>
 
-	<%= render 'shared/details', object: @blog_post %>
+	<%= render 'shared/details', object: @blog_post, new_comment: true %>
 
 	<%= render 'shared/timestamps', object: @blog_post %>
 

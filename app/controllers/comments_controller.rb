@@ -6,6 +6,7 @@ class CommentsController < ApplicationController
 	before_action :require_authenticate, except: [:create]
 	before_action :require_untrashed_user, only: [:create, :update, :destroy], if: :logged_in?
 	before_action :require_admin, only: [:destroy]
+	after_action :mark_activity, only: [:trash, :untrash, :create, :update, :destroy], if: :logged_in?
 
 	def create
 		@comment = @post.comments.build(comment_params)

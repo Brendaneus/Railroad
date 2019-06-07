@@ -2,6 +2,6 @@
 
 <%= render 'heading', title_prefix: "Editing " %>
 
-<%= render 'shared/timestamps', object: @user %>
-
 <%= render 'form', submit_text: "Update Account" %>
+
+<%= render 'shared/timestamps', object: @user, create_alias: "Joined" %>
