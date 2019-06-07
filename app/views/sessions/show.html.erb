@@ -1,0 +1,13 @@
+<% if (authorized_for? @user) %>
+
+	<div class="<%= ( admin_user? ) ? "admin " : "" %>control">
+		<%= link_to "Edit Session", edit_user_session_path(@user, @session) %>
+
+		<%= link_to "Delete Session", user_session_path(@user, @session), method: :delete %>
+	</div>
+
+<% end %>
+
+<h2><%= link_to @user.name.possessive, @user %> <%= link_to "Sessions:", user_sessions_path(@user) %> <%= @session.name %></h2>
+
+<%= tag.h3 "Last IP Connected: " + @session.ip if @session.ip.present? %>

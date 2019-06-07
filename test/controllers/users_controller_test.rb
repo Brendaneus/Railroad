@@ -82,6 +82,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 		end
 	end
 
+	# Please clean this
 	test "should get show" do
 		load_forum_posts
 
@@ -92,6 +93,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 
 			assert_select 'div.control', 0
 			assert_select 'div.admin.control', 0
+			assert_select 'a[href=?]', user_sessions_path(show_user), 0
 			assert_select 'a[href=?]', edit_user_path(show_user), 0
 			assert_select 'a[href=?]', trash_user_path(show_user), 0
 			assert_select 'a[href=?]', untrash_user_path(show_user), 0
@@ -121,10 +123,11 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 
 				assert_select 'div.control', logged_user == show_user
 				assert_select 'div.admin.control', 0
+				assert_select 'a[href=?]', user_sessions_path(show_user), (logged_user == show_user)
 				assert_select 'a[href=?]', edit_user_path(show_user), (logged_user == show_user) && !logged_user.trashed?
 				assert_select 'a[href=?]', trash_user_path(show_user), (logged_user == show_user) && !show_user.trashed?
 				assert_select 'a[href=?]', untrash_user_path(show_user), (logged_user == show_user) && show_user.trashed?
-				assert_select 'a[href=?][data-method=delete]', user_path(show_user), 0
+				assert_select 'a[href=?][data-method=delete]', user_path(show_user), (logged_user == show_user) && show_user.trashed?
 
 				loop_forum_posts( only: {user: show_user_key} ) do |show_user_forum_post|
 					assert_select 'main a[href=?]', forum_post_path(show_user_forum_post), 1
@@ -144,6 +147,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 					assert_response :success
 
 					assert_select 'div.control' do
+						assert_select 'a[href=?]', user_sessions_path(show_user), 1
 						assert_select 'a[href=?]', edit_user_path(show_user), 1
 						assert_select 'a[href=?]', trash_user_path(show_user), !show_user.trashed?
 						assert_select 'a[href=?]', untrash_user_path(show_user), show_user.trashed?
@@ -173,14 +177,16 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 
 				if !logged_user.trashed? || (logged_user == show_user)
 					assert_select 'div.control' do
+						assert_select 'a[href=?]', user_sessions_path(show_user), 1
 						assert_select 'a[href=?]', edit_user_path(show_user) unless show_user.trashed?
 						assert_select 'a[href=?]', trash_user_path(show_user) unless show_user.trashed?
 						assert_select 'a[href=?]', untrash_user_path(show_user) if show_user.trashed?
-						assert_select 'a[href=?][data-method=delete]', user_path(show_user), logged_user.admin?
+						assert_select 'a[href=?][data-method=delete]', user_path(show_user), show_user.trashed?
 					end
 				else
-					assert_select 'div.control', 0
-					assert_select 'div.admin.control', 0
+					assert_select 'div.admin.control' do
+						assert_select 'a[href=?]', user_sessions_path(show_user), 1
+					end
 					assert_select 'a[href=?]', edit_user_path(show_user), 0
 					assert_select 'a[href=?]', trash_user_path(show_user), 0
 					assert_select 'a[href=?]', untrash_user_path(show_user), 0
@@ -233,6 +239,12 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 			assert flash[:success]
 
 			logout
+		end
+
+		assert_difference 'User.count', 1 do
+			assert_difference 'Session.count', 1 do
+				post users_url, params: { user: { name: "New Remembered User", email: "new_remembered_user@test.org", password: "secret", password_confirmation: "secret" }, remember: '1', session: { name: '' } }
+			end
 		end
 	end
 
@@ -315,7 +327,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 					other_user.reload
 				end
 				assert flash[:success]
-				other_user.update_attributes(password: "password", password_confirmation: "password")
+				other_user.update(password: "password", password_confirmation: "password")
 			end
 
 			loop_users( except: {user: user_key} ) do |other_user|
@@ -340,7 +352,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 					other_user.reload
 				end
 				assert flash[:success]
-				other_user.update_attributes(password: "password", password_confirmation: "password")
+				other_user.update(password: "password", password_confirmation: "password")
 			end
 
 			loop_users( except: {user: user_key} ) do |other_user|
@@ -365,7 +377,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 					other_user.reload
 				end
 				assert flash[:success]
-				other_user.update_attributes(password: "password", password_confirmation: "password")
+				other_user.update(password: "password", password_confirmation: "password")
 			end
 
 			logout

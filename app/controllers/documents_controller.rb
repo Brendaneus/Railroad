@@ -39,7 +39,7 @@ class DocumentsController < ApplicationController
 		set_article
 		@document = Document.find( params[:id] )
 		@document.upload.purge if params[:purge_upload] || ( params[:document][:upload] && @document.upload.attached? )
-		if @document.update_attributes(document_params)
+		if @document.update(document_params)
 			flash[:success] = "The document has been successfully updated."
 			redirect_to article_document_path(@article, @document)
 		else

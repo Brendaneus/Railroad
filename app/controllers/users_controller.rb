@@ -25,12 +25,22 @@ class UsersController < ApplicationController
 		@user = User.new
 	end
 
+	# Needs to be DRYed
 	def create
 		@user = User.new( user_params )
 		if @user.save
 			log_in @user
 			current_user = @user
-			remember @user if params[:user][:remember] == "1"
+			if params[:remember] == "1"
+				session = @user.sessions.build(session_params)
+				session.ip = request.remote_ip if params[:save_ip]
+				if session.save
+					remember session
+					flash[:success] = "Now logged in under #{session.name}."
+				else
+					flash.now[:warning] = "There was a problem saving your session."
+				end
+			end
 			flash[:success] = "Your new account has been created!"
 			redirect_to root_url
 		else
@@ -79,7 +89,7 @@ class UsersController < ApplicationController
 
 	def destroy
 		@user = User.find( params[:id] )
-		log_out( @user ) if current_user == @user
+		log_out if current_user == @user
 		if @user.destroy
 			flash[:success] = "User account deleted."
 			if admin_user?
@@ -97,7 +107,11 @@ class UsersController < ApplicationController
 	private
 
 		def user_params
-			params.require(:user).permit( :name, :email, :password, :password_confirmation, :avatar )
+			params.require(:user).permit( :name, :email, :password, :password_confirmation, :avatar, :bio )
+		end
+
+		def session_params
+			params.require(:session).permit(:name)
 		end
 
 		def require_authorize

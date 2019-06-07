@@ -1,7 +1,10 @@
 class User < ApplicationRecord
 
+	include Digestable
+
 	attr_accessor :remember_token
 
+	has_many :sessions, dependent: :destroy
 	has_many :forum_posts, dependent: :destroy
 	has_many :comments, dependent: :destroy
 	has_many :commented_blog_posts, -> { distinct },
@@ -14,8 +17,8 @@ class User < ApplicationRecord
 									 source_type: 'ForumPost'
 	has_one_attached :avatar
 
-	scope :trashed, -> { User.where(trashed: true) }
-	scope :non_trashed, -> { User.where(trashed: false) }
+	scope :trashed, -> { where(trashed: true) }
+	scope :non_trashed, -> { where(trashed: false) }
 
 	validates :name, presence: true,
 					 uniqueness: { case_sensitive: false },
@@ -30,41 +33,8 @@ class User < ApplicationRecord
 	validates :avatar, content_type: ["image/png", "image/jpeg", "image/gif"]
 
 
-	def self.new_token
-		SecureRandom.urlsafe_base64
-	end
-
-	def self.digest string
-		cost = ActiveModel::SecurePassword.min_cost ? BCrypt::Engine::MIN_COST : BCrypt::Engine.cost
-    	BCrypt::Password.create(string, cost: cost)
-	end
-
-	def remember
-		remember_token = User.new_token
-		remember_digest = User.digest( remember_token )
-
-		unless new_record?
-			update_attribute( :remember_digest, remember_digest )
-		end
-
-		return remember_token
-	end
-
-	def forget
-		remember_token = nil
-		update_attribute( :remember_digest, nil )
-	end
-
 	def authorized? ( user )
 		self == user || admin?
-	end
-
-	# Straight outta railstutorial.org
-	def authenticates? attribute, token
-		digest = send("#{attribute}_digest")
-		return false if digest.nil?
-		BCrypt::Password.new(digest)
-		BCrypt::Password.new(digest).is_password?(token)
 	end
 
 	def edited?

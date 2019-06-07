@@ -3,9 +3,9 @@ class Comment < ApplicationRecord
 	belongs_to :post, polymorphic: true
 	belongs_to :user, optional: true
 
-	scope :trashed, -> { Comment.where(trashed: true) }
-	scope :non_trashed, -> { Comment.where(trashed: false) }
-	scope :non_trashed_or_owned_by, -> (user) { Comment.where(trashed: false).or( Comment.where(user: user) ) }
+	scope :trashed, -> { where(trashed: true) }
+	scope :non_trashed, -> { where(trashed: false) }
+	scope :non_trashed_or_owned_by, -> (user) { where(trashed: false).or( where(user: user) ) }
 
 	validates :content, presence: true,
 						length: { maximum: 512 }

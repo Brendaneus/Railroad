@@ -21,7 +21,7 @@ module ApplicationHelper
 	def container_class(object)
 		class_attr = ""
 
-		class_attr += "trashed " if object.trashed?
+		class_attr += "trashed " if (object.class != Session) && object.trashed?
 
 		if (object.class == ForumPost) || (object.class == BlogPost)
 			if object.class == ForumPost

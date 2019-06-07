@@ -16,24 +16,6 @@ nav {
 		vertical-align: middle;
 		display: inline-block;
 	}
-	.status_control {
-		float: right;
-		display: inline-block;
-		a.avatar {
-			padding: 0;
-			border-radius: 25%;
-			img {
-				background-color: black;
-				border-radius: 25%;
-				vertical-align: middle;
-				display: inline-block;
-			}
-			&:hover {
-				opacity: 0.7;
-			}
-		}
-	}
-
 }
 
 
@@ -44,6 +26,34 @@ nav {
 	color: #999;
 	&.right {
 		float: right;
+	}
+}
+.collapsed {
+	display: none;
+}
+.expanded {
+	border: thin solid grey;
+	display: block;
+}
+
+
+/* Control */
+
+.status_control {
+	float: right;
+	display: inline-block;
+	a.avatar {
+		padding: 0;
+		border-radius: 25%;
+		img {
+			background-color: black;
+			border-radius: 25%;
+			vertical-align: middle;
+			display: inline-block;
+		}
+		&:hover {
+			opacity: 0.7;
+		}
 	}
 }
 

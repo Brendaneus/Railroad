@@ -43,7 +43,7 @@ class ArchivingsController < ApplicationController
 
 	def update
 		@archiving = Archiving.find( params[:id] )
-		if @archiving.update_attributes(archiving_params)
+		if @archiving.update(archiving_params)
 			flash[:success] = "The archiving has been successfully updated."
 			redirect_to @archiving
 		else

@@ -48,6 +48,79 @@ def load_users(reset: true, flat_array: false,
 
 end
 
+def load_sessions(reset: true, flat_array: false,
+		user_modifiers: {'trashed' => nil, 'admin' => nil},
+		user_numbers: ['one', 'two'],
+		session_numbers: ['one', 'two', 'three', 'four'],
+		except: {user: nil, session: nil},
+		only: {user: nil, session: nil, user_session: nil} )
+
+	if reset
+		if flat_array
+			@sessions = []
+		else
+			@sessions = {}
+		end
+	end
+
+	user_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a
+
+	user_modifier_states_sets.map! { |user_modifier_states|
+		user_modifiers.keys.zip(user_modifier_states).to_h.merge(user_modifiers) do |user_modifier, state, set_state|
+			set_state.nil? ? state : set_state
+		end
+	}.uniq!
+
+	user_modifier_states_sets.reverse.each do |user_modifier_states|
+
+		user_numbers.each do |user_number|
+
+			user_ref = ""
+			user_modifier_states.each do |user_modifier, state|
+				user_ref += (user_modifier + "_") if state
+			end
+			user_ref += "user_" + user_number
+
+			if except.values.any?
+				next if user_ref == except[:user]
+			end
+			if only.values.any?
+				next if only[:user] && ( user_ref != only[:user] )
+			end
+
+			unless flat_array
+				if reset
+					@sessions[user_ref] = {}
+				else
+					@sessions[user_ref] ||= {}
+				end
+			end
+
+			session_numbers.each do |session_number|
+
+				session_ref = "session_" + session_number
+
+				if except.values.any?
+					next if session_ref == except[:session]
+				end
+				if only.values.any?
+					next if only[:session] && ( session_ref != only[:session] )
+					next if only[:user_session] && ( (user_ref + '_' + session_ref) != only[:user_session] )
+				end
+
+				if flat_array
+					@sessions.push sessions( (user_ref + '_' + session_ref).to_sym )
+				else
+					@sessions[user_ref][session_ref] = sessions( (user_ref + '_' + session_ref).to_sym )
+				end
+			end
+		end
+	end
+
+	return @sessions
+
+end
+
 def load_archivings( reset: true, flat_array: false,
 		archiving_modifiers: {'trashed' => nil},
 		archiving_numbers: ['one', 'two'],

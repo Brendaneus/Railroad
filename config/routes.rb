@@ -6,10 +6,10 @@ Rails.application.routes.draw do
 	get '/landing',		to: 'home_pages#landing'
 	get '/about',		to: 'home_pages#about'
 
-	# Log in
-	get '/login',		to: 'sessions#new'
-	post '/login',		to: 'sessions#create'
-	delete '/logout',	to: 'sessions#destroy'
+	# Sessions
+	get '/login',		to: 'sessions#new_login'
+	post '/login',		to: 'sessions#login'
+	get '/logout',		to: 'sessions#logout'
 
 	# Users
 	get '/signup',		to: 'users#new'
@@ -19,6 +19,7 @@ Rails.application.routes.draw do
 			get :trash
 			get :untrash
 		end
+		resources :sessions
 	end
 
 	# Archive

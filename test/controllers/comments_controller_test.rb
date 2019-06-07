@@ -73,14 +73,16 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
 
 	test "should patch update only for [untrashed] authorized users" do
 		# Guest
-		loop_comments(reload: true, guest_users: false) do |comment|
-			assert_no_changes -> { comment.content } do
-				patch post_comment_url(comment.post, comment), params: { comment: { content: "Guest's Updated " + comment.content } }
-				comment.reload
-			end
-			assert flash[:warning]
-			assert_response :redirect
-		end
+		# loop_comments(reload: true, guest_users: false) do |comment|
+		# 	assert_no_changes -> { comment.content } do
+		# 		patch post_comment_url(comment.post, comment), params: { comment: { content: "Guest's Updated " + comment.content } }
+		# 		comment.reload
+		# 	end
+		# 	assert flash[:warning]
+		# 	assert_response :redirect
+		# end
+
+		load_comments
 
 		# User, Trashed
 		loop_users( user_modifiers: {'trashed' => true, 'admin' => nil} ) do |user, user_key|

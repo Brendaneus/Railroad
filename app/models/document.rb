@@ -3,8 +3,8 @@ class Document < ApplicationRecord
 	belongs_to :article, polymorphic: true
 	has_one_attached :upload
 
-	scope :trashed, -> { Document.where(trashed: true) }
-	scope :non_trashed, -> { Document.where(trashed: false) }
+	scope :trashed, -> { where(trashed: true) }
+	scope :non_trashed, -> { where(trashed: false) }
 
 	validates_presence_of :local_id, unless: :new_record?
 	validate :unique_local_id, unless: :new_record?
@@ -15,7 +15,6 @@ class Document < ApplicationRecord
 	validates :content, length: { maximum: 1024 }
 
 	before_create :auto_increment_local_id
-	before_destroy :purge_upload
 
 
 	def edited?
@@ -52,10 +51,6 @@ class Document < ApplicationRecord
 			else
 				self.local_id ||= 1
 			end
-		end
-
-		def purge_upload
-			upload.purge
 		end
 
 end

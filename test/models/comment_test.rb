@@ -89,8 +89,10 @@ class CommentTest < ActiveSupport::TestCase
 	end
 
 	test "should scope owned or non-trashed posts" do
-		loop_users(reload: true) do |user|
+		load_forum_posts
+		loop_users(reload: true) do |user, user_key|
 			assert Comment.non_trashed_or_owned_by(user) == Comment.where(trashed: false).or(user.comments)
+			assert @forum_posts[user_key]['forum_post_one'].comments.non_trashed_or_owned_by(user) == @forum_posts[user_key]['forum_post_one'].comments.where(trashed: false).or( @forum_posts[user_key]['forum_post_one'].comments.where(user: user) )
 		end
 	end
 

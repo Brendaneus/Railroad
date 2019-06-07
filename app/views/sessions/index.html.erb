@@ -1,0 +1,11 @@
+<% if (current_user == @user) && !remembered? %>
+
+	<div class="control">
+		<%= link_to "Save Session", new_user_session_path(@user)  %>
+	</div>
+
+<% end %>
+
+<main>
+	<%= (render @sessions) || (tag.h2 "No sessions exist...") %>
+</main>

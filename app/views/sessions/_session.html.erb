@@ -1,0 +1,9 @@
+<%= link_to user_session_path(session.user, session), class: container_class(session) do %>
+	<h2><%= session.name %></h2>
+
+	<% if session.ip.present? %>
+
+		<h4 class="subtle right"><%= session.ip %></h4>
+
+	<% end %>
+<% end %>

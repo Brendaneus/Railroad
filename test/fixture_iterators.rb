@@ -42,6 +42,64 @@ def loop_users( reload: false, reset: true,
 
 end
 
+def loop_sessions( reload: false, reset: true,
+		user_modifiers: {'trashed' => nil, 'admin' => nil},
+		user_numbers: ['one', 'two'],
+		session_numbers: ['one', 'two', 'three', 'four'],
+		except: {user: nil, session: nil},
+		only: {user: nil, session: nil, user_session: nil} )
+
+	load_sessions( reset: reset,
+		user_modifiers: user_modifiers,
+		user_numbers: user_numbers,
+		session_numbers: session_numbers,
+		except: except,
+		only: only ) if reload
+
+	user_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a
+
+	user_modifier_states_sets.map! { |user_modifier_states|
+		user_modifiers.keys.zip(user_modifier_states).to_h.merge(user_modifiers) do |user_modifier, state, set_state|
+			set_state.nil? ? state : set_state
+		end
+	}.uniq!
+
+	user_modifier_states_sets.reverse.each do |user_modifier_states|
+
+		user_numbers.each do |user_number|
+
+			user_ref = ""
+			user_modifier_states.each do |user_modifier, state|
+				user_ref += (user_modifier + "_") if state
+			end
+			user_ref += "user_" + user_number
+
+			if except.values.any?
+				next if user_ref == except[:user]
+			end
+			if only.values.any?
+				next if only[:user] && ( user_ref != only[:user] )
+			end
+
+			session_numbers.each do |session_number|
+
+				session_ref = "session_" + session_number
+
+				if except.values.any?
+					next if session_ref == except[:session]
+				end
+				if only.values.any?
+					next if only[:session] && ( session_ref != only[:session] )
+					next if only[:user_session] && ( (user_ref + '_' + session_ref) != only[:user_session] )
+				end
+
+				yield @sessions[user_ref][session_ref], session_ref, user_ref
+			end
+		end
+	end
+
+end
+
 def loop_archivings( reload: false, reset: true,
 		archiving_modifiers: {'trashed' => nil},
 		archiving_numbers: ['one', 'two'],

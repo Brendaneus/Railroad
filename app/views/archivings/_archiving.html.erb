@@ -1,5 +1,5 @@
 <%= link_to archiving, class: container_class(archiving) do %>
-	<%= render archiving.documents, size: :thumb %>
+	<%= render archiving.documents.reverse, size: :thumb %>
 
 	<h2><%= archiving.title %></h2>
 

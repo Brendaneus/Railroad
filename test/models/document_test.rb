@@ -43,18 +43,6 @@ class DocumentTest < ActiveSupport::TestCase
 		end
 	end
 
-	test "should validate local uniqueness of title" do
-		loop_documents(reload: true) do |document|
-			document.article.documents.each do |other_document|
-				unless document.id == other_document.id
-					document.title = other_document.title
-					assert_not document.valid?
-					document.reload
-				end
-			end
-		end
-	end
-
 	# This seems wrong
 	test "should auto increment local_id on create" do
 		load_documents
@@ -88,6 +76,18 @@ class DocumentTest < ActiveSupport::TestCase
 
 		@documents['archiving_one']['document_one'].title = "    ";
 		assert_not @documents['archiving_one']['document_one'].valid?
+	end
+
+	test "should validate local uniqueness of title" do
+		loop_documents(reload: true) do |document|
+			document.article.documents.each do |other_document|
+				unless document.id == other_document.id
+					document.title = other_document.title
+					assert_not document.valid?
+					document.reload
+				end
+			end
+		end
 	end
 
 	test "should validate length of title (max: 64)" do

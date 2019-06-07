@@ -16,6 +16,8 @@
 			<%= link_to image_tag( user.avatar.variant(resize: "30x30") ), user, class: "avatar" %>
 	<% elsif size == :thumb %>
 			<%= image_tag user.avatar.variant(resize: "60x60"), class: "avatar" %>
+	<% elsif size == :profile %>
+			<%= image_tag user.avatar.variant(resize: "300x300"), class: "avatar" %>
 	<% else %>
 			<%= image_tag url_for(user.avatar), class: "avatar" %>
 	<% end %>

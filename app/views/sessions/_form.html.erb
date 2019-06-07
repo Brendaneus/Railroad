@@ -1,0 +1,51 @@
+<% content_for :javascript_include, javascript_include_tag(:expandables) %>
+
+<%= form_for @session, url: form_path do |f| %>
+
+	<% if (login_form ||= nil) %>
+
+		<div>
+			<%= label_tag :email %>
+			<%= text_field_tag :email %>
+		</div>
+
+		<div>
+			<%= label_tag :password %>
+			<%= password_field_tag :password %>
+		</div>
+
+		<div id='toggle_one' class='check_box'>
+			<%= label_tag :remember, "Remember?" %>
+			<%= check_box_tag :remember %>
+		</div>
+
+	<% end %>
+
+	<div id='collapsable_one' class='<%= 'collapsed' if login_form %>'>
+		<div>
+			<%= f.label :name, "Session Name" %>
+			<%= f.text_field :name %>
+		</div>
+
+		<% unless @session.ip.present? %>
+
+			<div class="check_box">
+				<%= label_tag :save_ip, "Save IP Address?" %>
+				<%= check_box_tag :save_ip %>
+				<h4>Your IP: <%= request.remote_ip %></h4>
+			</div>
+
+		<% else %>
+
+			<div class="check_box">
+				<%= label_tag :remove_ip, "Remove IP Address?" %>
+				<%= check_box_tag :remove_ip %>
+				<h4>Your IP: <%= request.remote_ip %></h4>
+			</div>
+
+		<% end %>
+	</div>
+
+	<%= f.submit submit_text, class: 'submit' %>
+
+<% end %>

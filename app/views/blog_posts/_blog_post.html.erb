@@ -1,5 +1,5 @@
 <%= link_to blog_post, class: container_class(blog_post) do %>
-	<%= render blog_post.documents, size: :thumb %>
+	<%= render blog_post.documents.reverse, size: :thumb %>
 
 	<h2><%= blog_post.title %></h2>
 

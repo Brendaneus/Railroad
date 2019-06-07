@@ -61,7 +61,7 @@ class ForumPostsController < ApplicationController
 		if !admin_user? && ( params[:forum_post].has_key?(:motd) || params[:forum_post].has_key?(:sticky) )
 			flash.now[:warning] = "Only admins may make motds and stickies."
 			render :new
-		elsif @forum_post.update_attributes(forum_post_params)
+		elsif @forum_post.update(forum_post_params)
 			flash[:success] = "The forum post was successfully updated."
 			redirect_to forum_post_path(@forum_post)
 		else
@@ -99,7 +99,7 @@ class ForumPostsController < ApplicationController
 	def destroy
 		@forum_post = ForumPost.find( params[:id] )
 		if @forum_post.destroy
-			flash[:success] = "The forum post was successfully deleted."
+			flash[:success] = "The forum post has been successfully deleted."
 			redirect_to forum_posts_path
 		else
 			flash[:failure] = "There was a problem deleting this post."

@@ -6,11 +6,11 @@ class ForumPost < ApplicationRecord
 						  through: :comments,
 						  source: :user
 
-	scope :trashed, -> { ForumPost.where(trashed: true) }
-	scope :non_trashed, -> { ForumPost.where(trashed: false) }
-	scope :motds, -> { ForumPost.where(motd: true) }
-	scope :stickies, -> { ForumPost.where(sticky: true) }
-	scope :non_stickies, -> { ForumPost.where(sticky: false) }
+	scope :trashed, -> { where(trashed: true) }
+	scope :non_trashed, -> { where(trashed: false) }
+	scope :motds, -> { where(motd: true) }
+	scope :stickies, -> { where(sticky: true) }
+	scope :non_stickies, -> { where(sticky: false) }
 
 	validates :title, presence: true,
 					  length: { maximum: 64 }

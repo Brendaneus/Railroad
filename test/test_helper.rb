@@ -20,11 +20,11 @@ class ActiveSupport::TestCase
 	end
 
 	def login_as user, password: 'password', remember: '0'
-		post login_url, params: { session: { email: user.email, password: password, remember: remember } }
+		post login_url, params: { email: user.email, password: password, remember: remember, session: { name: '' } }
 	end
 
 	def logout
-		delete logout_url
+		get logout_url
 	end
 
 	def logged_in?
@@ -36,17 +36,17 @@ class ActiveSupport::TestCase
 	end
 
 	def remembered?
-		if user_id = decode_cookie(:user_id)
-			user = User.find(user_id)
+		if session_id = decode_cookie(:session_id)
+			session = Session.find(session_id)
 			if ( remember_token = decode_cookie(:remember_token) )
-				user.authenticates? :remember, remember_token
+				session.authenticates? :remember, remember_token
 			end
 		end
 	end
 
 	def decode_cookie key
 		if ( cookie = cookies[key] ).present?
-			Base64.decode64( cookies[key].split('--').first ).chomp('"').reverse.chomp('"').reverse
+			Base64.decode64( cookie.split('--').first ).chomp('"').reverse.chomp('"').reverse
 		end
 	end
 
@@ -58,6 +58,7 @@ class ActiveSupport::TestCase
 		elsif article.class == Archiving
 			archiving_url(article)
 		else
+			p article
 			raise "Error constructing Article Url: Article type unknown"
 		end
 	end
@@ -68,6 +69,8 @@ class ActiveSupport::TestCase
 		elsif article.class == Archiving
 			archiving_document_url(article, document)
 		else
+			p article
+			p document
 			raise "Error constructing Document Url: Article type unknown"
 		end
 	end
@@ -78,6 +81,7 @@ class ActiveSupport::TestCase
 		elsif article.class == Archiving
 			new_archiving_document_url(article)
 		else
+			p article
 			raise "Error constructing New Document Url: Article type unknown"
 		end
 	end
@@ -88,6 +92,8 @@ class ActiveSupport::TestCase
 		elsif article.class == Archiving
 			edit_archiving_document_url(article, document)
 		else
+			p article
+			p document
 			raise "Error constructing Edit Document Url: Article type unknown"
 		end
 	end
@@ -98,6 +104,8 @@ class ActiveSupport::TestCase
 		elsif article.class == Archiving
 			trash_archiving_document_url(article, document)
 		else
+			p article
+			p document
 			raise "Error constructing Trash Document Url: Article type unknown"
 		end
 	end
@@ -108,6 +116,8 @@ class ActiveSupport::TestCase
 		elsif article.class == Archiving
 			untrash_archiving_document_url(article, document)
 		else
+			p article
+			p document
 			raise "Error constructing Untrash Document Url: Article type unknown"
 		end
 	end
@@ -118,6 +128,7 @@ class ActiveSupport::TestCase
 		elsif article.class == Archiving
 			archiving_path(article)
 		else
+			p article
 			raise "Error constructing Article Path: Article type unknown"
 		end
 	end
@@ -128,6 +139,8 @@ class ActiveSupport::TestCase
 		elsif article.class == Archiving
 			archiving_document_path(article, document)
 		else
+			p article
+			p document
 			raise "Error constructing Document Path: Article type unknown"
 		end
 	end
@@ -138,6 +151,7 @@ class ActiveSupport::TestCase
 		elsif article.class == Archiving
 			new_archiving_document_path(article)
 		else
+			p article
 			raise "Error constructing New Document Path: Article type unknown"
 		end
 	end
@@ -148,6 +162,8 @@ class ActiveSupport::TestCase
 		elsif article.class == Archiving
 			edit_archiving_document_path(article, document)
 		else
+			p article
+			p document
 			raise "Error constructing Edit Document Path: Article type unknown"
 		end
 	end
@@ -158,6 +174,8 @@ class ActiveSupport::TestCase
 		elsif article.class == Archiving
 			trash_archiving_document_path(article, document)
 		else
+			p article
+			p document
 			raise "Error constructing Trash Document Path: Article type unknown"
 		end
 	end
@@ -168,6 +186,8 @@ class ActiveSupport::TestCase
 		elsif article.class == Archiving
 			untrash_archiving_document_path(article, document)
 		else
+			p article
+			p document
 			raise "Error constructing Untrash Document Path: Article type unknown"
 		end
 	end
@@ -178,6 +198,8 @@ class ActiveSupport::TestCase
 		elsif post.class == ForumPost
 			forum_post_comment_path(post, comment)
 		else
+			p post
+			p comment
 			raise "Error constructing Post Comment Path: Post type unknown"
 		end
 	end
@@ -188,6 +210,8 @@ class ActiveSupport::TestCase
 		elsif post.class == ForumPost
 			trash_forum_post_comment_path(post, comment)
 		else
+			p post
+			p comment
 			raise "Error constructing Trash Post Comment Path: Post type unknown"
 		end
 	end
@@ -198,6 +222,8 @@ class ActiveSupport::TestCase
 		elsif post.class == ForumPost
 			untrash_forum_post_comment_path(post, comment)
 		else
+			p post
+			p comment
 			raise "Error constructing Untrash Post Comment Path: Post type unknown"
 		end
 	end
@@ -208,6 +234,8 @@ class ActiveSupport::TestCase
 		elsif post.class == ForumPost
 			forum_post_comment_url(post, comment)
 		else
+			p post
+			p comment
 			raise "Error constructing Post Comment Url: Post type unknown"
 		end
 	end
@@ -218,6 +246,8 @@ class ActiveSupport::TestCase
 		elsif post.class == ForumPost
 			trash_forum_post_comment_url(post, comment)
 		else
+			p post
+			p comment
 			raise "Error constructing Trash Post Comment Url: Post type unknown"
 		end
 	end
@@ -228,6 +258,8 @@ class ActiveSupport::TestCase
 		elsif post.class == ForumPost
 			untrash_forum_post_comment_url(post, comment)
 		else
+			p post
+			p comment
 			raise "Error constructing Untrash Post Comment Url: Post type unknown"
 		end
 	end

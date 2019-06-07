@@ -6,6 +6,26 @@ class UserTest < ActiveSupport::TestCase
 		load_users( user_modifiers: {},	user_numbers: ['one'] )
 	end
 
+	test "should associate with sessions" do
+		loop_users(reload: true) do |user, user_key|
+			assert user.sessions == load_sessions( flat_array: true, only: {user: user_key} )
+		end
+	end
+
+	test "should dependent destroy sessions" do
+		load_sessions
+
+		loop_users(reload: true) do |user, user_key|
+			user.destroy
+			
+			assert_raise(ActiveRecord::RecordNotFound) { user.reload }
+
+			loop_sessions( only: {user: user_key} ) do |session|
+				assert_raise(ActiveRecord::RecordNotFound) { session.reload }
+			end
+		end
+	end
+
 	test "should associate with forum posts" do
 		loop_users(reload: true) do |user, user_key|
 			assert user.forum_posts == load_forum_posts( flat_array: true, only: {user: user_key} )
@@ -133,19 +153,19 @@ class UserTest < ActiveSupport::TestCase
 	# Needs a better test suite?
 	test "should validate has_secure_password (confirmation)" do
 		assert_no_changes -> { @users['user_one'].password_digest } do
-			@users['user_one'].update_attributes(password: "foobar")
+			@users['user_one'].update(password: "foobar")
 			@users['user_one'].reload
 		end
 		@users['user_one'].password = ""
 		
 		assert_no_changes -> { @users['user_one'].password_digest } do
-			@users['user_one'].update_attributes(password_confirmation: "foobar")
+			@users['user_one'].update(password_confirmation: "foobar")
 			@users['user_one'].reload
 		end
 		@users['user_one'].password_confirmation = ""
 
 		assert_changes -> { @users['user_one'].password_digest } do
-			@users['user_one'].update_attributes(password: "foobar", password_confirmation: "foobar")
+			@users['user_one'].update(password: "foobar", password_confirmation: "foobar")
 			@users['user_one'].reload
 		end
 	end

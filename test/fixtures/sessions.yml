@@ -1,0 +1,37 @@
+<% user_numbers = ['one', 'two'] %>
+<% user_modifiers = ['trashed', 'admin'] %>
+<% session_numbers = ['one', 'two', 'three', 'four'] %>
+
+<% id = 1 %>
+<% user_id = 1 %>
+
+<% user_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a %>
+<% user_modifier_states_sets.map! { |user_modifier_states| user_modifiers.zip(user_modifier_states).to_h } %>
+<% user_modifier_states_sets.reverse.each do |user_modifier_states| %>
+
+  <% user_numbers.each do |user_number| %>
+
+    <% user_ref = "" %>
+    <% user_modifier_states.each do |user_modifier, state| %>
+      <% user_ref += (user_modifier + "_") if state %>
+    <% end %>
+    <% user_ref += "user_" + user_number %>
+
+    <% session_numbers.each do |session_number| %>
+
+      <% session_ref = "session_" + session_number %>
+
+<%= user_ref + '_' + session_ref %>:
+  id: <%= id %>
+  user_id: <%= user_id %>
+  name: <%= (user_ref + "_" + session_ref).split("_").map(&:capitalize).join(" ") %>
+  remember_digest: <%= Session.digest(Session.new_token) %>
+  ip: <%= "192.168.0.#{id}" %>
+
+      <% id += 1 %>
+    <% end %>
+
+    <% user_id += 1 %>
+  <% end %>
+
+<% end %>

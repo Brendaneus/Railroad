@@ -6,9 +6,9 @@ class BlogPost < ApplicationRecord
 						  through: :comments,
 						  source: :user
 	
-	scope :trashed, -> { BlogPost.where(trashed: true) }
-	scope :non_trashed, -> { BlogPost.where(trashed: false) }
-	scope :motds, -> { BlogPost.where(motd: true) }
+	scope :trashed, -> { where(trashed: true) }
+	scope :non_trashed, -> { where(trashed: false) }
+	scope :motds, -> { where(motd: true) }
 
 	validates :title, presence: true,
 					  uniqueness: { case_sensitive: false },

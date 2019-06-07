@@ -2,8 +2,8 @@ class Archiving < ApplicationRecord
 	
 	has_many :documents, as: :article, dependent: :destroy
 
-	scope :trashed, -> { Archiving.where(trashed: true) }
-	scope :non_trashed, -> { Archiving.where(trashed: false) }
+	scope :trashed, -> { where(trashed: true) }
+	scope :non_trashed, -> { where(trashed: false) }
 
 	validates :title, presence: true,
 					  uniqueness: { case_sensitive: false },

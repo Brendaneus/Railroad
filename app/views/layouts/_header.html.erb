@@ -1,4 +1,4 @@
-<h1>The Railroad</h1>
+<h1>The Railroad:  Your IP: <%= request.remote_ip %></h1>
 
 <nav>
 	<%= link_to "Dashboard", root_path %>
@@ -16,7 +16,7 @@
 	<div class="status_control">
 		<% if logged_in? %>
 		
-			<%= link_to "Log out", logout_path, method: :delete %>
+			<%= link_to "Log out", logout_path %>
 
 			<%= link_to current_user.name, user_path( current_user ), class: "account_link" %>
 

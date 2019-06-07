@@ -6,33 +6,48 @@
 - [x] **Trash Can Update**
 	- [ ] Trash All Action for Users (???)
 
-- [ ] **Users Update**
-	- [ ] Create RememberTokens table in database
-	- Includes user_id, remember_token, and session_name
-		- [ ] Controller
-		- [ ] Views
-			- [ ] Document previews
-				- [ ] Video Preview
-				- [x] Dashboard
-				- [x] Archivings
-				- [x] BlogPosts
-			- [ ] Users
-				- [x] Index
-					- [x] Avatar
-				- [ ] Show
-					- [x] Avatar
-					- [x] Bio
-					- [ ] Sessions
-	- NOT POSSIBLE: In-view bucket-switching
-	- CANNED: NavBar User Icon
+- [x] **Users (& Sessions) Update**
+	- CANNED: Video Preview
+	- [ ] DELAYED: NavBar User Icon
+	- [ ] DELAYED: In-view bucket-switching
 	- [ ] **Future Update:**
 		- [ ] Add custom crop editing
 
+- [ ] **Suggests Update**
+	- [ ] Archives
+		- [ ] Show
+	- [ ] Documents
+		- [ ] Show
+	- [ ] Suggestions
+		- [ ] Controller
+			- [ ] Index
+			- [ ] Trashed
+			- [ ] Show
+			- [ ] New
+			- [ ] Create
+			- [ ] Edit
+			- [ ] Update
+			- [ ] Trash
+			- [ ] Untrash
+			- [ ] Destroy
+		- [ ] Views
+			- [ ] Index
+			- [ ] Trashed
+			- [ ] Show
+				- [ ] Highlight and replace sections
+					- **Needs a special format???**
+			- [ ] New
+			- [ ] Edit
+
+- [ ] Uniformalize all icons
+
 - [ ] Add sample files to fixtures
 
-- [ ] Mirror upload database
+- Reduce session and cookie clutter
+	- [ ] Change user_id session to session_token
+	- [ ] Change user_id and remember_token cookies to remember_token
 
-- [ ] **Suggests Update**
+- [ ] Mirror upload database
 
 - [ ] **Tabs Update**
 	- [ ] Add dropdowns to all sections
@@ -48,19 +63,21 @@
 
 - [ ] Add Guest-Mode option to layout
 
+- [ ] Put redundant model code into concerns
+	- Posts' titles and content
 
 - [ ] Add pagination
 
-- [ ] **6.0 Release:**  Move old upload purging to _callback stack_(???) for document updates and deletes
-	- [ ] **6.1 Release:**
-		- [ ] Replace multi-bucket hack with ActiveStorage native support
-			- [ ] Avatar persistence + navbar
-		- [ ] Documents -- uploads
-		- [ ] Users -- avatars
-		- Remove initializer
-		- Remove ApplicationController method
+- [ ] **6.1 Release:**
+	- [ ] Replace multi-bucket hack with ActiveStorage native support
+		- [ ] Avatar persistence + navbar
+	- [ ] Documents -- uploads
+	- [ ] Users -- avatars
+	- Remove initializer
+	- Remove ApplicationController method
 
 - [ ] Clean up tests
+	- [ ] **FIX THE DAMN COMMENTS CONTROLLER TESTS**
 	- [ ] Speed up all tests
 		- Testing groups?
 	- [ ] Guardfile
@@ -102,6 +119,7 @@
 		- [ ] Controller - 00:01:04
 			- [ ] DRY/Speed-Up/Clean in a second pass
 	- [ ] Documents
+		- Add Attachment + content typing support
 		- [ ] Model - 00:00:04
 			- [ ] DRY/Speed-Up/Clean in a second pass
 		- [ ] Controller - 00:00:20
@@ -131,8 +149,12 @@
 - [ ] **Bundle clean --force**
 
 - [ ] Add in-view error handling (missing attachments, etc)
+	- [ ] Extend missing attachements icon to failed s3 requests
 
 - Minimize server load by reducing database queries
+
+- **NOTES:**
+	- Test Env has _cookies_with_metadata_ disabled
 
 
 ## Nav Bar
@@ -145,10 +167,10 @@
 - [ ] **Account Functions**
 	- [ ] Convert into dropdown with 'LED-style' status dot for login / remembering
 
+
 ## Home Pages
 - [x] **TESTS**
 	- [x] Controller
-	- [ ] Integration
 
 - [x] **Landing page**
 	- [x] Redirect
@@ -163,7 +185,10 @@
 	- [ ] Plan
 	- [ ] Graphic?
 
+
 ## Users
+- **has_many Sessions**
+- **has_many Suggestions**
 - **has_many Forum Posts**
 - **has_many Comments**
 
@@ -171,17 +196,11 @@
 	- [x] Model
 		- [ ] Improve email regex tests
 	- [x] Controller
-	- [ ] Integration
-- [ ] Add Avatars
-- [ ] Add multiple sessions support
-	- [ ] Create and link to RememberTokens table in database
-	- [ ] Add _'Logged in Sessions'_ control view
+
+- [x] Confirm on destructive actions
 - [ ] Add _Email Confirmations_
 	- [ ] Add 'Activated' column to table in database
 - [ ] Add _MFA Multi-Factor Authentication_
-- [x] Confirm on destructive actions
-
-- [ ] Add bio, avatar, etc
 
 - [x] **index**
 - [x] **show**
@@ -189,101 +208,156 @@
 - [x] **create**
 - [x] **edit**
 - [x] **update**
+- [x] **trashed**
+- [x] **trash**
 - [x] **destroy**
-	- [ ] VERY EXPLICIT CONFIRM
-	- [ ] MFA / EMAIL CONFIRM
+
+
+## Sessions
+- **belongs_to Users**
+
+- [ ] **TESTS**
+	- [x] Model
+		- [ ] Add Token & Digest support
+	- [x] Controller
+
+- [x] **index**
+- [x] **show**
+- [x] **new_login**
+- [x] **login**
+- [x] **logout**
+- [x] **new**
+- [x] **create**
+- [x] **edit**
+- [x] **update**
+- [x] **destroy**
+
 
 ## Blog
 - **has_many Documents**
 - **has_many Comments**
 
-- [ ] **TESTS**
+- [x] **TESTS**
 	- [x] Model
 	- [x] Controller
-	- [ ] Integration
-- [x] Document support
+
 - [x] Confirm on destructive actions
 
-- [ ] **motd**
 - [x] **index**
 - [x] **show**
-	- [x] Comments
 - [x] **new**
 - [x] **create**
 - [x] **edit**
-	- [ ] Document support
 - [x] **update**
+- [x] **trashed**
+- [x] **trash**
 - [x] **destroy**
 	- [ ] VERY EXPLICIT CONFIRM
-	- [ ] MFA / EMAIL CONFIRM
+
 
 ## Archive
 - **has_many Documents**
+- **has_many Suggestions**
 
-- [ ] **TESTS**
+- [x] **TESTS**
 	- [x] Model
 	- [x] Controller
-	- [ ] Integration
-- [x] Document support
-- [ ] Filter non-admins to proposals on _**database**_ actions
+
 - [x] Confirm on destructive actions
+- [ ] Filter non-admins to suggestions on _**database**_ actions
 
 - [x] **index**
 - [x] **show**
 - [x] **new**
-- [ ] **new_proposal**
 - [x] **create**
-- [ ] **create_proposal**
 - [x] **edit**
-- [ ] **edit_proposal**
 - [x] **update**
+- [x] **trashed**
+- [x] **trash**
 - [x] **destroy**
 	- [ ] VERY EXPLICIT CONFIRM
-	- [ ] MFA / EMAIL CONFIRM
-- [ ] **destroy_proposal**
+
 
 ## Document
 - **belongs_to Article (Archiving or Blog Post)**
+- **has_many Suggestions**
 
 - [ ] **TESTS**
 	- [x] Model
 		- [ ] Test for attachment presence (Unsupported, see below)
 		- [ ] Test for attachment dependent purge (and replacement)
 	- [x] Controller
-		- [ ] Implement friendly_id support for local_id / other
-			- ActiveStorage [and soon S3] doesn't support file hierarchies
-	- [ ] Integration
-- [ ] Filter non-admins to proposals on _**database**_ actions
+
 - [ ] Confirm on destructive actions
-
-- Attachments are needed for fixtures, currently unsupported
-
+- [ ] Filter non-admins to suggestions on _**database**_ actions
 - [ ] Add create capabilities on Article create
-
 - [ ] _Find a better solution for server-side raw, hierarchic storage (S3 soon won't support, ActiveStorage will never support)_
+- Attachments are needed for fixtures, currently unsupported
+- ActiveStorage [and soon S3] doesn't support file hierarchies
 
 - [x] **show**
 - [x] **new**
-- [ ] **new_proposal**
 - [x] **create**
-- [ ] **create_proposal**
 - [x] **edit**
-- [ ] **edit_proposal**
 - [x] **update**
 - [x] **upload**
+- [x] **trashed**
+- [x] **trash**
 - [x] **destroy**
 	- [ ] VERY EXPLICIT CONFIRM
-	- [ ] MFA / EMAIL CONFIRM
-- [ ] **destroy_proposal**
+
+
+## Suggestion
+- **belongs_to User (optional)**
+- **belongs_to Citation (Archiving or Document)**
+
+- [ ] **TESTS**
+	- [ ] Model
+		- [ ] Associations
+		- [ ] Title
+			- [ ] Uniqueness
+			- [ ] Length
+		- [ ] Content
+			- [ ] Length
+		- [ ] Trashed
+			- Default to false
+	- [ ] Controller
+		- [ ] Index
+		- [ ] Trashed
+		- [ ] Show
+		- [ ] New
+		- [ ] Create
+		- [ ] Edit
+		- [ ] Update
+		- [ ] Trash
+		- [ ] Untrash
+		- [ ] Destroy
+
+- [ ] Confirm on destructive actions
+- [ ] Add create capabilities on Article create
+- Attachments are needed for fixtures, currently unsupported
+
+- [ ] **index**
+- [ ] **show**
+- [ ] **new**
+- [ ] **create**
+- [ ] **edit**
+- [ ] **update**
+- [ ] **upload**
+- [ ] **trashed**
+- [ ] **trash**
+- [ ] **destroy**
+	- [ ] VERY EXPLICIT CONFIRM
+
 
 ## Forum
 - **belongs_to User (deletable)**
 - **has_many Comments**
 
-- [ ] **TESTS**
+- [x] **TESTS**
 	- [x] Model
 	- [x] Controller
-	- [ ] Integration
+
 - [x] Confirm on destructive actions
 
 - [x] **index**
@@ -292,25 +366,27 @@
 - [x] **create**
 - [x] **edit**
 - [x] **update**
+- [x] **trashed**
+- [x] **trash**
 - [x] **destroy**
 	- [ ] VERY EXPLICIT CONFIRM
+
 
 ## Comments
 - **belongs_to User (optional)**
 
-- [ ] **TESTS**
+- [x] **TESTS**
 	- [x] Model
 	- [x] Controller
-	- [ ] Integration
-- [x] Confirm on destructive actions
 
+- [x] Confirm on destructive actions
 - [ ] Add layouts for comment renders in user show
 
 - [x] **create**
 - [x] **update**
 - [x] **destroy**
 
+
 ### Errors
-- [ ] **TESTS**
+- [x] **TESTS**
 	- [x] Controller
-	- [ ] Integration
