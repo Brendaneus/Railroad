@@ -1,0 +1,19 @@
+<div class="<%= (admin_user?) ? "admin " : "" %>control">
+	<% if admin_user? %>
+
+		<%= link_to "Edit Archiving", edit_archiving_path( @archiving ) if untrashed_user? %>
+		
+		<%= link_to "Trash Archiving", trash_archiving_path( @archiving ) unless @archiving.trashed? %>
+		
+		<%= link_to "Restore Archiving", untrash_archiving_path( @archiving ) if @archiving.trashed? %>
+
+		<%= link_to "Delete Archiving", @archiving, method: :delete, data: { confirm: 'Really delete this post?'} if @archiving.trashed? && untrashed_user? %>
+
+		<%= link_to "New Document", new_archiving_document_path( @archiving ) if untrashed_user? %>
+
+	<% end %>
+
+	<%= link_to "History", archiving_versions_path( @archiving ) %>
+
+	<%= link_to "Suggestions", archiving_suggestions_path( @archiving ) %>
+</div>

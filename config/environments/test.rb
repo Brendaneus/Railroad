@@ -53,4 +53,8 @@ Rails.application.configure do
   config.exceptions_app = self.routes
 
   config.action_dispatch.use_cookies_with_metadata = false
+
+  config.after_initialize do
+    PaperTrail.enabled = false
+  end
 end

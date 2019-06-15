@@ -1,50 +1,1152 @@
-<% user_numbers = ['one', 'two'] %>
-<% user_modifiers = ['trashed', 'admin'] %>
-<% forum_numbers = ['one', 'two'] %>
-<% forum_modifiers = ['trashed', 'sticky', 'motd'] %>
+user_one_forum_post_one:
+  id: 1
+  user_id: 1
+  title: 'User One Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: false
 
-<% id = 1 %>
-<% user_id = 1 %>
+user_one_forum_post_two:
+  id: 2
+  user_id: 1
+  title: 'User One Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: false
 
-<% user_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a %>
-<% user_modifier_states_sets.map! { |user_modifier_states| user_modifiers.zip(user_modifier_states).to_h } %>
-<% user_modifier_states_sets.reverse.each do |user_modifier_states| %>
+user_one_motd_forum_post_one:
+  id: 3
+  user_id: 1
+  title: 'User One Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: false
 
-  <% user_numbers.each do |user_number| %>
+user_one_motd_forum_post_two:
+  id: 4
+  user_id: 1
+  title: 'User One Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: false
 
-    <% user_ref = "" %>
-    <% user_modifier_states.each do |user_modifier, state| %>
-      <% user_ref += (user_modifier + "_") if state %>
-    <% end %>
-    <% user_ref += "user_" + user_number %>
+user_one_sticky_forum_post_one:
+  id: 5
+  user_id: 1
+  title: 'User One Sticky Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: false
 
-    <% forum_modifier_states_sets = [true, false].repeated_permutation(forum_modifiers.count).to_a %>
-    <% forum_modifier_states_sets.map! { |forum_modifier_states| forum_modifiers.zip(forum_modifier_states).to_h } %>
-    <% forum_modifier_states_sets.reverse.each do |forum_modifier_states| %>
+user_one_sticky_forum_post_two:
+  id: 6
+  user_id: 1
+  title: 'User One Sticky Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: false
 
-      <% forum_numbers.each do |forum_number| %>
+user_one_sticky_motd_forum_post_one:
+  id: 7
+  user_id: 1
+  title: 'User One Sticky Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: false
 
-        <% forum_ref = "" %>
-        <% forum_modifier_states.each do |forum_modifier, state| %>
-          <% forum_ref += (forum_modifier + "_") if state %>
-        <% end %>
-        <% forum_ref += "forum_post_" + forum_number %>
+user_one_sticky_motd_forum_post_two:
+  id: 8
+  user_id: 1
+  title: 'User One Sticky Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: false
 
-<%= user_ref + '_' + forum_ref %>:
-  id: <%= id %>
-  user_id: <%= user_id %>
-  title: <%= (user_ref + "_" + forum_ref).split("_").map(&:capitalize).join(" ") %>
-  content: "Lorem ipsum"
-  motd: <%= forum_modifier_states['motd'] %>
-  sticky: <%= forum_modifier_states['sticky'] %>
-  trashed: <%= forum_modifier_states['trashed'] %>
+user_one_trashed_forum_post_one:
+  id: 9
+  user_id: 1
+  title: 'User One Trashed Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: true
 
-        <% id += 1 %>
-      <% end %>
+user_one_trashed_forum_post_two:
+  id: 10
+  user_id: 1
+  title: 'User One Trashed Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: true
 
-    <% end %>
+user_one_trashed_motd_forum_post_one:
+  id: 11
+  user_id: 1
+  title: 'User One Trashed Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: true
 
-    <% user_id += 1 %>
-  <% end %>
+user_one_trashed_motd_forum_post_two:
+  id: 12
+  user_id: 1
+  title: 'User One Trashed Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: true
 
-<% end %>
+user_one_trashed_sticky_forum_post_one:
+  id: 13
+  user_id: 1
+  title: 'User One Trashed Sticky Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: true
+
+user_one_trashed_sticky_forum_post_two:
+  id: 14
+  user_id: 1
+  title: 'User One Trashed Sticky Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: true
+
+user_one_trashed_sticky_motd_forum_post_one:
+  id: 15
+  user_id: 1
+  title: 'User One Trashed Sticky Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: true
+
+user_one_trashed_sticky_motd_forum_post_two:
+  id: 16
+  user_id: 1
+  title: 'User One Trashed Sticky Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: true
+
+user_two_forum_post_one:
+  id: 17
+  user_id: 2
+  title: 'User Two Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: false
+
+user_two_forum_post_two:
+  id: 18
+  user_id: 2
+  title: 'User Two Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: false
+
+user_two_motd_forum_post_one:
+  id: 19
+  user_id: 2
+  title: 'User Two Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: false
+
+user_two_motd_forum_post_two:
+  id: 20
+  user_id: 2
+  title: 'User Two Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: false
+
+user_two_sticky_forum_post_one:
+  id: 21
+  user_id: 2
+  title: 'User Two Sticky Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: false
+
+user_two_sticky_forum_post_two:
+  id: 22
+  user_id: 2
+  title: 'User Two Sticky Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: false
+
+user_two_sticky_motd_forum_post_one:
+  id: 23
+  user_id: 2
+  title: 'User Two Sticky Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: false
+
+user_two_sticky_motd_forum_post_two:
+  id: 24
+  user_id: 2
+  title: 'User Two Sticky Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: false
+
+user_two_trashed_forum_post_one:
+  id: 25
+  user_id: 2
+  title: 'User Two Trashed Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: true
+
+user_two_trashed_forum_post_two:
+  id: 26
+  user_id: 2
+  title: 'User Two Trashed Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: true
+
+user_two_trashed_motd_forum_post_one:
+  id: 27
+  user_id: 2
+  title: 'User Two Trashed Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: true
+
+user_two_trashed_motd_forum_post_two:
+  id: 28
+  user_id: 2
+  title: 'User Two Trashed Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: true
+
+user_two_trashed_sticky_forum_post_one:
+  id: 29
+  user_id: 2
+  title: 'User Two Trashed Sticky Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: true
+
+user_two_trashed_sticky_forum_post_two:
+  id: 30
+  user_id: 2
+  title: 'User Two Trashed Sticky Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: true
+
+user_two_trashed_sticky_motd_forum_post_one:
+  id: 31
+  user_id: 2
+  title: 'User Two Trashed Sticky Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: true
+
+user_two_trashed_sticky_motd_forum_post_two:
+  id: 32
+  user_id: 2
+  title: 'User Two Trashed Sticky Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: true
+
+admin_user_one_forum_post_one:
+  id: 33
+  user_id: 3
+  title: 'Admin User One Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: false
+
+admin_user_one_forum_post_two:
+  id: 34
+  user_id: 3
+  title: 'Admin User One Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: false
+
+admin_user_one_motd_forum_post_one:
+  id: 35
+  user_id: 3
+  title: 'Admin User One Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: false
+
+admin_user_one_motd_forum_post_two:
+  id: 36
+  user_id: 3
+  title: 'Admin User One Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: false
+
+admin_user_one_sticky_forum_post_one:
+  id: 37
+  user_id: 3
+  title: 'Admin User One Sticky Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: false
+
+admin_user_one_sticky_forum_post_two:
+  id: 38
+  user_id: 3
+  title: 'Admin User One Sticky Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: false
+
+admin_user_one_sticky_motd_forum_post_one:
+  id: 39
+  user_id: 3
+  title: 'Admin User One Sticky Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: false
+
+admin_user_one_sticky_motd_forum_post_two:
+  id: 40
+  user_id: 3
+  title: 'Admin User One Sticky Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: false
+
+admin_user_one_trashed_forum_post_one:
+  id: 41
+  user_id: 3
+  title: 'Admin User One Trashed Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: true
+
+admin_user_one_trashed_forum_post_two:
+  id: 42
+  user_id: 3
+  title: 'Admin User One Trashed Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: true
+
+admin_user_one_trashed_motd_forum_post_one:
+  id: 43
+  user_id: 3
+  title: 'Admin User One Trashed Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: true
+
+admin_user_one_trashed_motd_forum_post_two:
+  id: 44
+  user_id: 3
+  title: 'Admin User One Trashed Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: true
+
+admin_user_one_trashed_sticky_forum_post_one:
+  id: 45
+  user_id: 3
+  title: 'Admin User One Trashed Sticky Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: true
+
+admin_user_one_trashed_sticky_forum_post_two:
+  id: 46
+  user_id: 3
+  title: 'Admin User One Trashed Sticky Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: true
+
+admin_user_one_trashed_sticky_motd_forum_post_one:
+  id: 47
+  user_id: 3
+  title: 'Admin User One Trashed Sticky Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: true
+
+admin_user_one_trashed_sticky_motd_forum_post_two:
+  id: 48
+  user_id: 3
+  title: 'Admin User One Trashed Sticky Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: true
+
+admin_user_two_forum_post_one:
+  id: 49
+  user_id: 4
+  title: 'Admin User Two Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: false
+
+admin_user_two_forum_post_two:
+  id: 50
+  user_id: 4
+  title: 'Admin User Two Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: false
+
+admin_user_two_motd_forum_post_one:
+  id: 51
+  user_id: 4
+  title: 'Admin User Two Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: false
+
+admin_user_two_motd_forum_post_two:
+  id: 52
+  user_id: 4
+  title: 'Admin User Two Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: false
+
+admin_user_two_sticky_forum_post_one:
+  id: 53
+  user_id: 4
+  title: 'Admin User Two Sticky Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: false
+
+admin_user_two_sticky_forum_post_two:
+  id: 54
+  user_id: 4
+  title: 'Admin User Two Sticky Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: false
+
+admin_user_two_sticky_motd_forum_post_one:
+  id: 55
+  user_id: 4
+  title: 'Admin User Two Sticky Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: false
+
+admin_user_two_sticky_motd_forum_post_two:
+  id: 56
+  user_id: 4
+  title: 'Admin User Two Sticky Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: false
+
+admin_user_two_trashed_forum_post_one:
+  id: 57
+  user_id: 4
+  title: 'Admin User Two Trashed Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: true
+
+admin_user_two_trashed_forum_post_two:
+  id: 58
+  user_id: 4
+  title: 'Admin User Two Trashed Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: true
+
+admin_user_two_trashed_motd_forum_post_one:
+  id: 59
+  user_id: 4
+  title: 'Admin User Two Trashed Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: true
+
+admin_user_two_trashed_motd_forum_post_two:
+  id: 60
+  user_id: 4
+  title: 'Admin User Two Trashed Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: true
+
+admin_user_two_trashed_sticky_forum_post_one:
+  id: 61
+  user_id: 4
+  title: 'Admin User Two Trashed Sticky Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: true
+
+admin_user_two_trashed_sticky_forum_post_two:
+  id: 62
+  user_id: 4
+  title: 'Admin User Two Trashed Sticky Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: true
+
+admin_user_two_trashed_sticky_motd_forum_post_one:
+  id: 63
+  user_id: 4
+  title: 'Admin User Two Trashed Sticky Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: true
+
+admin_user_two_trashed_sticky_motd_forum_post_two:
+  id: 64
+  user_id: 4
+  title: 'Admin User Two Trashed Sticky Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: true
+
+trashed_user_one_forum_post_one:
+  id: 65
+  user_id: 5
+  title: 'Trashed User One Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: false
+
+trashed_user_one_forum_post_two:
+  id: 66
+  user_id: 5
+  title: 'Trashed User One Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: false
+
+trashed_user_one_motd_forum_post_one:
+  id: 67
+  user_id: 5
+  title: 'Trashed User One Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: false
+
+trashed_user_one_motd_forum_post_two:
+  id: 68
+  user_id: 5
+  title: 'Trashed User One Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: false
+
+trashed_user_one_sticky_forum_post_one:
+  id: 69
+  user_id: 5
+  title: 'Trashed User One Sticky Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: false
+
+trashed_user_one_sticky_forum_post_two:
+  id: 70
+  user_id: 5
+  title: 'Trashed User One Sticky Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: false
+
+trashed_user_one_sticky_motd_forum_post_one:
+  id: 71
+  user_id: 5
+  title: 'Trashed User One Sticky Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: false
+
+trashed_user_one_sticky_motd_forum_post_two:
+  id: 72
+  user_id: 5
+  title: 'Trashed User One Sticky Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: false
+
+trashed_user_one_trashed_forum_post_one:
+  id: 73
+  user_id: 5
+  title: 'Trashed User One Trashed Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: true
+
+trashed_user_one_trashed_forum_post_two:
+  id: 74
+  user_id: 5
+  title: 'Trashed User One Trashed Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: true
+
+trashed_user_one_trashed_motd_forum_post_one:
+  id: 75
+  user_id: 5
+  title: 'Trashed User One Trashed Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: true
+
+trashed_user_one_trashed_motd_forum_post_two:
+  id: 76
+  user_id: 5
+  title: 'Trashed User One Trashed Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: true
+
+trashed_user_one_trashed_sticky_forum_post_one:
+  id: 77
+  user_id: 5
+  title: 'Trashed User One Trashed Sticky Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: true
+
+trashed_user_one_trashed_sticky_forum_post_two:
+  id: 78
+  user_id: 5
+  title: 'Trashed User One Trashed Sticky Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: true
+
+trashed_user_one_trashed_sticky_motd_forum_post_one:
+  id: 79
+  user_id: 5
+  title: 'Trashed User One Trashed Sticky Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: true
+
+trashed_user_one_trashed_sticky_motd_forum_post_two:
+  id: 80
+  user_id: 5
+  title: 'Trashed User One Trashed Sticky Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: true
+
+trashed_user_two_forum_post_one:
+  id: 81
+  user_id: 6
+  title: 'Trashed User Two Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: false
+
+trashed_user_two_forum_post_two:
+  id: 82
+  user_id: 6
+  title: 'Trashed User Two Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: false
+
+trashed_user_two_motd_forum_post_one:
+  id: 83
+  user_id: 6
+  title: 'Trashed User Two Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: false
+
+trashed_user_two_motd_forum_post_two:
+  id: 84
+  user_id: 6
+  title: 'Trashed User Two Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: false
+
+trashed_user_two_sticky_forum_post_one:
+  id: 85
+  user_id: 6
+  title: 'Trashed User Two Sticky Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: false
+
+trashed_user_two_sticky_forum_post_two:
+  id: 86
+  user_id: 6
+  title: 'Trashed User Two Sticky Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: false
+
+trashed_user_two_sticky_motd_forum_post_one:
+  id: 87
+  user_id: 6
+  title: 'Trashed User Two Sticky Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: false
+
+trashed_user_two_sticky_motd_forum_post_two:
+  id: 88
+  user_id: 6
+  title: 'Trashed User Two Sticky Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: false
+
+trashed_user_two_trashed_forum_post_one:
+  id: 89
+  user_id: 6
+  title: 'Trashed User Two Trashed Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: true
+
+trashed_user_two_trashed_forum_post_two:
+  id: 90
+  user_id: 6
+  title: 'Trashed User Two Trashed Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: true
+
+trashed_user_two_trashed_motd_forum_post_one:
+  id: 91
+  user_id: 6
+  title: 'Trashed User Two Trashed Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: true
+
+trashed_user_two_trashed_motd_forum_post_two:
+  id: 92
+  user_id: 6
+  title: 'Trashed User Two Trashed Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: true
+
+trashed_user_two_trashed_sticky_forum_post_one:
+  id: 93
+  user_id: 6
+  title: 'Trashed User Two Trashed Sticky Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: true
+
+trashed_user_two_trashed_sticky_forum_post_two:
+  id: 94
+  user_id: 6
+  title: 'Trashed User Two Trashed Sticky Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: true
+
+trashed_user_two_trashed_sticky_motd_forum_post_one:
+  id: 95
+  user_id: 6
+  title: 'Trashed User Two Trashed Sticky Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: true
+
+trashed_user_two_trashed_sticky_motd_forum_post_two:
+  id: 96
+  user_id: 6
+  title: 'Trashed User Two Trashed Sticky Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: true
+
+trashed_admin_user_one_forum_post_one:
+  id: 97
+  user_id: 7
+  title: 'Trashed Admin User One Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: false
+
+trashed_admin_user_one_forum_post_two:
+  id: 98
+  user_id: 7
+  title: 'Trashed Admin User One Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: false
+
+trashed_admin_user_one_motd_forum_post_one:
+  id: 99
+  user_id: 7
+  title: 'Trashed Admin User One Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: false
+
+trashed_admin_user_one_motd_forum_post_two:
+  id: 100
+  user_id: 7
+  title: 'Trashed Admin User One Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: false
+
+trashed_admin_user_one_sticky_forum_post_one:
+  id: 101
+  user_id: 7
+  title: 'Trashed Admin User One Sticky Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: false
+
+trashed_admin_user_one_sticky_forum_post_two:
+  id: 102
+  user_id: 7
+  title: 'Trashed Admin User One Sticky Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: false
+
+trashed_admin_user_one_sticky_motd_forum_post_one:
+  id: 103
+  user_id: 7
+  title: 'Trashed Admin User One Sticky Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: false
+
+trashed_admin_user_one_sticky_motd_forum_post_two:
+  id: 104
+  user_id: 7
+  title: 'Trashed Admin User One Sticky Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: false
+
+trashed_admin_user_one_trashed_forum_post_one:
+  id: 105
+  user_id: 7
+  title: 'Trashed Admin User One Trashed Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: true
+
+trashed_admin_user_one_trashed_forum_post_two:
+  id: 106
+  user_id: 7
+  title: 'Trashed Admin User One Trashed Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: true
+
+trashed_admin_user_one_trashed_motd_forum_post_one:
+  id: 107
+  user_id: 7
+  title: 'Trashed Admin User One Trashed Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: true
+
+trashed_admin_user_one_trashed_motd_forum_post_two:
+  id: 108
+  user_id: 7
+  title: 'Trashed Admin User One Trashed Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: true
+
+trashed_admin_user_one_trashed_sticky_forum_post_one:
+  id: 109
+  user_id: 7
+  title: 'Trashed Admin User One Trashed Sticky Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: true
+
+trashed_admin_user_one_trashed_sticky_forum_post_two:
+  id: 110
+  user_id: 7
+  title: 'Trashed Admin User One Trashed Sticky Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: true
+
+trashed_admin_user_one_trashed_sticky_motd_forum_post_one:
+  id: 111
+  user_id: 7
+  title: 'Trashed Admin User One Trashed Sticky Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: true
+
+trashed_admin_user_one_trashed_sticky_motd_forum_post_two:
+  id: 112
+  user_id: 7
+  title: 'Trashed Admin User One Trashed Sticky Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: true
+
+trashed_admin_user_two_forum_post_one:
+  id: 113
+  user_id: 8
+  title: 'Trashed Admin User Two Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: false
+
+trashed_admin_user_two_forum_post_two:
+  id: 114
+  user_id: 8
+  title: 'Trashed Admin User Two Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: false
+
+trashed_admin_user_two_motd_forum_post_one:
+  id: 115
+  user_id: 8
+  title: 'Trashed Admin User Two Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: false
+
+trashed_admin_user_two_motd_forum_post_two:
+  id: 116
+  user_id: 8
+  title: 'Trashed Admin User Two Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: false
+
+trashed_admin_user_two_sticky_forum_post_one:
+  id: 117
+  user_id: 8
+  title: 'Trashed Admin User Two Sticky Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: false
+
+trashed_admin_user_two_sticky_forum_post_two:
+  id: 118
+  user_id: 8
+  title: 'Trashed Admin User Two Sticky Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: false
+
+trashed_admin_user_two_sticky_motd_forum_post_one:
+  id: 119
+  user_id: 8
+  title: 'Trashed Admin User Two Sticky Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: false
+
+trashed_admin_user_two_sticky_motd_forum_post_two:
+  id: 120
+  user_id: 8
+  title: 'Trashed Admin User Two Sticky Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: false
+
+trashed_admin_user_two_trashed_forum_post_one:
+  id: 121
+  user_id: 8
+  title: 'Trashed Admin User Two Trashed Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: true
+
+trashed_admin_user_two_trashed_forum_post_two:
+  id: 122
+  user_id: 8
+  title: 'Trashed Admin User Two Trashed Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: false
+  trashed: true
+
+trashed_admin_user_two_trashed_motd_forum_post_one:
+  id: 123
+  user_id: 8
+  title: 'Trashed Admin User Two Trashed Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: true
+
+trashed_admin_user_two_trashed_motd_forum_post_two:
+  id: 124
+  user_id: 8
+  title: 'Trashed Admin User Two Trashed Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: false
+  trashed: true
+
+trashed_admin_user_two_trashed_sticky_forum_post_one:
+  id: 125
+  user_id: 8
+  title: 'Trashed Admin User Two Trashed Sticky Forum Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: true
+
+trashed_admin_user_two_trashed_sticky_forum_post_two:
+  id: 126
+  user_id: 8
+  title: 'Trashed Admin User Two Trashed Sticky Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  sticky: true
+  trashed: true
+
+trashed_admin_user_two_trashed_sticky_motd_forum_post_one:
+  id: 127
+  user_id: 8
+  title: 'Trashed Admin User Two Trashed Sticky Motd Forum Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: true
+
+trashed_admin_user_two_trashed_sticky_motd_forum_post_two:
+  id: 128
+  user_id: 8
+  title: 'Trashed Admin User Two Trashed Sticky Motd Forum Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  sticky: true
+  trashed: true
+

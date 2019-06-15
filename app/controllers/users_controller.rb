@@ -7,7 +7,7 @@ class UsersController < ApplicationController
 	before_action :require_untrashed_user, only: [:destroy]
 	before_action :require_admin_for_trashed, only: :show
 	before_action :set_avatar_bucket, unless: -> { Rails.env.test? }
-	after_action :mark_activity, only: [:trash, :untrash, :create, :update, :destroy], if: :logged_in?
+	after_action :mark_activity, only: [:create, :update, :trash, :untrash, :destroy], if: :logged_in?
 
 	def index
 		@users = User.non_trashed.order( admin: :desc )

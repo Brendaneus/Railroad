@@ -26,6 +26,80 @@ class DocumentTest < ActiveSupport::TestCase
 		end
 	end
 
+	test "should associate with suggestions" do
+		loop_documents( reload: true,
+			blog_modifiers: {}, blog_numbers: [] ) do |document, document_key, archiving_key|
+			assert document.suggestions ==
+				load_suggestions( only: {archiving_document: (archiving_key + '_' + document_key)},
+					include_archivings: false, flat_array: true )
+		end
+	end
+
+	test "should dependent destroy suggestions" do
+		load_suggestions(include_archivings: false)
+
+		loop_documents( reload: true,
+			blog_modifiers: {}, blog_numbers: [] ) do |document, document_key, archiving_key|
+			document.destroy
+
+			assert_raise(ActiveRecord::RecordNotFound) { document.reload }
+
+			loop_suggestions( only: {archiving_document: (archiving_key + '_' + document_key)},
+					include_archivings: false ) do |suggestion|
+				assert_raise(ActiveRecord::RecordNotFound) { suggestion.reload }
+			end
+		end
+	end
+
+	test "should save versions on create, update, destroy if suggestable (belongs to Archiving)" do
+		load_documents
+
+		with_versioning do
+			# Archive Docs
+			new_archive_doc = create(:archiving_document)
+			assert new_archive_doc.versions.count == 1
+			assert new_archive_doc.versions.last.name == "Original"
+
+			loop_documents(blog_numbers: []) do |document, document_key|
+				assert_difference 'document.versions.count', 1 do
+					document.update(content: ("Another Edit for " + document.content), version_name: "Custom Name")
+				end
+				assert document.versions.last.name == "Custom Name"
+				assert_difference 'document.versions.count', 1 do
+					document.update(content: ("Edit for " + document.content))
+				end
+				assert document.versions.last.name == "Manual Update"
+
+				assert_no_difference 'document.versions.count' do
+					document.touch
+				end
+
+				assert_difference 'document.versions.count', 1 do
+					document.destroy
+				end
+				assert document.versions.last.name == "Deleted"
+			end
+
+			# Blog Docs
+			new_blog_doc = create(:blog_post_document)
+			assert new_blog_doc.versions.count == 0
+
+			loop_documents(archiving_numbers: []) do |document|
+				assert_no_difference 'document.versions.count' do
+					document.update(content: ("Edit for " + document.content))
+				end
+
+				assert_no_difference 'document.versions.count' do
+					document.touch
+				end
+
+				assert_no_difference 'document.versions.count' do
+					document.destroy
+				end
+			end
+		end
+	end
+
 	test "should validate presence of local_id" do
 		@documents['archiving_one']['document_one'].local_id = nil;
 		assert_not @documents['archiving_one']['document_one'].valid?
@@ -109,14 +183,14 @@ class DocumentTest < ActiveSupport::TestCase
 		assert @documents['archiving_one']['document_one'].valid?
 	end
 
-	test "should validate length of content (max: 1024)" do
+	test "should validate length of content (max: 4096)" do
 		@documents['archiving_one']['document_one'].content = "X"
 		assert @documents['archiving_one']['document_one'].valid?
 
-		@documents['archiving_one']['document_one'].content = "X" * 1024
+		@documents['archiving_one']['document_one'].content = "X" * 4096
 		assert @documents['archiving_one']['document_one'].valid?
 
-		@documents['archiving_one']['document_one'].content = "X" * 1025
+		@documents['archiving_one']['document_one'].content = "X" * 4097
 		assert_not @documents['archiving_one']['document_one'].valid?
 	end
 
@@ -157,6 +231,15 @@ class DocumentTest < ActiveSupport::TestCase
 			archiving_modifiers: {'trashed' => false},
 			blog_modifiers: {'trashed' => false, 'motd' => nil} ) do |document, doc_key|
 			assert_not document.article_trashed?
+		end
+	end
+
+	test "should check if suggestable" do
+		loop_documents( reload: true, blog_numbers: [] ) do |document|
+			assert document.suggestable?
+		end
+		loop_documents( reload: true, archiving_numbers: [] ) do |document|
+			assert_not document.suggestable?
 		end
 	end
 

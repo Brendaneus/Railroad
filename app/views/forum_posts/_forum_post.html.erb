@@ -5,5 +5,5 @@
 
 	<%= render 'shared/details', object: forum_post %>
 
-	<%= render 'shared/timestamps', object: forum_post, owned: true %>
+	<%= render 'shared/timestamps', object: forum_post, owner: forum_post.user.name %>
 <% end %>

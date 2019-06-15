@@ -13,9 +13,21 @@ class CommentTest < ActiveSupport::TestCase
 			user_numbers: ['one'] )
 	end
 
+	test "should associate with suggestions" do
+		loop_comments( reload: true, document_numbers: [], blog_numbers: [],
+				poster_numbers: [] ) do |comment, comment_key, commenter_key, suggestion_key, suggester_key, archiving_key|
+			assert comment.post == load_suggestions( flat_array: true, document_numbers: [],
+				only: {archiving: archiving_key, user_suggestion: (suggester_key + '_' + suggestion_key)} ).first
+		end
+		loop_comments( reload: true, include_archivings: false, blog_numbers: [],
+				poster_numbers: [] ) do |comment, comment_key, commenter_key, suggestion_key, suggester_key, document_key, archiving_key|
+			assert comment.post == load_suggestions( flat_array: true, include_archivings: false,
+				only: {archiving_document: (archiving_key + '_' + document_key), user_suggestion: (suggester_key + '_' + suggestion_key)} ).first
+		end
+	end
+
 	test "should associate with blog posts" do
-		loop_comments( reload: true,
-			poster_modifiers: {}, poster_numbers: [] ) do |comment, comment_key, user_key, blog_post_key|
+		loop_comments( reload: true, archiving_numbers: [], poster_numbers: [] ) do |comment, comment_key, user_key, blog_post_key|
 			assert comment.post ==
 				load_blog_posts( flat_array: true,
 					only: {blog_post: blog_post_key} ).first
@@ -23,11 +35,8 @@ class CommentTest < ActiveSupport::TestCase
 	end
 
 	test "should associate with forum posts" do
-		loop_comments( reload: true,
-			blog_modifiers: {}, blog_numbers: [] ) do |comment, comment_key, user_key, forum_post_key, poster_key|
-			assert comment.post ==
-				load_forum_posts( flat_array: true,
-					only: {user: poster_key, forum_post: forum_post_key} ).first
+		loop_comments( reload: true, archiving_numbers: [], blog_numbers: [] ) do |comment, comment_key, user_key, forum_post_key, poster_key|
+			assert comment.post == load_forum_posts( flat_array: true, only: {user: poster_key, forum_post: forum_post_key} ).first
 		end
 	end
 
@@ -64,20 +73,12 @@ class CommentTest < ActiveSupport::TestCase
 	end
 
 	test "should default trashed as false" do
-		load_users( user_modifiers: {'trashed' => false},
-			user_numbers: ['one'] )
-		load_blog_posts( blog_modifiers: {'trashed' => false},
-			blog_numbers: ['one'] )
-		load_forum_posts( user_modifiers: {'trashed' => false},
-			user_numbers: ['one'],
-			forum_modifiers: {'trashed' => false},
-			forum_numbers: ['one'] )
-
-		new_blog_post_comment = @users['user_one'].comments.create!(post: @blog_posts['blog_post_one'], content: "Lorem Ipsum")
+		new_blog_post_comment = build(:blog_post_comment, content: "Blog Post Comment" )
 		assert_not new_blog_post_comment.trashed?
-
-		new_forum_post_comment = @users['user_one'].comments.create!(post: @forum_posts['user_one']['forum_post_one'], content: "Lorem Ipsum")
+		new_forum_post_comment = build(:forum_post_comment, content: "Forum Post Comment" )
 		assert_not new_forum_post_comment.trashed?
+		new_suggestion_comment = build(:suggestion_comment, content: "Suggestion Comment" )
+		assert_not new_suggestion_comment.trashed?
 	end
 
 	test "should scope trashed posts" do
@@ -137,34 +138,30 @@ class CommentTest < ActiveSupport::TestCase
 
 	test "should check if post trashed" do
 		loop_comments( reload: true,
+			suggestion_modifiers: {'trashed' => true},
 			blog_modifiers: {'trashed' => true, 'motd' => nil},
-			forum_modifiers: {'trashed' => true, 'sticky' => nil, 'motd' => nil},
-			guest_users: false ) do |comment|
+			forum_modifiers: {'trashed' => true, 'sticky' => nil, 'motd' => nil} ) do |comment|
 			assert comment.post_trashed?
 		end
 
 		loop_comments( reload: true,
+			suggestion_modifiers: {'trashed' => false},
 			blog_modifiers: {'trashed' => false, 'motd' => nil},
-			forum_modifiers: {'trashed' => false, 'sticky' => nil, 'motd' => nil},
-			guest_users: false ) do |comment|
+			forum_modifiers: {'trashed' => false, 'sticky' => nil, 'motd' => nil} ) do |comment|
 			assert_not comment.post_trashed?
 		end
 	end
 
 	test "should check if post owner trashed" do
-		loop_comments( reload: true,
-			blog_modifiers: {}, blog_numbers: [],
-			poster_modifiers: {'trashed' => true, 'admin' => nil},
-			guest_users: false ) do |comment|
-			# p comment.content
+		loop_comments( reload: true, blog_numbers: [],
+			suggester_modifiers: {'trashed' => true, 'admin' => nil},
+			archiving_numbers: [],
+			poster_modifiers: {'trashed' => true, 'admin' => nil} ) do |comment|
 			assert comment.post_owner_trashed?
 		end
-
-		loop_comments( reload: true,
-			blog_modifiers: {}, blog_numbers: [],
-			poster_modifiers: {'trashed' => false, 'admin' => nil},
-			guest_users: false ) do |comment|
-			# p comment.content
+		loop_comments( reload: true, blog_numbers: [],
+			suggester_modifiers: {'trashed' => false, 'admin' => nil},
+			poster_modifiers: {'trashed' => false, 'admin' => nil} ) do |comment|
 			assert_not comment.post_owner_trashed?
 		end
 	end

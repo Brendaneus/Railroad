@@ -1,3 +1,12 @@
+<% content_for :header_extension do %>
+	/ <%= articles_path(@article, link: true) %>
+	<% if @article.trashed? %>
+		/ <%= trashed_articles_path(@article, link: true) %>
+	<% end %>
+	/ <%= article_path(@article, link: true) %>
+	/ <%= new_article_document_path(@article, link: true) %>
+<% end %>
+
 <%= render 'shared/error_messages', object: @document %>
 
 <%= render 'form' %>

@@ -1,0 +1,20 @@
+<%= form_for @suggestion, url: form_url do |f| %>
+
+	<div>
+		<%= f.label :name %>
+		<%= f.text_field :name %>
+	</div>
+
+	<div>
+		<%= f.label :title, "New Title" %>
+		<%= f.text_field :title, value: ((@suggestion.title.present?) ? @suggestion.title : @citation.title) %>
+	</div>
+
+	<div>
+		<%= f.label :content, "New Content" %>
+		<%= f.text_area :content, value: ((@suggestion.content.present?) ? @suggestion.content : @citation.content) %>
+	</div>
+
+	<%= f.submit submit_text, class: 'submit' %>
+
+<% end %>

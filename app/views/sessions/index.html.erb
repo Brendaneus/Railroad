@@ -1,3 +1,12 @@
+<% content_for :header_extension do %>
+	/ <%= link_to "Users", users_path %>
+	<% if @user.trashed? %>
+		/ <%= link_to "Trash", trashed_users_path %>
+	<% end %>
+	/ <%= link_to @user.name, user_path(@user) %>
+	/ <%= link_to "Sessions", user_sessions_path(@user) %>
+<% end %>
+
 <% if (current_user == @user) && !remembered? %>
 
 	<div class="control">

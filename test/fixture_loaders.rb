@@ -1,8 +1,8 @@
 def load_users(reset: true, flat_array: false,
-		user_modifiers: {'trashed' => nil, 'admin' => nil},
-		user_numbers: ['one', 'two'],
-		except: {user: nil},
-		only: {user: nil} )
+	user_modifiers: {'trashed' => nil, 'admin' => nil},
+	user_numbers: ['one', 'two'],
+	except: {user: nil},
+	only: {user: nil} )
 
 	if reset
 		if flat_array
@@ -45,15 +45,14 @@ def load_users(reset: true, flat_array: false,
 	end
 
 	return @users
-
 end
 
 def load_sessions(reset: true, flat_array: false,
-		user_modifiers: {'trashed' => nil, 'admin' => nil},
-		user_numbers: ['one', 'two'],
-		session_numbers: ['one', 'two', 'three', 'four'],
-		except: {user: nil, session: nil},
-		only: {user: nil, session: nil, user_session: nil} )
+	user_modifiers: {'trashed' => nil, 'admin' => nil},
+	user_numbers: ['one', 'two'],
+	session_numbers: ['one', 'two', 'three', 'four'],
+	except: {user: nil, session: nil},
+	only: {user: nil, session: nil, user_session: nil} )
 
 	if reset
 		if flat_array
@@ -118,14 +117,13 @@ def load_sessions(reset: true, flat_array: false,
 	end
 
 	return @sessions
-
 end
 
 def load_archivings( reset: true, flat_array: false,
-		archiving_modifiers: {'trashed' => nil},
-		archiving_numbers: ['one', 'two'],
-		except: {archiving: nil},
-		only: {archiving: nil} )
+	archiving_modifiers: {'trashed' => nil},
+	archiving_numbers: ['one', 'two'],
+	except: {archiving: nil},
+	only: {archiving: nil} )
 
 	if reset
 		if flat_array
@@ -169,14 +167,13 @@ def load_archivings( reset: true, flat_array: false,
 	end
 
 	return @archivings
-
 end
 
 def load_blog_posts(reset: true, flat_array: false,
-		blog_modifiers: {'trashed' => nil, 'motd' => nil},
-		blog_numbers: ['one', 'two'],
-		except: {blog_post: nil},
-		only: {blog_post: nil} )
+	blog_modifiers: {'trashed' => nil, 'motd' => nil},
+	blog_numbers: ['one', 'two'],
+	except: {blog_post: nil},
+	only: {blog_post: nil} )
 
 	if reset
 		if flat_array
@@ -219,16 +216,15 @@ def load_blog_posts(reset: true, flat_array: false,
 	end
 
 	return @blog_posts
-
 end
 
 def load_forum_posts(reset: true, flat_array: false,
-		user_modifiers: {'trashed' => nil, 'admin' => nil},
-		user_numbers: ['one', 'two'],
-		forum_modifiers: {'trashed' => nil, 'sticky' => nil, 'motd' => nil},
-		forum_numbers: ['one', 'two'],
-		except: {user: nil, forum_post: nil},
-		only: {user: nil, forum_post: nil, user_forum_post: nil} )
+	user_modifiers: {'trashed' => nil, 'admin' => nil},
+	user_numbers: ['one', 'two'],
+	forum_modifiers: {'trashed' => nil, 'sticky' => nil, 'motd' => nil},
+	forum_numbers: ['one', 'two'],
+	except: {user: nil, forum_post: nil},
+	only: {user: nil, forum_post: nil, user_forum_post: nil} )
 
 	if reset
 		if flat_array
@@ -307,20 +303,19 @@ def load_forum_posts(reset: true, flat_array: false,
 	end
 
 	return @forum_posts
-
 end
 
 def load_documents(reset: true, flat_array: false,
-		archiving_modifiers: {'trashed' => nil},
-		archiving_numbers: ['one', 'two'],
-		blog_modifiers: {'trashed' => nil, 'motd' => nil},
-		blog_numbers: ['one', 'two'],
-		document_modifiers: {'trashed' => nil},	
-		document_numbers: ['one', 'two', 'three'],
-		except: {archiving: nil, blog_post: nil, document: nil,
-			archiving_document: nil, blog_post_document: nil},
-		only: {archiving: nil, blog_post: nil, document: nil,
-			archiving_document: nil, blog_post_document: nil} )
+	archiving_modifiers: {'trashed' => nil},
+	archiving_numbers: ['one', 'two'],
+	blog_modifiers: {'trashed' => nil, 'motd' => nil},
+	blog_numbers: ['one', 'two'],
+	document_modifiers: {'trashed' => nil},	
+	document_numbers: ['one', 'two', 'three'],
+	except: {archiving: nil, blog_post: nil, document: nil,
+		archiving_document: nil, blog_post_document: nil},
+	only: {archiving: nil, blog_post: nil, document: nil,
+		archiving_document: nil, blog_post_document: nil} )
 
 	if reset
 		if flat_array
@@ -468,25 +463,277 @@ def load_documents(reset: true, flat_array: false,
 	end
 
 	return @documents
+end
 
+def load_suggestions( reset: true, flat_array: false,
+	archiving_modifiers: {'trashed' => nil},
+	archiving_numbers: ['one', 'two'],
+	include_archivings: true,
+	document_modifiers: {'trashed' => nil},
+	document_numbers: ['one', 'two', 'three'],
+	user_modifiers: {'trashed' => nil, 'admin' => nil},
+	user_numbers: ['one', 'two'],
+	suggestion_modifiers: {'trashed' => nil},
+	suggestion_numbers: ['one', 'two'],
+	except: {archiving: nil, document: nil, archiving_document: nil,
+		user: nil, suggestion: nil, user_suggestion: nil},
+	only: {archiving: nil, document: nil, archiving_document: nil,
+		user: nil, suggestion: nil, user_suggestion: nil} )
+
+	if reset
+		if flat_array
+			@suggestions = []
+		else
+			@suggestions = {}
+		end
+	end
+
+	archiving_modifier_states_sets = [true, false].repeated_permutation(archiving_modifiers.count).to_a
+	
+	archiving_modifier_states_sets.map! { |archiving_modifier_states|
+		archiving_modifiers.keys.zip(archiving_modifier_states).to_h.merge(archiving_modifiers) do |archiving_modifier, state, set_state|
+			set_state.nil? ? state : set_state
+		end
+	}.uniq!
+
+	archiving_modifier_states_sets.reverse.each do |archiving_modifier_states|
+
+		archiving_numbers.each do |archiving_number|
+
+			archiving_ref = ""
+			archiving_modifier_states.each do |archiving_modifier, state|
+				archiving_ref += (archiving_modifier + "_") if state
+			end
+			archiving_ref += "archiving_" + archiving_number
+
+			if except.values.any?
+				next if archiving_ref == except[:archiving]
+			end
+			if only.values.any?
+				next if only[:archiving] && ( archiving_ref != only[:archiving] )
+			end
+
+			unless flat_array
+				if reset
+					@suggestions[archiving_ref] = {}
+				else
+					@suggestions[archiving_ref] ||= {}
+				end
+			end
+
+			user_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a
+
+			user_modifier_states_sets.map! { |user_modifier_states|
+				user_modifiers.keys.zip(user_modifier_states).to_h.merge(user_modifiers) do |user_modifier, state, set_state|
+					set_state.nil? ? state : set_state
+				end
+			}.uniq!
+
+			if include_archivings
+
+				user_modifier_states_sets.reverse.each do |user_modifier_states|
+
+					user_numbers.each do |user_number|
+
+						user_ref = ""
+						user_modifier_states.each do |user_modifier, state|
+							user_ref += (user_modifier + "_") if state
+						end
+						user_ref += "user_" + user_number
+
+						if except.values.any?
+							next if user_ref == except[:user]
+						end
+						if only.values.any?
+							next if only[:user] && ( user_ref != only[:user] )
+						end
+
+						unless flat_array
+							if reset
+								@suggestions[archiving_ref][user_ref] = {}
+							else
+								@suggestions[archiving_ref][user_ref] ||= {}
+							end
+						end
+
+						suggestion_modifier_states_sets = [true, false].repeated_permutation(suggestion_modifiers.count).to_a
+
+						suggestion_modifier_states_sets.map! { |suggestion_modifier_states|
+							suggestion_modifiers.keys.zip(suggestion_modifier_states).to_h.merge(suggestion_modifiers) do |suggestion_modifier, state, set_state|
+								set_state.nil? ? state : set_state
+							end
+						}.uniq!
+
+						suggestion_modifier_states_sets.reverse.each do |suggestion_modifier_states|
+
+							suggestion_numbers.each do |suggestion_number|
+
+								suggestion_ref = ""
+								suggestion_modifier_states.each do |suggestion_modifier, state|
+									suggestion_ref += (suggestion_modifier + "_") if state
+								end
+								suggestion_ref += "suggestion_" + suggestion_number
+
+								if except.values.any?
+									next if suggestion_ref == except[:suggestion]
+									next if (user_ref + '_' + suggestion_ref) == except[:user_suggestion]
+								end
+								if only.values.any?
+									next if only[:suggestion] && ( suggestion_ref != only[:suggestion] )
+									next if only[:user_suggestion] && ( (user_ref + '_' + suggestion_ref) != only[:user_suggestion] )
+								end
+
+								if flat_array
+									@suggestions.push suggestions( (archiving_ref + '_' + user_ref + '_' + suggestion_ref).to_sym )
+								else
+									@suggestions[archiving_ref][user_ref][suggestion_ref] = suggestions( (archiving_ref + '_' + user_ref + '_' + suggestion_ref).to_sym )
+								end
+							end
+						end
+					end
+				end
+			end
+
+			document_modifier_states_sets = [true, false].repeated_permutation(document_modifiers.count).to_a
+
+			document_modifier_states_sets.map! { |document_modifier_states|
+				document_modifiers.keys.zip(document_modifier_states).to_h.merge(document_modifiers) do |document_modifier, state, set_state|
+					set_state.nil? ? state : set_state
+				end
+			}.uniq!
+
+			document_modifier_states_sets.reverse.each do |document_modifier_states|
+				document_numbers.each do |document_number|
+
+					document_ref = ""
+					document_modifier_states.each do |document_modifier, state|
+						document_ref += (document_modifier + "_") if state
+					end
+					document_ref += "document_" + document_number
+
+					if except.values.any?
+						next if document_ref == except[:document]
+						next if (archiving_ref + '_' + document_ref) == except[:archiving_document]
+					end
+					if only.values.any?
+						next if only[:document] && ( document_ref != only[:document] )
+						next if only[:archiving_document] && ( (archiving_ref + '_' + document_ref) != only[:archiving_document] )
+					end
+
+					unless flat_array
+						if reset
+							@suggestions[archiving_ref][document_ref] = {}
+						else
+							@suggestions[archiving_ref][document_ref] ||= {}
+						end
+					end
+
+					user_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a
+
+					user_modifier_states_sets.map! { |user_modifier_states|
+						user_modifiers.keys.zip(user_modifier_states).to_h.merge(user_modifiers) do |user_modifier, state, set_state|
+							set_state.nil? ? state : set_state
+						end
+					}.uniq!
+
+					user_modifier_states_sets.reverse.each do |user_modifier_states|
+
+						user_numbers.each do |user_number|
+
+							user_ref = ""
+							user_modifier_states.each do |user_modifier, state|
+								user_ref += (user_modifier + "_") if state
+							end
+							user_ref += "user_" + user_number
+
+							if except.values.any?
+								next if user_ref == except[:user]
+							end
+							if only.values.any?
+								next if only[:user] && ( user_ref != only[:user] )
+							end
+
+							unless flat_array
+								if reset
+									@suggestions[archiving_ref][document_ref][user_ref] = {}
+								else
+									@suggestions[archiving_ref][document_ref][user_ref] ||= {}
+								end
+							end
+
+							suggestion_modifier_states_sets = [true, false].repeated_permutation(suggestion_modifiers.count).to_a
+
+							suggestion_modifier_states_sets.map! { |suggestion_modifier_states|
+								suggestion_modifiers.keys.zip(suggestion_modifier_states).to_h.merge(suggestion_modifiers) do |suggestion_modifier, state, set_state|
+									set_state.nil? ? state : set_state
+								end
+							}.uniq!
+
+							suggestion_modifier_states_sets.reverse.each do |suggestion_modifier_states|
+
+								suggestion_numbers.each do |suggestion_number|
+
+									suggestion_ref = ""
+									suggestion_modifier_states.each do |suggestion_modifier, state|
+										suggestion_ref += (suggestion_modifier + "_") if state
+									end
+									suggestion_ref += "suggestion_" + suggestion_number
+
+									if except.values.any?
+										next if suggestion_ref == except[:suggestion]
+										next if (user_ref + '_' + suggestion_ref) == except[:user_suggestion]
+									end
+									if only.values.any?
+										next if only[:suggestion] && ( suggestion_ref != only[:suggestion] )
+										next if only[:user_suggestion] && ( (user_ref + '_' + suggestion_ref) != only[:user_suggestion] )
+									end
+
+									if flat_array
+										@suggestions.push suggestions( (archiving_ref + '_' + document_ref + '_' + user_ref + '_' + suggestion_ref).to_sym )
+									else
+										@suggestions[archiving_ref][document_ref][user_ref][suggestion_ref] = suggestions( (archiving_ref + '_' + document_ref + '_' + user_ref + '_' + suggestion_ref).to_sym )
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
+	return @suggestions
 end
 
 def load_comments(reset: true, flat_array: false,
-		poster_modifiers: {'trashed' => nil, 'admin' => nil},
-		poster_numbers: ['one', 'two'],
-		forum_modifiers: {'trashed' => nil, 'sticky' => nil, 'motd' => nil},
-		forum_numbers: ['one', 'two'],
-		blog_modifiers: {'trashed' => nil, 'motd' => nil},
-		blog_numbers: ['one', 'two'],
-		user_modifiers: {'trashed' => nil, 'admin' => nil},
-		user_numbers: ['one', 'two'],
-		guest_users: true,
-		comment_modifiers: {'trashed' => nil},
-		comment_numbers: ['one', 'two'],
-		except: {blog_post: nil, poster: nil, forum_post: nil, poster_forum_post: nil,
-			user: nil, comment: nil, user_comment: nil},
-		only: {blog_post: nil, poster: nil, forum_post: nil, poster_forum_post: nil,
-			user: nil, comment: nil, user_comment: nil} )
+	archiving_modifiers: {'trashed' => nil},
+	archiving_numbers: ['one', 'two'],
+	include_archivings: true,
+	document_modifiers: {'trashed' => nil},
+	document_numbers: ['one', 'two', 'three'],
+	suggester_modifiers: {'trashed' => nil, 'admin' => nil},
+	suggester_numbers: ['one', 'two'],
+	suggestion_modifiers: {'trashed' => nil},
+	suggestion_numbers: ['one', 'two'],
+	blog_modifiers: {'trashed' => nil, 'motd' => nil},
+	blog_numbers: ['one', 'two'],
+	poster_modifiers: {'trashed' => nil, 'admin' => nil},
+	poster_numbers: ['one', 'two'],
+	forum_modifiers: {'trashed' => nil, 'sticky' => nil, 'motd' => nil},
+	forum_numbers: ['one', 'two'],
+	user_modifiers: {'trashed' => nil, 'admin' => nil},
+	user_numbers: ['one', 'two'],
+	guest_users: true,
+	comment_modifiers: {'trashed' => nil},
+	comment_numbers: ['one', 'two'],
+	except: {archiving: nil, document: nil, archiving_document: nil,
+		suggester: nil, suggestion: nil, suggester_suggestion: nil,
+		blog_post: nil, poster: nil, forum_post: nil, poster_forum_post: nil,
+		user: nil, comment: nil, user_comment: nil},
+	only: {archiving: nil, document: nil, archiving_document: nil,
+		suggester: nil, suggestion: nil, suggester_suggestion: nil,
+		blog_post: nil, poster: nil, forum_post: nil, poster_forum_post: nil,
+		user: nil, comment: nil, user_comment: nil} )
 
 	if reset
 		if flat_array
@@ -497,6 +744,450 @@ def load_comments(reset: true, flat_array: false,
 	end
 
 	guest_ref = 'guest_user'
+
+	archiving_modifier_states_sets = [true, false].repeated_permutation(archiving_modifiers.count).to_a
+	
+	archiving_modifier_states_sets.map! { |archiving_modifier_states|
+		archiving_modifiers.keys.zip(archiving_modifier_states).to_h.merge(archiving_modifiers) do |archiving_modifier, state, set_state|
+			set_state.nil? ? state : set_state
+		end
+	}.uniq!
+
+	archiving_modifier_states_sets.reverse.each do |archiving_modifier_states|
+
+		archiving_numbers.each do |archiving_number|
+
+			archiving_ref = ""
+			archiving_modifier_states.each do |archiving_modifier, state|
+				archiving_ref += (archiving_modifier + "_") if state
+			end
+			archiving_ref += "archiving_" + archiving_number
+
+			if except.values.any?
+				next if archiving_ref == except[:archiving]
+			end
+			if only.values.any?
+				next if only[:archiving] && ( archiving_ref != only[:archiving] )
+			end
+
+			unless flat_array
+				if reset
+					@comments[archiving_ref] = {}
+				else
+					@comments[archiving_ref] ||= {}
+				end
+			end
+
+			if include_archivings
+				suggester_modifier_states_sets = [true, false].repeated_permutation(suggester_modifiers.count).to_a
+
+				suggester_modifier_states_sets.map! { |suggester_modifier_states|
+					suggester_modifiers.keys.zip(suggester_modifier_states).to_h.merge(suggester_modifiers) do |suggester_modifier, state, set_state|
+						set_state.nil? ? state : set_state
+					end
+				}.uniq!
+
+				suggester_modifier_states_sets.reverse.each do |suggester_modifier_states|
+					suggester_numbers.each do |suggester_number|
+
+						suggester_ref = ""
+						suggester_modifier_states.each do |suggester_modifier, state|
+							suggester_ref += (suggester_modifier + "_") if state
+						end
+						suggester_ref += "user_" + suggester_number
+
+						if except.values.any?
+							next if suggester_ref == except[:suggester]
+						end
+						if only.values.any?
+							next if only[:suggester] && ( suggester_ref != only[:suggester] )
+						end
+
+						unless flat_array
+							if reset
+								@comments[archiving_ref][suggester_ref] = {}
+							else
+								@comments[archiving_ref][suggester_ref] ||= {}
+							end
+						end
+
+						suggestion_modifier_states_sets = [true, false].repeated_permutation(suggestion_modifiers.count).to_a
+
+						suggestion_modifier_states_sets.map! { |suggestion_modifier_states|
+							suggestion_modifiers.keys.zip(suggestion_modifier_states).to_h.merge(suggestion_modifiers) do |suggestion_modifier, state, set_state|
+								set_state.nil? ? state : set_state
+							end
+						}.uniq!
+
+						suggestion_modifier_states_sets.reverse.each do |suggestion_modifier_states|
+
+							suggestion_numbers.each do |suggestion_number|
+
+								suggestion_ref = ""
+								suggestion_modifier_states.each do |suggestion_modifier, state|
+									suggestion_ref += (suggestion_modifier + "_") if state
+								end
+								suggestion_ref += "suggestion_" + suggestion_number
+
+								if except.values.any?
+									next if suggestion_ref == except[:suggestion]
+									next if (suggester_ref + '_' + suggestion_ref) == except[:suggester_suggestion]
+								end
+								if only.values.any?
+									next if only[:suggestion] && ( suggestion_ref != only[:suggestion] )
+									next if only[:suggester_suggestion] && ( (suggester_ref + '_' + suggestion_ref) != only[:suggester_suggestion] )
+								end
+
+								unless flat_array
+									if reset
+										@comments[archiving_ref][suggester_ref][suggestion_ref] = {}
+									else
+										@comments[archiving_ref][suggester_ref][suggestion_ref] ||= {}
+									end
+								end
+
+								user_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a
+
+								user_modifier_states_sets.map! { |user_modifier_states|
+									user_modifiers.keys.zip(user_modifier_states).to_h.merge(user_modifiers) do |user_modifier, state, set_state|
+										set_state.nil? ? state : set_state
+									end
+								}.uniq!
+
+								user_modifier_states_sets.reverse.each do |user_modifier_states|
+
+									user_numbers.each do |user_number|
+
+										user_ref = ""
+										user_modifier_states.each do |user_modifier, state|
+											user_ref += (user_modifier + "_") if state
+										end
+										user_ref += "user_" + user_number
+
+										if except.values.any?
+											next if user_ref == except[:user]
+										end
+										if only.values.any?
+											next if only[:user] && ( user_ref != only[:user] )
+										end
+
+										unless flat_array
+											if reset
+												@comments[archiving_ref][suggester_ref][suggestion_ref][user_ref] = {}
+											else
+												@comments[archiving_ref][suggester_ref][suggestion_ref][user_ref] ||= {}
+											end
+										end
+
+										comment_modifier_states_sets = [true, false].repeated_permutation(comment_modifiers.count).to_a
+
+										comment_modifier_states_sets.map! { |comment_modifier_states|
+											comment_modifiers.keys.zip(comment_modifier_states).to_h.merge(comment_modifiers) do |comment_modifier, state, set_state|
+												set_state.nil? ? state : set_state
+											end
+										}.uniq!
+
+										comment_modifier_states_sets.reverse.each do |comment_modifier_states|
+
+											comment_numbers.each do |comment_number|
+
+												comment_ref = ""
+												comment_modifier_states.each do |comment_modifier, state|
+													comment_ref += (comment_modifier + "_") if state
+												end
+												comment_ref += "comment_" + comment_number
+
+												if except.values.any?
+													next if comment_ref == except[:comment]
+													next if (user_ref + '_' + comment_ref) == except[:user_comment]
+												end
+												if only.values.any?
+													next if only[:comment] && ( comment_ref != only[:comment] )
+													next if only[:user_comment] && ( (user_ref + '_' + comment_ref) != only[:user_comment] )
+												end
+
+												if flat_array
+													@comments.push comments( (archiving_ref + '_' + suggester_ref + '_' + suggestion_ref + '_' + user_ref + '_' + comment_ref).to_sym )
+												else
+													@comments[archiving_ref][suggester_ref][suggestion_ref][user_ref][comment_ref] = comments( (archiving_ref + '_' + suggester_ref + '_' + suggestion_ref + '_' + user_ref + '_' + comment_ref).to_sym )
+												end
+											end
+										end # Comments
+									end
+								end # Users
+
+								if guest_users
+
+									unless flat_array
+										if reset
+											@comments[archiving_ref][suggester_ref][suggestion_ref][guest_ref] = {}
+										else
+											@comments[archiving_ref][suggester_ref][suggestion_ref][guest_ref] ||= {}
+										end
+									end
+
+									comment_modifier_states_sets = [true, false].repeated_permutation(comment_modifiers.count).to_a
+
+									comment_modifier_states_sets.map! { |comment_modifier_states|
+										comment_modifiers.keys.zip(comment_modifier_states).to_h.merge(comment_modifiers) do |comment_modifier, state, set_state|
+											set_state.nil? ? state : set_state
+										end
+									}.uniq!
+
+									comment_modifier_states_sets.reverse.each do |comment_modifier_states|
+
+										comment_numbers.each do |comment_number|
+
+											comment_ref = ""
+											comment_modifier_states.each do |comment_modifier, state|
+												comment_ref += (comment_modifier + "_") if state
+											end
+											comment_ref += "comment_" + comment_number
+
+											if except.values.any?
+												next if comment_ref == except[:comment]
+											end
+											if only.values.any?
+												next if only[:comment] && ( comment_ref != only[:comment] )
+											end
+
+											if flat_array
+												@comments.push comments( ( archiving_ref + '_' + suggester_ref + '_' + suggestion_ref + '_' + guest_ref + '_' + comment_ref).to_sym )
+											else
+												@comments[archiving_ref][suggester_ref][suggestion_ref][guest_ref][comment_ref] = comments( (archiving_ref + '_' + suggester_ref + '_' + suggestion_ref + '_' + guest_ref + '_' + comment_ref).to_sym )
+											end
+										end
+									end # Comments
+								end # Guest Users
+							end
+						end # Suggestions
+					end
+				end # Suggesters
+			end # include_archivings
+
+			document_modifier_states_sets = [true, false].repeated_permutation(document_modifiers.count).to_a
+
+			document_modifier_states_sets.map! { |document_modifier_states|
+				document_modifiers.keys.zip(document_modifier_states).to_h.merge(document_modifiers) do |document_modifier, state, set_state|
+					set_state.nil? ? state : set_state
+				end
+			}.uniq!
+
+			document_modifier_states_sets.reverse.each do |document_modifier_states|
+				document_numbers.each do |document_number|
+
+					document_ref = ""
+					document_modifier_states.each do |document_modifier, state|
+						document_ref += (document_modifier + "_") if state
+					end
+					document_ref += "document_" + document_number
+
+					if except.values.any?
+						next if document_ref == except[:document]
+						next if (archiving_ref + '_' + document_ref) == except[:archiving_document]
+					end
+					if only.values.any?
+						next if only[:document] && ( document_ref != only[:document] )
+						next if only[:archiving_document] && ( (archiving_ref + '_' + document_ref) != only[:archiving_document] )
+					end
+
+					unless flat_array
+						if reset
+							@comments[archiving_ref][document_ref] = {}
+						else
+							@comments[archiving_ref][document_ref] ||= {}
+						end
+					end
+
+					suggester_modifier_states_sets = [true, false].repeated_permutation(suggester_modifiers.count).to_a
+
+					suggester_modifier_states_sets.map! { |suggester_modifier_states|
+						suggester_modifiers.keys.zip(suggester_modifier_states).to_h.merge(suggester_modifiers) do |suggester_modifier, state, set_state|
+							set_state.nil? ? state : set_state
+						end
+					}.uniq!
+
+					suggester_modifier_states_sets.reverse.each do |suggester_modifier_states|
+
+						suggester_numbers.each do |suggester_number|
+
+							suggester_ref = ""
+							suggester_modifier_states.each do |suggester_modifier, state|
+								suggester_ref += (suggester_modifier + "_") if state
+							end
+							suggester_ref += "user_" + suggester_number
+
+							if except.values.any?
+								next if suggester_ref == except[:suggester]
+							end
+							if only.values.any?
+								next if only[:suggester] && ( suggester_ref != only[:suggester] )
+							end
+
+							unless flat_array
+								if reset
+									@comments[archiving_ref][document_ref][suggester_ref] = {}
+								else
+									@comments[archiving_ref][document_ref][suggester_ref] ||= {}
+								end
+							end
+
+							suggestion_modifier_states_sets = [true, false].repeated_permutation(suggestion_modifiers.count).to_a
+
+							suggestion_modifier_states_sets.map! { |suggestion_modifier_states|
+								suggestion_modifiers.keys.zip(suggestion_modifier_states).to_h.merge(suggestion_modifiers) do |suggestion_modifier, state, set_state|
+									set_state.nil? ? state : set_state
+								end
+							}.uniq!
+
+							suggestion_modifier_states_sets.reverse.each do |suggestion_modifier_states|
+
+								suggestion_numbers.each do |suggestion_number|
+
+									suggestion_ref = ""
+									suggestion_modifier_states.each do |suggestion_modifier, state|
+										suggestion_ref += (suggestion_modifier + "_") if state
+									end
+									suggestion_ref += "suggestion_" + suggestion_number
+
+									if except.values.any?
+										next if suggestion_ref == except[:suggestion]
+										next if (suggester_ref + '_' + suggestion_ref) == except[:suggester_suggestion]
+									end
+									if only.values.any?
+										next if only[:suggestion] && ( suggestion_ref != only[:suggestion] )
+										next if only[:suggester_suggestion] && ( (suggester_ref + '_' + suggestion_ref) != only[:suggester_suggestion] )
+									end
+
+									unless flat_array
+										if reset
+											@comments[archiving_ref][document_ref][suggester_ref][suggestion_ref] = {}
+										else
+											@comments[archiving_ref][document_ref][suggester_ref][suggestion_ref] ||= {}
+										end
+									end
+
+									user_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a
+
+									user_modifier_states_sets.map! { |user_modifier_states|
+										user_modifiers.keys.zip(user_modifier_states).to_h.merge(user_modifiers) do |user_modifier, state, set_state|
+											set_state.nil? ? state : set_state
+										end
+									}.uniq!
+
+									user_modifier_states_sets.reverse.each do |user_modifier_states|
+
+										user_numbers.each do |user_number|
+
+											user_ref = ""
+											user_modifier_states.each do |user_modifier, state|
+												user_ref += (user_modifier + "_") if state
+											end
+											user_ref += "user_" + user_number
+
+											if except.values.any?
+												next if user_ref == except[:user]
+											end
+											if only.values.any?
+												next if only[:user] && ( user_ref != only[:user] )
+											end
+
+											unless flat_array
+												if reset
+													@comments[archiving_ref][document_ref][suggester_ref][suggestion_ref][user_ref] = {}
+												else
+													@comments[archiving_ref][document_ref][suggester_ref][suggestion_ref][user_ref] ||= {}
+												end
+											end
+
+											comment_modifier_states_sets = [true, false].repeated_permutation(comment_modifiers.count).to_a
+
+											comment_modifier_states_sets.map! { |comment_modifier_states|
+												comment_modifiers.keys.zip(comment_modifier_states).to_h.merge(comment_modifiers) do |comment_modifier, state, set_state|
+													set_state.nil? ? state : set_state
+												end
+											}.uniq!
+
+											comment_modifier_states_sets.reverse.each do |comment_modifier_states|
+
+												comment_numbers.each do |comment_number|
+
+													comment_ref = ""
+													comment_modifier_states.each do |comment_modifier, state|
+														comment_ref += (comment_modifier + "_") if state
+													end
+													comment_ref += "comment_" + comment_number
+
+													if except.values.any?
+														next if comment_ref == except[:comment]
+														next if (user_ref + '_' + comment_ref) == except[:user_comment]
+													end
+													if only.values.any?
+														next if only[:comment] && ( comment_ref != only[:comment] )
+														next if only[:user_comment] && ( (user_ref + '_' + comment_ref) != only[:user_comment] )
+													end
+
+													if flat_array
+														@comments.push comments( (archiving_ref + '_' + document_ref + '_' + suggester_ref + '_' + suggestion_ref + '_' + user_ref + '_' + comment_ref).to_sym )
+													else
+														@comments[archiving_ref][document_ref][suggester_ref][suggestion_ref][user_ref][comment_ref] = comments( (archiving_ref + '_' + document_ref + '_' + suggester_ref + '_' + suggestion_ref + '_' + user_ref + '_' + comment_ref).to_sym )
+													end
+												end
+											end # Comments
+										end
+									end # Users
+
+									if guest_users
+
+										unless flat_array
+											if reset
+												@comments[archiving_ref][document_ref][suggester_ref][suggestion_ref][guest_ref] = {}
+											else
+												@comments[archiving_ref][document_ref][suggester_ref][suggestion_ref][guest_ref] ||= {}
+											end
+										end
+
+										comment_modifier_states_sets = [true, false].repeated_permutation(comment_modifiers.count).to_a
+
+										comment_modifier_states_sets.map! { |comment_modifier_states|
+											comment_modifiers.keys.zip(comment_modifier_states).to_h.merge(comment_modifiers) do |comment_modifier, state, set_state|
+												set_state.nil? ? state : set_state
+											end
+										}.uniq!
+
+										comment_modifier_states_sets.reverse.each do |comment_modifier_states|
+
+											comment_numbers.each do |comment_number|
+
+												comment_ref = ""
+												comment_modifier_states.each do |comment_modifier, state|
+													comment_ref += (comment_modifier + "_") if state
+												end
+												comment_ref += "comment_" + comment_number
+
+												if except.values.any?
+													next if comment_ref == except[:comment]
+												end
+												if only.values.any?
+													next if only[:comment] && ( comment_ref != only[:comment] )
+												end
+
+												if flat_array
+													@comments.push comments( (archiving_ref + '_' + document_ref + '_' + suggester_ref + '_' + suggestion_ref + '_' + guest_ref + '_' + comment_ref).to_sym )
+												else
+													@comments[archiving_ref][document_ref][suggester_ref][suggestion_ref][guest_ref][comment_ref] = comments( (archiving_ref + '_' + document_ref + '_' + suggester_ref + '_' + suggestion_ref + '_' + guest_ref + '_' + comment_ref).to_sym )
+												end
+											end
+										end # Comments
+									end # Guest Users
+								end
+							end # Suggestions
+						end
+					end # Suggesters
+				end
+			end # Documents
+		end
+	end # Archivings
 
 	blog_modifier_states_sets = [true, false].repeated_permutation(blog_modifiers.count).to_a
 
@@ -834,5 +1525,4 @@ def load_comments(reset: true, flat_array: false,
 	end
 
 	return @comments
-
 end

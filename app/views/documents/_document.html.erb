@@ -1,6 +1,6 @@
 <% unless (size ||= nil) %>
 
-	<%= link_to article_document_path(document.article, document), class: container_class(document) do %>
+	<%= link_to versionable_article_document_path(document.article, document), class: container_class(document) do %>
 			
 		<h2><%= document.title %></h2>
 		

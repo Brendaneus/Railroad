@@ -1,3 +1,7 @@
+<% content_for :header_extension do %>
+	/ <%= link_to "Signup", signup_path %>
+<% end %>
+
 <%= render 'shared/error_messages', object: @user %>
 
 <%= render 'form', submit_text: "Create Account" %>

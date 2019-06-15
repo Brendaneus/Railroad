@@ -2,12 +2,11 @@ class Comment < ApplicationRecord
 
 	include Editable
 	include Ownable
+	include Trashable
 	
 	belongs_to :post, polymorphic: true
 	belongs_to :user, optional: true
 
-	scope :trashed, -> { where(trashed: true) }
-	scope :non_trashed, -> { where(trashed: false) }
 	scope :non_trashed_or_owned_by, -> (user) { where(trashed: false).or( where(user: user) ) }
 
 	validates :content, presence: true,

@@ -1,0 +1,22 @@
+<% content_for :header_extension do %>
+	<% if @source.class == Archiving %>
+		/ <%= link_to "Archives", archivings_path %>
+		<% if @source.trashed? %>
+			/ <%= link_to "Trash", trashed_archivings_path %>
+		<% end %>
+		/ <%= link_to @source.title, archiving_path(@source) %>
+		/ <%= link_to "History", archiving_versions_path(@source) %>
+	<% else %>
+		/ <%= link_to "Archives", archivings_path %>
+		<% if @source.article.trashed? %>
+			/ <%= link_to "Trash", trashed_archivings_path %>
+		<% end %>
+		/ <%= link_to @source.article.title, archiving_path(@source.article) %>
+		/ <%= link_to @source.title, archiving_document_path(@source.article, @source) %>
+		/ <%= link_to "History", archiving_document_versions_path(@source.article, @source) %>
+	<% end %>
+<% end %>
+
+<main>
+	<%= (render partial: 'versions/version', collection: @versions) || (tag.h2 "This #{@source.class.name} doesn't have any version history.") %>
+</main>

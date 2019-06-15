@@ -1,3 +1,8 @@
+<% content_for :header_extension do %>
+	/ <%= link_to "Trashed Archives", archivings_path %>
+	/ <%= link_to "New Archiving", new_archiving_path %>
+<% end %>
+
 <%= render 'shared/error_messages', object: @archiving %>
 
 <%= render 'form', submit_text: "Create Archiving" %>

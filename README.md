@@ -2,43 +2,69 @@
 
 ## **PHASE ONE:** Create Architecture
 
-
 - [x] **Trash Can Update**
 	- [ ] Trash All Action for Users (???)
+	- [ ] Change all Trashing patch methods
+	- [ ] **Change all of this into hide/unhide**
 
 - [x] **Users (& Sessions) Update**
 	- CANNED: Video Preview
 	- [ ] DELAYED: NavBar User Icon
 	- [ ] DELAYED: In-view bucket-switching
 	- [ ] **Future Update:**
-		- [ ] Add custom crop editing
-	- [ ] **Add helper tests (auto-logs, etc?)**
+		- [ ] Add custom crop editing (javascript?)
 
 - [ ] **Suggests Update**
-	- [ ] Archives
-		- [ ] Show
-	- [ ] Documents
-		- [ ] Show
-	- [ ] Suggestions
-		- [ ] Controller
-			- [ ] Index
-			- [ ] Trashed
+	- [x] Archives
+		- [x] Show
+	- [x] Documents
+		- [x] Show
+	- [x] Suggestions
+		- [x] Model
+		- [x] Controller
+			- [x] Index
+			- [x] Trashed
+			- [x] Show
+			- [x] New
+			- [x] Create
+			- [x] Edit
+			- [x] Update
+			- [x] Merge
+			- [x] Trash
+			- [x] Untrash
+			- [x] Destroy
+		- [x] Views
+			- [x] Index
+			- [x] Trashed
+			- [x] Show
+			- [x] New
+			- [x] Edit
+	- [ ] Versions
+		- [ ] Associations -- **RESUME HERE**
+		- [x] Model Tests
+		- [/] Index
+			- [x] Timestamps on all partials
+			- [ ] Double check everything is clean here
+		- [/] Show
+			- [ ] Double check everything is clean here
+		- [x] Hide
+		- [x] Unhide
+		- [x] Delete
+	- [ ] **Future update:**
+		- [ ] Versions
 			- [ ] Show
-			- [ ] New
-			- [ ] Create
-			- [ ] Edit
-			- [ ] Update
-			- [ ] Trash
-			- [ ] Untrash
-			- [ ] Destroy
-		- [ ] Views
-			- [ ] Index
-			- [ ] Trashed
-			- [ ] Show
-				- [ ] Highlight and replace sections
-					- **Needs a special format???**
-			- [ ] New
-			- [ ] Edit
+				- [ ] Togglable diff
+			- [ ] Restore
+			- [ ] Diff
+				- Shows changes between any two versions
+
+- [ ] Add User last_active checks to all controller tests
+
+- [ ] Set up partial inheritance with versions
+
+- [ ] Move new comments into partial calls
+
+- [ ] Scope document thumbnails to non-trashed
 
 - [ ] Put redundant model code into concerns
 	- Posts' titles and content
@@ -76,7 +102,11 @@
 	- Remove ApplicationController method
 
 - [ ] Clean up tests
-	- [ ] **FIX THE DAMN COMMENTS CONTROLLER TESTS**
+	- [ ] https://github.com/paper-trail-gem/paper_trail#7-testing
+	- [ ] **Reduce all redundant testing to relevent security implementations**
+	- [ ] **Reduce all loading and iterating to one recursive method using nested hashes**
+	- [ ] **POWER WASH THE DAMN COMMENTS CONTROLLER TESTS**
+	- [ ] **Add helper tests (auto-logs, etc?)**
 	- [ ] Speed up all tests
 		- Testing groups?
 	- [ ] Guardfile

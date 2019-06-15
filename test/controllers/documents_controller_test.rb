@@ -16,6 +16,16 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
 			else
 				assert_response :success
 
+				if document.article.class == Archiving
+					assert_select 'div.control' do
+						assert_select 'a[href=?]', archiving_document_suggestions_path(document.article, document), 1
+						assert_select 'a[href=?]', archiving_document_versions_path(document.article, document), 1
+					end
+				else
+					assert_select 'div.control', 0
+					assert_select 'a[href=?]', archiving_document_suggestions_path(document.article, document), 0
+					assert_select 'a[href=?]', archiving_document_versions_path(document.article, document), 0
+				end
 				assert_select 'div.admin.control', 0
 				assert_select 'a[href=?]', edit_article_document_path(document.article, document), 0
 				assert_select 'a[href=?]', trash_article_document_path(document.article, document), 0
@@ -38,12 +48,29 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
 
 					if user.admin
 						assert_select 'div.admin.control' do
+							if document.article.class == Archiving
+								assert_select 'a[href=?]', archiving_document_suggestions_path(document.article, document), 1
+								assert_select 'a[href=?]', archiving_document_versions_path(document.article, document), 1
+							else
+								assert_select 'a[href=?]', archiving_document_suggestions_path(document.article, document), 0
+								assert_select 'a[href=?]', archiving_document_versions_path(document.article, document), 0
+							end
 							assert_select 'a[href=?]', edit_article_document_path(document.article, document), !user.trashed?
 							assert_select 'a[href=?]', trash_article_document_path(document.article, document), !document.trashed?
 							assert_select 'a[href=?]', untrash_article_document_path(document.article, document), document.trashed?
 							assert_select 'a[href=?][data-method=delete]', article_document_path(document.article, document), document.trashed? && !user.trashed?
 						end
 					else
+						if document.article.class == Archiving
+							assert_select 'div.control' do
+								assert_select 'a[href=?]', archiving_document_suggestions_path(document.article, document), 1
+								assert_select 'a[href=?]', archiving_document_versions_path(document.article, document), 1
+							end
+						else
+							assert_select 'div.control', 0
+							assert_select 'a[href=?]', archiving_document_suggestions_path(document.article, document), 0
+							assert_select 'a[href=?]', archiving_document_versions_path(document.article, document), 0
+						end
 						assert_select 'div.admin.control', 0
 						assert_select 'a[href=?]', edit_article_document_path(document.article, document), 0
 						assert_select 'a[href=?]', trash_article_document_path(document.article, document), 0
@@ -456,64 +483,64 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
 		end
 	end
 
-	# test "should delete destroy only for [untrashed] admin" do
-	# 	# Guest
-	# 	loop_documents(reload: true) do |document|
-	# 		assert_no_difference 'Document.count' do
-	# 			delete article_document_url(document.article, document)
-	# 		end
-	# 		assert_nothing_raised { document.reload }
-	# 		assert flash[:warning]
-	# 		assert_response :redirect
-	# 	end
+	test "should delete destroy only for [untrashed] admin" do
+		# Guest
+		loop_documents(reload: true) do |document|
+			assert_no_difference 'Document.count' do
+				delete article_document_url(document.article, document)
+			end
+			assert_nothing_raised { document.reload }
+			assert flash[:warning]
+			assert_response :redirect
+		end
 
-	# 	# Non-Admin
-	# 	loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |user|
-	# 		login_as user
+		# Non-Admin
+		loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |user|
+			login_as user
 
-	# 		loop_documents do |document|
-	# 			assert_no_difference 'Document.count' do
-	# 				delete article_document_url(document.article, document)
-	# 			end
-	# 			assert_nothing_raised { document.reload }
-	# 			assert flash[:warning]
-	# 			assert_response :redirect
-	# 		end
+			loop_documents do |document|
+				assert_no_difference 'Document.count' do
+					delete article_document_url(document.article, document)
+				end
+				assert_nothing_raised { document.reload }
+				assert flash[:warning]
+				assert_response :redirect
+			end
 
-	# 		logout
-	# 	end
+			logout
+		end
 
-	# 	# Admin, Trashed
-	# 	loop_users( user_modifiers: {'trashed' => true, 'admin' => true} ) do |user|
-	# 		login_as user
+		# Admin, Trashed
+		loop_users( user_modifiers: {'trashed' => true, 'admin' => true} ) do |user|
+			login_as user
 
-	# 		loop_documents do |document|
-	# 			assert_no_difference 'Document.count' do
-	# 				delete article_document_url(document.article, document)
-	# 			end
-	# 			assert_nothing_raised { document.reload }
-	# 			assert flash[:warning]
-	# 			assert_response :redirect
-	# 		end
+			loop_documents do |document|
+				assert_no_difference 'Document.count' do
+					delete article_document_url(document.article, document)
+				end
+				assert_nothing_raised { document.reload }
+				assert flash[:warning]
+				assert_response :redirect
+			end
 
-	# 		logout
-	# 	end
+			logout
+		end
 
-	# 	# Admin, UnTrashed
-	# 	loop_users( user_modifiers: {'trashed' => false, 'admin' => true} ) do |user, user_key|
-	# 		login_as user
+		# Admin, UnTrashed
+		loop_users( user_modifiers: {'trashed' => false, 'admin' => true} ) do |user, user_key|
+			login_as user
 
-	# 		loop_documents( document_numbers: [user_key.split('_').last] ) do |document|
-	# 			assert_difference 'Document.count', -1 do
-	# 				delete article_document_url(document.article, document)
-	# 			end
-	# 			assert_raise(ActiveRecord::RecordNotFound) { document.reload }
-	# 			assert flash[:success]
-	# 			assert_response :redirect
-	# 		end
+			loop_documents( document_numbers: [user_key.split('_').last] ) do |document|
+				assert_difference 'Document.count', -1 do
+					delete article_document_url(document.article, document)
+				end
+				assert_raise(ActiveRecord::RecordNotFound) { document.reload }
+				assert flash[:success]
+				assert_response :redirect
+			end
 
-	# 		logout
-	# 	end
-	# end
+			logout
+		end
+	end
 
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_06_05_132831) do
+ActiveRecord::Schema.define(version: 2019_06_15_011636) do
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -99,6 +99,20 @@ ActiveRecord::Schema.define(version: 2019_06_05_132831) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "suggestions", force: :cascade do |t|
+    t.string "citation_type", null: false
+    t.integer "citation_id", null: false
+    t.integer "user_id"
+    t.string "name"
+    t.string "title"
+    t.text "content"
+    t.boolean "trashed", default: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["citation_type", "citation_id"], name: "index_suggestions_on_citation_type_and_citation_id"
+    t.index ["user_id"], name: "index_suggestions_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "name"
     t.string "email"
@@ -111,8 +125,22 @@ ActiveRecord::Schema.define(version: 2019_06_05_132831) do
     t.datetime "last_active"
   end
 
+  create_table "versions", force: :cascade do |t|
+    t.string "item_type", null: false
+    t.integer "item_id", limit: 8, null: false
+    t.string "event", null: false
+    t.string "name"
+    t.string "whodunnit"
+    t.boolean "hidden", default: false
+    t.text "object", limit: 1073741823
+    t.text "object_changes", limit: 1073741823
+    t.datetime "created_at"
+    t.index ["item_type", "item_id"], name: "index_versions_on_item_type_and_item_id"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "comments", "users"
   add_foreign_key "forum_posts", "users"
   add_foreign_key "sessions", "users"
+  add_foreign_key "suggestions", "users"
 end

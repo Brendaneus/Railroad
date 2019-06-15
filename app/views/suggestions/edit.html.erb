@@ -1,0 +1,26 @@
+<% content_for :header_extension do %>
+	<% if @citation.class == Archiving %>
+		/ <%= link_to "Archives", archivings_path %>
+		<% if @citation.trashed? %>
+			/ <%= link_to "Trash", trashed_archivings_path %>
+		<% end %>
+		/ <%= link_to @citation.title, archiving_path(@citation) %>
+	<% else %>
+		/ <%= link_to "Archives", archivings_path %>
+		<% if @citation.article.trashed? %>
+			/ <%= link_to "Trash", trashed_archivings_path %>
+		<% end %>
+		/ <%= link_to @citation.article.title, archiving_path(@citation.article) %>
+		/ <%= link_to @citation.title, citation_path(@citation) %>
+	<% end %>
+	/ <%= link_to "Suggestions", citation_suggestions_path(@citation) %>
+	<% if @suggestion.trashed? %>
+		/ <%= link_to "Trash", trashed_citation_suggestions_path(@citation) %>
+	<% end %>
+	/ <%= link_to @suggestion.name, citation_suggestion_path(@citation, @suggestion) %>
+	/ <%= link_to "Edit", edit_citation_suggestion_path(@citation, @suggestion) %>
+<% end %>
+
+<%= render 'shared/error_messages', object: @suggestion %>
+
+<%= render 'form', form_url: citation_suggestion_path(@citation, @suggestion), submit_text: "Update Suggestion" %>

@@ -1,26 +1,28 @@
 class Document < ApplicationRecord
 
 	include Editable
-	
-	belongs_to :article, polymorphic: true
-	has_one_attached :upload
+	include Suggestable
+	include Trashable
 
-	scope :trashed, -> { where(trashed: true) }
-	scope :non_trashed, -> { where(trashed: false) }
+	belongs_to :article, polymorphic: true
+	has_many :suggestions, as: :citation, dependent: :destroy
+	has_one_attached :upload
 
 	validates_presence_of :local_id, unless: :new_record?
 	validate :unique_local_id, unless: :new_record?
 	# validates :upload, attached: true # Currently unsupported by ActiveStorage
-	validates :title, presence: true,
-					 length: { maximum: 64 }
+	validates :title, presence: true
 	validate :unique_local_title
-	validates :content, length: { maximum: 1024 }
 
 	before_create :auto_increment_local_id
 
 
 	def article_trashed?
 		article.trashed?
+	end
+
+	def suggestable?
+		article.class == Archiving
 	end
 
 

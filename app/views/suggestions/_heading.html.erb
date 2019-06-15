@@ -1,0 +1,5 @@
+<h1><%= @suggestion.name %></h1>
+
+<% if @suggestion.trashed? %>
+	<h2 class="subtle">Currently trashed</h2>
+<% end %>

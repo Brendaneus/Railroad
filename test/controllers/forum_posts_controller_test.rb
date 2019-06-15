@@ -125,19 +125,19 @@ class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 
 				assert_select 'form[action=?][method=?]', forum_post_comments_path(forum_post), 'post', 1
 				
-				loop_comments( blog_modifiers: {}, blog_numbers: [],
+				loop_comments( archiving_numbers: [],  blog_numbers: [],
 						comment_modifiers: {'trashed' => false},
 						only: {poster: poster_key, forum_post: forum_post_key} ) do |comment|
 					assert_select 'main p', {text: comment.content, count: 1 }
 					assert_select 'form[action=?][method=?]', forum_post_comment_path(forum_post, comment), 'post', 0
 				end
-				loop_comments( blog_modifiers: {}, blog_numbers: [],
+				loop_comments( archiving_numbers: [],  blog_numbers: [],
 						comment_modifiers: {'trashed' => true},
 						only: {poster: poster_key, forum_post: forum_post_key} ) do |comment|
 					assert_select 'main p', {text: comment.content, count: 0 }
 					assert_select 'form[action=?][method=?]', forum_post_comment_path(forum_post, comment), 'post', 0
 				end
-				loop_comments( blog_modifiers: {}, blog_numbers: [],
+				loop_comments( archiving_numbers: [],  blog_numbers: [],
 						except: {poster: poster_key, forum_post: forum_post_key} ) do |comment|
 					assert_select 'main p', {text: comment.content, count: 0 }
 					assert_select 'form[action=?][method=?]', forum_post_comment_path(forum_post, comment), 'post', 0
@@ -181,21 +181,21 @@ class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 						assert_select 'a[href=?][data-method=delete]', forum_post_path(forum_post), 0
 					end
 
-					assert_select 'form[action=?][method=?]', forum_post_comments_path(forum_post), 'post', 1
+					assert_select 'form[action=?][method=?]', forum_post_comments_path(forum_post), 'post', !user.trashed?
 
-					loop_comments( blog_modifiers: {}, blog_numbers: [],
+					loop_comments( archiving_numbers: [],  blog_numbers: [],
 							comment_modifiers: {'trashed' => false},
 							only: {poster: poster_key, forum_post: forum_post_key} ) do |comment|
 						assert_select 'main p', {text: comment.content, count: ( (comment.owned_by?(user) || user.admin?) && !user.trashed? ) ? 0 : 1 }
 						assert_select 'form[action=?][method=?]', forum_post_comment_path(forum_post, comment), 'post', ( (comment.owned_by?(user) || user.admin?) && !user.trashed? ) ? 1 : 0
 					end
-					loop_comments( blog_modifiers: {}, blog_numbers: [],
+					loop_comments( archiving_numbers: [],  blog_numbers: [],
 							comment_modifiers: {'trashed' => true},
 							only: {poster: poster_key, forum_post: forum_post_key} ) do |comment|
 						assert_select 'main p', {text: comment.content, count: ( ( comment.owned_by?(user) || user.admin? ) && !user.trashed? ) ? 0 : ( comment.owned_by?(user) || user.admin? ) ? 1 : 0 }
 						assert_select 'form[action=?][method=?]', forum_post_comment_path(forum_post, comment), 'post', ( (comment.owned_by?(user) || user.admin?) && !user.trashed? ) ? 1 : 0
 					end
-					loop_comments( blog_modifiers: {}, blog_numbers: [],
+					loop_comments( archiving_numbers: [],  blog_numbers: [],
 							except: {poster: poster_key, forum_post: forum_post_key} ) do |comment|
 						assert_select 'main p', {text: comment.content, count: 0 }
 						assert_select 'form[action=?][method=?]', forum_post_comment_path(forum_post, comment), 'post', 0

@@ -1,5 +1,35 @@
 Rails.application.routes.draw do
 
+	concern :versioned do
+		resources :versions, only: [:index, :show, :destroy] do
+			member do
+				patch :hide
+				patch :unhide
+			end
+		end
+	end
+
+	concern :trashable do
+		member do
+			get :trash
+			get :untrash
+		end
+	end
+
+	concern :commentable do
+		resources :comments, except: [:index, :show] do
+			concerns :trashable
+		end
+	end
+
+	concern :suggestable do
+		resources :suggestions, post_class: 'Suggestion' do
+			get :trashed, on: :collection
+			patch :merge, on: :member
+			concerns [:trashable, :commentable]
+		end
+	end
+
 	root 'home_pages#dashboard'
 
 	# Home Pages
@@ -13,76 +43,41 @@ Rails.application.routes.draw do
 
 	# Users
 	get '/signup',		to: 'users#new'
-	resources :users, except: :new do
+	resources :users, except: [:new] do
 		get :trashed, on: :collection
-		member do
-			get :trash
-			get :untrash
-		end
+		concerns :trashable
 		resources :sessions
 	end
 
 	# Archive
-	resources :archivings, only: [:index, :create], path: 'archive'
-	resources :archivings, except: [:index, :create], path: 'archives', model_name: 'Archiving' do
+	resources :archivings, path: 'archives', citation_class: 'Archiving', source_class: 'Archiving' do
 		get :trashed, on: :collection
-		member do
-			get :trash
-			get :untrash
-		end
-		resources :documents, except: :index do
-			member do
-				get :trash
-				get :untrash
-			end
+		concerns [:trashable, :versioned, :suggestable]
+		resources :documents, except: :index, article_class: 'Archiving', citation_class: 'Document', source_class: 'Document' do
+			concerns [:trashable, :versioned, :suggestable]
 		end
 	end
 
 	# Blog
-	resources :blog_posts, only: [:index, :create], path: 'blog'
-	resources :blog_posts, except: [:index, :create], path: 'blogs', model_name: 'BlogPost' do
+	resources :blog_posts, path: 'blogs', post_class: 'BlogPost' do
 		get :trashed, on: :collection
-		member do
-			get :trash
-			get :untrash
+		concerns [:trashable, :commentable]
+		resources :documents, except: :index, article_class: 'BlogPost' do
+			concerns [:trashable]
 		end
-		resources :documents, except: :index do
-			member do
-				get :trash
-				get :untrash
-			end
-		end
-		resources :comments, only: [:create, :update, :destroy] do
-			member do
-				get :trash
-				get :untrash
-			end
-		end
-		get '/motd',	to: 'blog_posts#motd'
 	end
 
 	# Forum
-	resources :forum_posts, only: [:index, :create], path: 'forum'
-	resources :forum_posts, except: [:index, :create], path: 'forums', model_name: 'ForumPost' do
+	resources :forum_posts, path: 'forums', post_class: 'ForumPost' do
 		get :trashed, on: :collection
-		member do
-			get :trash
-			get :untrash
-		end
-		resources :comments, only: [:create, :update, :destroy]do
-			member do
-				get :trash
-				get :untrash
-			end
-		end
-		get '/motd',	to: 'forum_posts#motd'
+		concerns [:trashable, :commentable]
 	end
+
 
 	# Errors
 	get '/404',		to: 'errors#not_found',			as: :not_found
 	get '/422',		to: 'errors#unprocessable',		as: :unprocessable
 	get '/500',		to: 'errors#internal_error',	as: :internal_error
-
 
 	# Catch-all Redirect
 	http_methods = [:get, :post, :put, :patch, :delete, :head, :connect, :options, :trace]

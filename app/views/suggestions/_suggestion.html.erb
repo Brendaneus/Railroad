@@ -1,0 +1,9 @@
+<%= link_to citation_suggestion_path(suggestion.citation, suggestion), class: container_class(suggestion) do %>
+
+	<h2><%= suggestion.name %></h2>
+
+	<%= render 'shared/details', object: suggestion %>
+
+	<%= render 'shared/timestamps', object: suggestion, owner: suggestion.user.name %>
+
+<% end %>

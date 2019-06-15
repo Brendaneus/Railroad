@@ -1,6 +1,7 @@
 class BlogPost < ApplicationRecord
 
 	include Editable
+	include Trashable
 	
 	has_many :documents, as: :article, dependent: :destroy
 	has_many :comments, as: :post, dependent: :destroy
@@ -8,8 +9,6 @@ class BlogPost < ApplicationRecord
 						  through: :comments,
 						  source: :user
 	
-	scope :trashed, -> { where(trashed: true) }
-	scope :non_trashed, -> { where(trashed: false) }
 	scope :motds, -> { where(motd: true) }
 
 	validates :title, presence: true,

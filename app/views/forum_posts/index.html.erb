@@ -1,3 +1,7 @@
+<% content_for :header_extension do %>
+	/ <%= link_to "Forums", forum_posts_path %>
+<% end %>
+
 <% if logged_in? %>
 
 	<div class="<%= ( admin_user? ) ? "admin " : "" %>control">

@@ -4,7 +4,7 @@ class BlogPostsController < ApplicationController
 	before_action :require_untrashed_user, except: [:index, :trashed, :show]
 	before_action :require_admin_for_trashed, only: :show
 	before_action :set_document_bucket, unless: -> { Rails.env.test? }
-	after_action :mark_activity, only: [:trash, :untrash, :create, :update, :destroy], if: :logged_in?
+	after_action :mark_activity, only: [:create, :update, :trash, :untrash, :destroy], if: :logged_in?
 
 	def index
 		@blog_posts = BlogPost.non_trashed.includes(:documents, :comments).order( created_at: :desc )

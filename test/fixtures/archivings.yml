@@ -1,27 +1,24 @@
-<% archiving_numbers = ['one', 'two'] %>
-<% archiving_modifiers = ['trashed'] %>
+archiving_one:
+  id: 1
+  title: 'Archiving One'
+  content: 'Lorem ipsum'
+  trashed: false
 
-<% id = 1 %>
+archiving_two:
+  id: 2
+  title: 'Archiving Two'
+  content: 'Lorem ipsum'
+  trashed: false
 
-<% archiving_modifier_states_sets = [true, false].repeated_permutation(archiving_modifiers.count).to_a %>
-<% archiving_modifier_states_sets.map! { |archiving_modifier_states| archiving_modifiers.zip(archiving_modifier_states).to_h } %>
-<% archiving_modifier_states_sets.reverse.each do |archiving_modifier_states| %>
+trashed_archiving_one:
+  id: 3
+  title: 'Trashed Archiving One'
+  content: 'Lorem ipsum'
+  trashed: true
 
-  <% archiving_numbers.each do |archiving_number| %>
+trashed_archiving_two:
+  id: 4
+  title: 'Trashed Archiving Two'
+  content: 'Lorem ipsum'
+  trashed: true
 
-    <% archiving_ref = "" %>
-    <% archiving_modifier_states.each do |archiving_modifier, state| %>
-      <% archiving_ref += (archiving_modifier + "_") if state %>
-    <% end %>
-    <% archiving_ref += "archiving_" + archiving_number %>
-
-<%= archiving_ref %>:
-  id: <%= id %>
-  title: <%= archiving_ref.split("_").map(&:capitalize).join(" ") %>
-  content: "Lorem ipsum"
-  trashed: <%= archiving_modifier_states['trashed'] %>
-
-    <% id += 1 %>
-  <% end %>
-
-<% end %>

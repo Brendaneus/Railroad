@@ -94,6 +94,10 @@ class ArchivingsControllerTest < ActionDispatch::IntegrationTest
 			get archiving_url(archiving)
 			assert_response :success
 
+			assert_select 'div.control' do
+				assert_select 'a[href=?]', archiving_versions_path(archiving), 1
+				assert_select 'a[href=?]', archiving_suggestions_path(archiving), 1
+			end
 			assert_select 'div.admin.control', 0
 			assert_select 'a[href=?]', edit_archiving_path(archiving), 0
 			assert_select 'a[href=?]', trash_archiving_path(archiving), 0
@@ -101,17 +105,15 @@ class ArchivingsControllerTest < ActionDispatch::IntegrationTest
 			assert_select 'a[href=?][data-method=delete]', archiving_path(archiving), 0
 			assert_select 'a[href=?]', new_archiving_document_path(archiving), 0
 
-			loop_documents( blog_modifiers: {}, blog_numbers: [],
-					document_modifiers: {'trashed' => false},
+			loop_documents( blog_numbers: [], document_modifiers: {'trashed' => false},
 					only: {archiving: archiving_key} ) do |document|
 				assert_select 'main a[href=?]', archiving_document_path(archiving, document), 1
 			end
-			loop_documents( blog_modifiers: {}, blog_numbers: [],
-					document_modifiers: {'trashed' => true},
+			loop_documents( blog_numbers: [], document_modifiers: {'trashed' => true},
 					only: {archiving: archiving_key} ) do |document|
 				assert_select 'main a[href=?]', archiving_document_path(archiving, document), 0
 			end
-			loop_documents( blog_modifiers: {}, blog_numbers: [],
+			loop_documents( blog_numbers: [],
 					except: {archiving: archiving_key} ) do |document|
 				assert_select 'main a[href=?]', archiving_document_path(archiving, document), 0
 			end
@@ -131,6 +133,11 @@ class ArchivingsControllerTest < ActionDispatch::IntegrationTest
 				get archiving_url(archiving)
 				assert_response :success
 
+				
+				assert_select 'div.control' do
+					assert_select 'a[href=?]', archiving_versions_path(archiving), 1
+					assert_select 'a[href=?]', archiving_suggestions_path(archiving), 1
+				end
 				assert_select 'div.admin.control', 0
 				assert_select 'a[href=?]', edit_archiving_path(archiving), 0
 				assert_select 'a[href=?]', trash_archiving_path(archiving), 0
@@ -138,17 +145,15 @@ class ArchivingsControllerTest < ActionDispatch::IntegrationTest
 				assert_select 'a[href=?][data-method=delete]', archiving_path(archiving), 0
 				assert_select 'a[href=?]', new_archiving_document_path(archiving), 0
 
-				loop_documents( blog_modifiers: {}, blog_numbers: [],
-						document_modifiers: {'trashed' => false},
+				loop_documents( blog_numbers: [], document_modifiers: {'trashed' => false},
 						only: {archiving: archiving_key} ) do |document|
 					assert_select 'main a[href=?]', archiving_document_path(archiving, document), 1
 				end
-				loop_documents( blog_modifiers: {}, blog_numbers: [],
-						document_modifiers: {'trashed' => true},
+				loop_documents( blog_numbers: [], document_modifiers: {'trashed' => true},
 						only: {archiving: archiving_key} ) do |document|
 					assert_select 'main a[href=?]', archiving_document_path(archiving, document), 0
 				end
-				loop_documents( blog_modifiers: {}, blog_numbers: [],
+				loop_documents( blog_numbers: [],
 						except: {archiving: archiving_key} ) do |document|
 					assert_select 'main a[href=?]', archiving_document_path(archiving, document), 0
 				end
@@ -177,13 +182,15 @@ class ArchivingsControllerTest < ActionDispatch::IntegrationTest
 					assert_select 'a[href=?]', untrash_archiving_path(archiving), archiving.trashed?
 					assert_select 'a[href=?][data-method=delete]', archiving_path(archiving), archiving.trashed? && !user.trashed?
 					assert_select 'a[href=?]', new_archiving_document_path(archiving), !user.trashed?
+					assert_select 'a[href=?]', archiving_versions_path(archiving), 1
+					assert_select 'a[href=?]', archiving_suggestions_path(archiving), 1
 				end
 
-				loop_documents( blog_modifiers: {}, blog_numbers: [],
+				loop_documents( blog_numbers: [],
 						only: {archiving: archiving_key} ) do |document|
 					assert_select 'main a[href=?]', archiving_document_path(archiving, document), 1
 				end
-				loop_documents( blog_modifiers: {}, blog_numbers: [],
+				loop_documents( blog_numbers: [],
 						except: {archiving: archiving_key} ) do |document|
 					assert_select 'main a[href=?]', archiving_document_path(archiving, document), 0
 				end

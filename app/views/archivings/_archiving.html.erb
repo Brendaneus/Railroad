@@ -1,9 +1,14 @@
-<%= link_to archiving, class: container_class(archiving) do %>
+<%= link_to versionable_archiving_path(archiving), class: container_class(archiving) do %>
+
 	<%= render archiving.documents.reverse, size: :thumb %>
 
-	<h2><%= archiving.title %></h2>
+	<h2>
+		<%= archiving.title if archiving.paper_trail.live? %>
+		<%= archiving.paper_trail.previous_version.version.name unless archiving.paper_trail.live? %>
+	</h2>
 
 	<%= render 'shared/details', object: archiving %>
 
 	<%= render 'shared/timestamps', object: archiving %>
+
 <% end %>

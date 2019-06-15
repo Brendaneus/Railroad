@@ -5,12 +5,12 @@
 
 	<% else %>
 			
-		<%= ( (create_alias ||= nil) || "Posted" ) + ( (owned ||= nil) ? " by #{object.user.name}" : "" ) %>
+		<%= ( (create_alias ||= nil) || "Posted" ) + ( (owner ||= nil) ? " by #{owner}" : "" ) %>
 		on
 
 		<%= (date_time ||= nil) ? object.created_at.to_datetime.to_formatted_s(:long_ordinal) : object.created_at.to_date %>.
-		
-		<% if object.edited? %>
+
+		<% if object.respond_to?(:edited?) && object.edited? %>
 
 			Last <%= (edit_alias ||= nil) || "edited" %>
 			on
@@ -20,7 +20,7 @@
 
 	<% end %>
 
-	<% if (object.class != Session) && object.trashed? %>
+	<% if object.respond_to?(:trashed?) && object.trashed? %>
 
 		Currently trashed.
 

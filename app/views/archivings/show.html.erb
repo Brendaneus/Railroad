@@ -1,21 +1,22 @@
-<% if admin_user? %>
-
-	<div class="admin control">
-		<%= link_to "Edit Archiving", edit_archiving_path( @archiving ) if untrashed_user? %>
-		
-		<%= link_to "Trash Archiving", trash_archiving_path( @archiving ) unless @archiving.trashed? %>
-		
-		<%= link_to "Restore Archiving", untrash_archiving_path( @archiving ) if @archiving.trashed? %>
-
-		<%= link_to "Delete Archiving", @archiving, method: :delete, data: { confirm: 'Really delete this post?'} if @archiving.trashed? && untrashed_user? %>
-
-		<%= link_to "New Document", new_archiving_document_path( @archiving ) if untrashed_user? %>
-	</div>
-
+<% content_for :header_extension do %>
+	/ <%= link_to "Archives", archivings_path %>
+	<% if @archiving.trashed? %>
+		/ <%= link_to "Trash", trashed_archivings_path %>
+	<% end %>
+	<% unless (@version ||= nil) %>
+		/ <%= link_to @archiving.title, archiving_path(@archiving) %>
+	<% else %>
+		/ <%= link_to @source.title, archiving_path(@source) %>
+		/ <%= link_to "History", archiving_versions_path(@archiving) %>
+		/ <%= link_to @version.name, archiving_version_path(@archiving, @version) %>
+	<% end %>
 <% end %>
 
+<%= render 'archivings/show_control' unless @version ||= nil %>
+<%= render 'archivings/version_control' if @version ||= nil %>
+
 <main>
-	<%= render 'heading' %>
+	<%= render 'archivings/heading' %>
 
 	<p><%= simple_format @archiving.content %></p>
 
@@ -23,5 +24,5 @@
 
 	<%= render 'shared/timestamps', object: @archiving %>
 
-	<%= render @documents %>
+	<%= render @documents unless @version ||= nil %>
 </main>

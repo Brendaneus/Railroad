@@ -1,0 +1,7 @@
+<%= link_to source_version_path(@source, version), class: container_class(version) do %>
+
+	<h2><%= version.name %></h2>
+
+	<%= render 'shared/timestamps', object: version, create_alias: "Created", owned: true, owner: version.whodunnit %>
+
+<% end %>

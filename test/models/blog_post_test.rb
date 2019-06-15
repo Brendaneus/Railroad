@@ -3,7 +3,7 @@ require 'test_helper'
 class BlogPostTest < ActiveSupport::TestCase
 
 	def setup
-		load_blog_posts( blog_modifiers: {}, blog_numbers: ['one'] )
+		load_blog_posts
 	end
 
 	test "should associate with documents" do
@@ -34,20 +34,20 @@ class BlogPostTest < ActiveSupport::TestCase
 		loop_blog_posts(reload: true) do |blog_post, blog_post_key|
 			assert blog_post.comments ==
 				load_comments( flat_array: true,
-					poster_modifiers: {}, poster_numbers: [],
+					archiving_numbers: [], poster_numbers: [],
 					only: {blog_post: blog_post_key} )
 		end
 	end
 
 	test "should dependent destroy comments" do
-		load_comments( poster_modifiers: {}, poster_numbers: [] )
+		load_comments( archiving_numbers: [], poster_numbers: [] )
 
 		loop_blog_posts(reload: true) do |blog_post, blog_post_key|
 			blog_post.destroy
 
 			assert_raise(ActiveRecord::RecordNotFound) { blog_post.reload }
 
-			loop_comments( poster_modifiers: {}, poster_numbers: [],
+			loop_comments( archiving_numbers: [], poster_numbers: [],
 				only: {blog_post: blog_post_key} ) do |comment|
 				assert_raise(ActiveRecord::RecordNotFound) { comment.reload }
 			end

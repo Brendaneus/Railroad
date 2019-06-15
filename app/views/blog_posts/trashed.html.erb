@@ -1,3 +1,8 @@
+<% content_for :header_extension do %>
+	/ <%= link_to "Blogs", blog_posts_path %>
+	/ <%= link_to "Trash", trashed_blog_posts_path %>
+<% end %>
+
 <main>
 	<%= (render @blog_posts) || (tag.h2 "There isn't anything here...") %>
 </main>

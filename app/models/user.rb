@@ -6,6 +6,7 @@ class User < ApplicationRecord
 	attr_accessor :remember_token
 
 	has_many :sessions, dependent: :destroy
+	has_many :suggestions, dependent: :destroy
 	has_many :forum_posts, dependent: :destroy
 	has_many :comments, dependent: :destroy
 	has_many :commented_blog_posts, -> { distinct },

@@ -70,6 +70,7 @@ module SessionsHelper
 				flash.now[:error] = "There was a problem with your saved session."
 				cookies.delete(:session_id)
 				cookies.delete(:remember_token)
+				nil
 			end
 		end
 	end

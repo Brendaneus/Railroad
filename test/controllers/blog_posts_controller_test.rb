@@ -113,17 +113,17 @@ class BlogPostsControllerTest < ActionDispatch::IntegrationTest
 
 			assert_select 'form[action=?][method=?]', blog_post_comments_path(blog_post), 'post', 1
 
-			loop_comments( forum_modifiers: {}, forum_numbers: [],
+			loop_comments( archiving_numbers: [], forum_numbers: [],
 					comment_modifiers: {'trashed' => false},
 					only: {blog_post: blog_post_key} ) do |comment|
 				assert_select 'main p', {text: comment.content, count: 1 }
 			end
-			loop_comments( forum_modifiers: {}, forum_numbers: [],
+			loop_comments( archiving_numbers: [], forum_numbers: [],
 					comment_modifiers: {'trashed' => true},
 					only: {blog_post: blog_post_key} ) do |comment|
 				assert_select 'main p', {text: comment.content, count: 0 }
 			end
-			loop_comments( forum_modifiers: {}, forum_numbers: [],
+			loop_comments( archiving_numbers: [], forum_numbers: [],
 					except: {blog_post: blog_post_key} ) do |comment|
 				assert_select 'main p', {text: comment.content, count: 0 }
 			end
@@ -150,35 +150,28 @@ class BlogPostsControllerTest < ActionDispatch::IntegrationTest
 				assert_select 'a[href=?][data-method=delete]', blog_post_path(blog_post), 0
 				assert_select 'a[href=?]', new_blog_post_document_path(blog_post), 0
 
-				loop_documents( archiving_modifiers: {},
-						archiving_numbers: [],
-						only: {blog_post: blog_post_key} ) do |document|
+				loop_documents( archiving_numbers: [], only: {blog_post: blog_post_key} ) do |document|
 					assert_select 'main a[href=?]', blog_post_document_path(blog_post, document), document.trashed? ? 0 : 1
 				end
-				loop_documents( archiving_modifiers: {},
-						archiving_numbers: [],
-						except: {blog_post: blog_post_key} ) do |document|
+				loop_documents( archiving_numbers: [], except: {blog_post: blog_post_key} ) do |document|
 					assert_select 'main a[href=?]', blog_post_document_path(blog_post, document), 0
 				end
 
 				assert_select 'form[action=?][method=?]', blog_post_comments_path(blog_post), 'post', 1
 
-				loop_comments( forum_modifiers: {},
-						forum_numbers: [],
+				loop_comments( archiving_numbers: [], forum_numbers: [],
 						comment_modifiers: {'trashed' => false},
 						only: {blog_post: blog_post_key} ) do |comment|
 					assert_select 'main p', {text: comment.content, count: ( comment.owned_by?(user) && !user.trashed? ) ? 0 : 1 }
 					assert_select 'form[action=?][method=?]', blog_post_comment_path(blog_post, comment), 'post', ( comment.owned_by?(user) && !user.trashed? ) ? 1 : 0
 				end
-				loop_comments( forum_modifiers: {},
-						forum_numbers: [],
+				loop_comments( archiving_numbers: [], forum_numbers: [],
 						comment_modifiers: {'trashed' => true},
 						only: {blog_post: blog_post_key} ) do |comment|
 					assert_select 'main p', {text: comment.content, count: ( comment.owned_by?(user) && !user.trashed? ) ? 0 : comment.owned_by?(user) ? 1 : 0 }
 					assert_select 'form[action=?][method=?]', blog_post_comment_path(blog_post, comment), 'post', ( comment.owned_by?(user) && !user.trashed? ) ? 1 : 0
 				end
-				loop_comments( forum_modifiers: {},
-						forum_numbers: [],
+				loop_comments( archiving_numbers: [], forum_numbers: [],
 						except: {blog_post: blog_post_key} ) do |comment|
 					assert_select 'main p', {text: comment.content, count: 0 }
 					assert_select 'form[action=?][method=?]', blog_post_comment_path(blog_post, comment), 'post', 0
@@ -210,23 +203,21 @@ class BlogPostsControllerTest < ActionDispatch::IntegrationTest
 					assert_select 'a[href=?]', new_blog_post_document_path(blog_post), !user.trashed?
 				end
 
-				loop_documents( archiving_modifiers: {}, archiving_numbers: [],
-						only: {blog_post: blog_post_key} ) do |document|
+				loop_documents( archiving_numbers: [], only: {blog_post: blog_post_key} ) do |document|
 					assert_select 'main a[href=?]', blog_post_document_path(blog_post, document), 1
 				end
-				loop_documents( archiving_modifiers: {}, archiving_numbers: [],
-						except: {blog_post: blog_post_key} ) do |document|
+				loop_documents( archiving_numbers: [], except: {blog_post: blog_post_key} ) do |document|
 					assert_select 'main a[href=?]', blog_post_document_path(blog_post, document), 0
 				end
 
 				assert_select 'form[action=?][method=?]', blog_post_comments_path(blog_post), 'post', 1
 
-				loop_comments( forum_modifiers: {}, forum_numbers: [],
+				loop_comments( archiving_numbers: [], forum_numbers: [],
 						only: {blog_post: blog_post_key} ) do |comment|
 					assert_select 'main p', {text: comment.content, count: ( !user.trashed? ) ? 0 : 1 }
 					assert_select 'form[action=?][method=?]', blog_post_comment_path(blog_post, comment), 'post', !user.trashed?
 				end
-				loop_comments( forum_modifiers: {}, forum_numbers: [],
+				loop_comments( archiving_numbers: [], forum_numbers: [],
 						except: {blog_post: blog_post_key} ) do |comment|
 					assert_select 'main p', {text: comment.content, count: 0 }
 					assert_select 'form[action=?][method=?]', blog_post_comment_path(blog_post, comment), 'post', 0

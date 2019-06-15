@@ -21,7 +21,8 @@ module ApplicationHelper
 	def container_class(object)
 		class_attr = ""
 
-		class_attr += "trashed " if (object.class != Session) && object.trashed?
+		class_attr += "hidden " if object.respond_to?(:hidden?) && object.hidden?
+		class_attr += "trashed " if object.respond_to?(:trashed?) && object.trashed?
 		class_attr += "admin " if object.respond_to?(:admin?) && object.admin?
 
 		if (object.class == ForumPost) || (object.class == BlogPost)

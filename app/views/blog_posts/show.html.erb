@@ -1,3 +1,11 @@
+<% content_for :header_extension do %>
+	/ <%= link_to "Blogs", blog_posts_path %>
+	<% if @blog_post.trashed? %>
+		/ <%= link_to "Trash", trashed_blog_posts_path %>
+	<% end %>
+	/ <%= link_to @blog_post.title, blog_post_path(@blog_post) %>
+<% end %>
+
 <% if admin_user? %>
 
 	<div class="admin control">

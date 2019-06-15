@@ -1,4 +1,14 @@
-<%= render 'heading', title_prefix: 'Editing ' %>
+<% content_for :header_extension do %>
+	/ <%= articles_path(@article, link: true) %>
+	<% if @article.trashed? %>
+		/ <%= trashed_articles_path(@article, link: true) %>
+	<% end %>
+	/ <%= article_path(@article, link: true) %>
+	/ <%= article_document_path(@article, @document, link: true) %>
+	/ <%= edit_article_document_path(@article, @document, link: true) %>
+<% end %>
+
+<%= render 'heading' %>
 
 <%= render 'shared/error_messages', object: @document %>
 

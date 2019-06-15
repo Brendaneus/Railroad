@@ -3,6 +3,7 @@ require 'test_helper'
 class SessionTest < ActiveSupport::TestCase
 
 	def setup
+		load_users
 		load_sessions
 	end
 
@@ -30,7 +31,7 @@ class SessionTest < ActiveSupport::TestCase
 	end
 
 	test "should validate local uniqueness of name" do
-		loop_sessions(reload: true) do |session|
+		loop_sessions do |session|
 			session.user.sessions.each do |other_session|
 				unless session.id == other_session.id
 					session.name = other_session.name
@@ -68,17 +69,13 @@ class SessionTest < ActiveSupport::TestCase
 	end
 
 	test "should auto-set name on create" do
-		loop_users(reload: true) do |user|
-			session = user.sessions.create!
-			assert session.name.present?
-		end
+		new_session = create(:session)
+		assert new_session.name.present?
 	end
 
 	test "should auto-set remember_digest on create" do
-		loop_users(reload: true) do |user|
-			session = user.sessions.create!
-			assert session.remember_digest.present?
-		end
+		new_session = create(:session)
+		assert new_session.remember_digest.present?
 	end
 
 	test "should digest and authenticate tokens" do
@@ -88,7 +85,7 @@ class SessionTest < ActiveSupport::TestCase
 	test "should check if edited" do
 		assert_not @sessions['user_one']['session_one'].edited?
 
-		@sessions['user_one']['session_one'].update(name: "Changed name")
+		@sessions['user_one']['session_one'].update(updated_at: Time.now + 5)
 		assert @sessions['user_one']['session_one'].edited?
 	end
 

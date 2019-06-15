@@ -3,20 +3,20 @@ class CommentsController < ApplicationController
 	include CommentsHelper
 
 	before_action :set_post
-	before_action :require_authenticate, except: [:create]
+	before_action :require_authorize, except: [:create]
 	before_action :require_untrashed_user, only: [:create, :update, :destroy], if: :logged_in?
 	before_action :require_admin, only: [:destroy]
-	after_action :mark_activity, only: [:trash, :untrash, :create, :update, :destroy], if: :logged_in?
+	after_action :mark_activity, if: :logged_in?
 
 	def create
 		@comment = @post.comments.build(comment_params)
 		@comment.user = current_user
 		if @comment.save
 			flash[:success] = "The comment has been successfully created."
-			redirect_to @post
+			redirect_to post_path(@post)
 		else
 			flash[:failure] = "There was a problem creating the comment."
-			redirect_to @post
+			redirect_to post_path(@post)
 		end
 	end
 
@@ -24,10 +24,10 @@ class CommentsController < ApplicationController
 		@comment = Comment.find( params[:id] )
 		if @comment.update(comment_params)
 			flash[:success] = "The comment has been successfully updated."
-			redirect_to @post
+			redirect_to post_path(@post)
 		else
 			flash[:failure] = "There was a problem updating the comment."
-			redirect_to @post
+			redirect_to post_path(@post)
 		end
 	end
 
@@ -35,10 +35,10 @@ class CommentsController < ApplicationController
 		@comment = Comment.find( params[:id] )
 		if @comment.update_columns(trashed: true)
 			flash[:success] = "The comment has been successfully trashed."
-			redirect_to @post
+			redirect_to post_path(@post)
 		else
 			flash[:failure] = "There was a problem trashing the comment."
-			redirect_back fallback_url: @post
+			redirect_back fallback_url: post_path(@post)
 		end
 	end
 
@@ -46,10 +46,10 @@ class CommentsController < ApplicationController
 		@comment = Comment.find( params[:id] )
 		if @comment.update_columns(trashed: false)
 			flash[:success] = "The comment has been successfully restored."
-			redirect_to @post
+			redirect_to post_path(@post)
 		else
 			flash[:failure] = "There was a problem restoring the comment."
-			redirect_back fallback_url: @post
+			redirect_back fallback_url: post_path(@post)
 		end
 	end
 
@@ -57,10 +57,10 @@ class CommentsController < ApplicationController
 		@comment = Comment.find( params[:id] )
 		if @comment.destroy
 			flash[:success] = "The comment has been successfully deleted."
-			redirect_to @post
+			redirect_to post_path(@post)
 		else
 			flash[:failure] = "There was a problem deleting the comment."
-			redirect_to @post
+			redirect_to post_path(@post)
 		end
 	end
 
@@ -71,7 +71,7 @@ class CommentsController < ApplicationController
 			params.require(:comment).permit(:content)
 		end
 
-		def require_authenticate
+		def require_authorize
 			unless ( Comment.find( params[:id] ).owned_by? current_user ) || ( admin_user? && untrashed_user? )
 				flash[:warning] = "You aren't allowed to do that."
 				redirect_to login_path
@@ -80,8 +80,8 @@ class CommentsController < ApplicationController
 
 		def set_post
 			begin
-				post_class = params[:model_name].constantize
-				post_foreign_key = params[:model_name].foreign_key
+				post_class = params[:post_class].constantize
+				post_foreign_key = params[:post_class].foreign_key
 				@post = post_class.find(params[post_foreign_key])
 			rescue
 				flash[:error] = "There was a problem finding the post for this comment."

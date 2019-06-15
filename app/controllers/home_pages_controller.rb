@@ -8,11 +8,12 @@ class HomePagesController < ApplicationController
 	end
 
 	def dashboard
-		@blog_posts = BlogPost.where('created_at > ?', 1.week.ago).order(created_at: :desc).limit(3)
-		@forum_posts = ForumPost.where('created_at > ?', 1.week.ago).order(created_at: :desc).limit(3)
-		unless admin_user?
-			@blog_posts = @blog_posts.non_trashed
-			@forum_posts = @forum_posts.non_trashed
+		if admin_user?
+			@blog_posts = BlogPost.where('created_at > ?', 1.week.ago).order(created_at: :desc).limit(3)
+			@forum_posts = ForumPost.where('created_at > ?', 1.week.ago).order(created_at: :desc).limit(3)
+		else
+			@blog_posts = BlogPost.non_trashed.where('created_at > ?', 1.week.ago).order(created_at: :desc).limit(3)
+			@forum_posts = ForumPost.non_trashed.where('created_at > ?', 1.week.ago).order(created_at: :desc).limit(3)
 		end
 	end
 

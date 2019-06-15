@@ -6,7 +6,7 @@ module Editable
 
 	def edited?
 		# Documents had a problem with comparing the original values
-		self.created_at.to_s != self.updated_at.to_s
+		self.created_at.to_i != self.updated_at.to_i
 	end
 
 end

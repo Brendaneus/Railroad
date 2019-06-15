@@ -1,103 +1,648 @@
-<% archiving_numbers = ['one', 'two'] %>
-<% archiving_modifiers = ['trashed'] %>
-<% blog_numbers = ['one', 'two'] %>
-<% blog_modifiers = ['trashed', 'motd'] %>
-<% document_numbers = ['one', 'two', 'three'] %>
-<% document_modifiers = ['trashed'] %>
-
-<% id = 1 %>
-<% archiving_id = 1 %>
-
-<% archiving_modifier_states_sets = [true, false].repeated_permutation(archiving_modifiers.count).to_a %>
-<% archiving_modifier_states_sets.map! { |archiving_modifier_states| archiving_modifiers.zip(archiving_modifier_states).to_h } %>
-<% archiving_modifier_states_sets.reverse.each do |archiving_modifier_states| %>
-
-  <% archiving_numbers.each do |archiving_number| %>
-
-    <% archiving_ref = "" %>
-    <% archiving_modifier_states.each do |archiving_modifier, state| %>
-      <% archiving_ref += (archiving_modifier + "_") if state %>
-    <% end %>
-    <% archiving_ref += "archiving_" + archiving_number %>
-
-    <% local_id = 1 %>
-
-    <% document_modifier_states_sets = [true, false].repeated_permutation(document_modifiers.count).to_a %>
-    <% document_modifier_states_sets.map! { |document_modifier_states| document_modifiers.zip(document_modifier_states).to_h } %>
-    <% document_modifier_states_sets.reverse.each do |document_modifier_states| %>
-
-      <% document_numbers.each do |document_number| %>
-
-        <% document_ref = "" %>
-        <% document_modifier_states.each do |document_modifier, state| %>
-          <% document_ref += (document_modifier + "_") if state %>
-        <% end %>
-        <% document_ref += "document_" + document_number %>
-
-<%= archiving_ref + '_' + document_ref %>:
-  id: <%= id %>
-  local_id: <%= local_id %>
+archiving_one_document_one:
+  id: 1
+  local_id: 1
   article_type: 'Archiving'
-  article_id: <%= archiving_id %>
-  title: <%= (archiving_ref + '_' + document_ref).split('_').map(&:capitalize).join(' ') %>
-  content: "Lorem ipsum"
-  trashed: <%= document_modifier_states['trashed'] %>
+  article_id: 1
+  title: Archiving One Document One
+  content: 'Lorem ipsum'
+  trashed: false
 
-        <% local_id += 1 %>
-        <% id += 1 %>
-      <% end %>
+archiving_one_document_two:
+  id: 2
+  local_id: 2
+  article_type: 'Archiving'
+  article_id: 1
+  title: Archiving One Document Two
+  content: 'Lorem ipsum'
+  trashed: false
 
-    <% end %>
+archiving_one_document_three:
+  id: 3
+  local_id: 3
+  article_type: 'Archiving'
+  article_id: 1
+  title: Archiving One Document Three
+  content: 'Lorem ipsum'
+  trashed: false
 
-    <% archiving_id += 1 %>
-  <% end %>
+archiving_one_trashed_document_one:
+  id: 4
+  local_id: 4
+  article_type: 'Archiving'
+  article_id: 1
+  title: Archiving One Trashed Document One
+  content: 'Lorem ipsum'
+  trashed: true
 
-<% end %>
+archiving_one_trashed_document_two:
+  id: 5
+  local_id: 5
+  article_type: 'Archiving'
+  article_id: 1
+  title: Archiving One Trashed Document Two
+  content: 'Lorem ipsum'
+  trashed: true
 
-<% blog_post_id = 1 %>
+archiving_one_trashed_document_three:
+  id: 6
+  local_id: 6
+  article_type: 'Archiving'
+  article_id: 1
+  title: Archiving One Trashed Document Three
+  content: 'Lorem ipsum'
+  trashed: true
 
-<% blog_modifier_states_sets = [true, false].repeated_permutation(blog_modifiers.count).to_a %>
-<% blog_modifier_states_sets.map! { |blog_modifier_states| blog_modifiers.zip(blog_modifier_states).to_h } %>
-<% blog_modifier_states_sets.reverse.each do |blog_modifier_states| %>
+archiving_two_document_one:
+  id: 7
+  local_id: 1
+  article_type: 'Archiving'
+  article_id: 2
+  title: Archiving Two Document One
+  content: 'Lorem ipsum'
+  trashed: false
 
-  <% blog_numbers.each do |blog_number| %>
+archiving_two_document_two:
+  id: 8
+  local_id: 2
+  article_type: 'Archiving'
+  article_id: 2
+  title: Archiving Two Document Two
+  content: 'Lorem ipsum'
+  trashed: false
 
-    <% blog_post_ref = "" %>
-    <% blog_modifier_states.each do |blog_modifier, state| %>
-      <% blog_post_ref += (blog_modifier + "_") if state %>
-    <% end %>
-    <% blog_post_ref += "blog_post_" + blog_number %>
+archiving_two_document_three:
+  id: 9
+  local_id: 3
+  article_type: 'Archiving'
+  article_id: 2
+  title: Archiving Two Document Three
+  content: 'Lorem ipsum'
+  trashed: false
 
-    <% local_id = 1 %>
+archiving_two_trashed_document_one:
+  id: 10
+  local_id: 4
+  article_type: 'Archiving'
+  article_id: 2
+  title: Archiving Two Trashed Document One
+  content: 'Lorem ipsum'
+  trashed: true
 
-    <% document_modifier_states_sets = [true, false].repeated_permutation(document_modifiers.count).to_a %>
-    <% document_modifier_states_sets.map! { |document_modifier_states| document_modifiers.zip(document_modifier_states).to_h } %>
-    <% document_modifier_states_sets.reverse.each do |document_modifier_states| %>
+archiving_two_trashed_document_two:
+  id: 11
+  local_id: 5
+  article_type: 'Archiving'
+  article_id: 2
+  title: Archiving Two Trashed Document Two
+  content: 'Lorem ipsum'
+  trashed: true
 
-      <% document_numbers.each do |document_number| %>
+archiving_two_trashed_document_three:
+  id: 12
+  local_id: 6
+  article_type: 'Archiving'
+  article_id: 2
+  title: Archiving Two Trashed Document Three
+  content: 'Lorem ipsum'
+  trashed: true
 
-        <% document_ref = "" %>
-        <% document_modifier_states.each do |document_modifier, state| %>
-          <% document_ref += (document_modifier + "_") if state %>
-        <% end %>
-        <% document_ref += "document_" + document_number %>
+trashed_archiving_one_document_one:
+  id: 13
+  local_id: 1
+  article_type: 'Archiving'
+  article_id: 3
+  title: Trashed Archiving One Document One
+  content: 'Lorem ipsum'
+  trashed: false
 
-<%= blog_post_ref + '_' + document_ref %>:
-  id: <%= id %>
-  local_id: <%= local_id %>
+trashed_archiving_one_document_two:
+  id: 14
+  local_id: 2
+  article_type: 'Archiving'
+  article_id: 3
+  title: Trashed Archiving One Document Two
+  content: 'Lorem ipsum'
+  trashed: false
+
+trashed_archiving_one_document_three:
+  id: 15
+  local_id: 3
+  article_type: 'Archiving'
+  article_id: 3
+  title: Trashed Archiving One Document Three
+  content: 'Lorem ipsum'
+  trashed: false
+
+trashed_archiving_one_trashed_document_one:
+  id: 16
+  local_id: 4
+  article_type: 'Archiving'
+  article_id: 3
+  title: Trashed Archiving One Trashed Document One
+  content: 'Lorem ipsum'
+  trashed: true
+
+trashed_archiving_one_trashed_document_two:
+  id: 17
+  local_id: 5
+  article_type: 'Archiving'
+  article_id: 3
+  title: Trashed Archiving One Trashed Document Two
+  content: 'Lorem ipsum'
+  trashed: true
+
+trashed_archiving_one_trashed_document_three:
+  id: 18
+  local_id: 6
+  article_type: 'Archiving'
+  article_id: 3
+  title: Trashed Archiving One Trashed Document Three
+  content: 'Lorem ipsum'
+  trashed: true
+
+trashed_archiving_two_document_one:
+  id: 19
+  local_id: 1
+  article_type: 'Archiving'
+  article_id: 4
+  title: Trashed Archiving Two Document One
+  content: 'Lorem ipsum'
+  trashed: false
+
+trashed_archiving_two_document_two:
+  id: 20
+  local_id: 2
+  article_type: 'Archiving'
+  article_id: 4
+  title: Trashed Archiving Two Document Two
+  content: 'Lorem ipsum'
+  trashed: false
+
+trashed_archiving_two_document_three:
+  id: 21
+  local_id: 3
+  article_type: 'Archiving'
+  article_id: 4
+  title: Trashed Archiving Two Document Three
+  content: 'Lorem ipsum'
+  trashed: false
+
+trashed_archiving_two_trashed_document_one:
+  id: 22
+  local_id: 4
+  article_type: 'Archiving'
+  article_id: 4
+  title: Trashed Archiving Two Trashed Document One
+  content: 'Lorem ipsum'
+  trashed: true
+
+trashed_archiving_two_trashed_document_two:
+  id: 23
+  local_id: 5
+  article_type: 'Archiving'
+  article_id: 4
+  title: Trashed Archiving Two Trashed Document Two
+  content: 'Lorem ipsum'
+  trashed: true
+
+trashed_archiving_two_trashed_document_three:
+  id: 24
+  local_id: 6
+  article_type: 'Archiving'
+  article_id: 4
+  title: Trashed Archiving Two Trashed Document Three
+  content: 'Lorem ipsum'
+  trashed: true
+
+blog_post_one_document_one:
+  id: 25
+  local_id: 1
   article_type: 'BlogPost'
-  article_id: <%= blog_post_id %>
-  title: <%= (blog_post_ref + '_' + document_ref).split('_').map(&:capitalize).join(' ') %>
-  content: "Lorem ipsum"
-  trashed: <%= document_modifier_states['trashed'] %>
+  article_id: 1
+  title: Blog Post One Document One
+  content: 'Lorem ipsum'
+  trashed: false
 
-        <% local_id += 1 %>
-        <% id += 1 %>
-      <% end %>
+blog_post_one_document_two:
+  id: 26
+  local_id: 2
+  article_type: 'BlogPost'
+  article_id: 1
+  title: Blog Post One Document Two
+  content: 'Lorem ipsum'
+  trashed: false
 
-    <% end %>
+blog_post_one_document_three:
+  id: 27
+  local_id: 3
+  article_type: 'BlogPost'
+  article_id: 1
+  title: Blog Post One Document Three
+  content: 'Lorem ipsum'
+  trashed: false
 
-    <% blog_post_id += 1 %>
-  <% end %>
+blog_post_one_trashed_document_one:
+  id: 28
+  local_id: 4
+  article_type: 'BlogPost'
+  article_id: 1
+  title: Blog Post One Trashed Document One
+  content: 'Lorem ipsum'
+  trashed: true
 
-<% end %>
+blog_post_one_trashed_document_two:
+  id: 29
+  local_id: 5
+  article_type: 'BlogPost'
+  article_id: 1
+  title: Blog Post One Trashed Document Two
+  content: 'Lorem ipsum'
+  trashed: true
+
+blog_post_one_trashed_document_three:
+  id: 30
+  local_id: 6
+  article_type: 'BlogPost'
+  article_id: 1
+  title: Blog Post One Trashed Document Three
+  content: 'Lorem ipsum'
+  trashed: true
+
+blog_post_two_document_one:
+  id: 31
+  local_id: 1
+  article_type: 'BlogPost'
+  article_id: 2
+  title: Blog Post Two Document One
+  content: 'Lorem ipsum'
+  trashed: false
+
+blog_post_two_document_two:
+  id: 32
+  local_id: 2
+  article_type: 'BlogPost'
+  article_id: 2
+  title: Blog Post Two Document Two
+  content: 'Lorem ipsum'
+  trashed: false
+
+blog_post_two_document_three:
+  id: 33
+  local_id: 3
+  article_type: 'BlogPost'
+  article_id: 2
+  title: Blog Post Two Document Three
+  content: 'Lorem ipsum'
+  trashed: false
+
+blog_post_two_trashed_document_one:
+  id: 34
+  local_id: 4
+  article_type: 'BlogPost'
+  article_id: 2
+  title: Blog Post Two Trashed Document One
+  content: 'Lorem ipsum'
+  trashed: true
+
+blog_post_two_trashed_document_two:
+  id: 35
+  local_id: 5
+  article_type: 'BlogPost'
+  article_id: 2
+  title: Blog Post Two Trashed Document Two
+  content: 'Lorem ipsum'
+  trashed: true
+
+blog_post_two_trashed_document_three:
+  id: 36
+  local_id: 6
+  article_type: 'BlogPost'
+  article_id: 2
+  title: Blog Post Two Trashed Document Three
+  content: 'Lorem ipsum'
+  trashed: true
+
+motd_blog_post_one_document_one:
+  id: 37
+  local_id: 1
+  article_type: 'BlogPost'
+  article_id: 3
+  title: Motd Blog Post One Document One
+  content: 'Lorem ipsum'
+  trashed: false
+
+motd_blog_post_one_document_two:
+  id: 38
+  local_id: 2
+  article_type: 'BlogPost'
+  article_id: 3
+  title: Motd Blog Post One Document Two
+  content: 'Lorem ipsum'
+  trashed: false
+
+motd_blog_post_one_document_three:
+  id: 39
+  local_id: 3
+  article_type: 'BlogPost'
+  article_id: 3
+  title: Motd Blog Post One Document Three
+  content: 'Lorem ipsum'
+  trashed: false
+
+motd_blog_post_one_trashed_document_one:
+  id: 40
+  local_id: 4
+  article_type: 'BlogPost'
+  article_id: 3
+  title: Motd Blog Post One Trashed Document One
+  content: 'Lorem ipsum'
+  trashed: true
+
+motd_blog_post_one_trashed_document_two:
+  id: 41
+  local_id: 5
+  article_type: 'BlogPost'
+  article_id: 3
+  title: Motd Blog Post One Trashed Document Two
+  content: 'Lorem ipsum'
+  trashed: true
+
+motd_blog_post_one_trashed_document_three:
+  id: 42
+  local_id: 6
+  article_type: 'BlogPost'
+  article_id: 3
+  title: Motd Blog Post One Trashed Document Three
+  content: 'Lorem ipsum'
+  trashed: true
+
+motd_blog_post_two_document_one:
+  id: 43
+  local_id: 1
+  article_type: 'BlogPost'
+  article_id: 4
+  title: Motd Blog Post Two Document One
+  content: 'Lorem ipsum'
+  trashed: false
+
+motd_blog_post_two_document_two:
+  id: 44
+  local_id: 2
+  article_type: 'BlogPost'
+  article_id: 4
+  title: Motd Blog Post Two Document Two
+  content: 'Lorem ipsum'
+  trashed: false
+
+motd_blog_post_two_document_three:
+  id: 45
+  local_id: 3
+  article_type: 'BlogPost'
+  article_id: 4
+  title: Motd Blog Post Two Document Three
+  content: 'Lorem ipsum'
+  trashed: false
+
+motd_blog_post_two_trashed_document_one:
+  id: 46
+  local_id: 4
+  article_type: 'BlogPost'
+  article_id: 4
+  title: Motd Blog Post Two Trashed Document One
+  content: 'Lorem ipsum'
+  trashed: true
+
+motd_blog_post_two_trashed_document_two:
+  id: 47
+  local_id: 5
+  article_type: 'BlogPost'
+  article_id: 4
+  title: Motd Blog Post Two Trashed Document Two
+  content: 'Lorem ipsum'
+  trashed: true
+
+motd_blog_post_two_trashed_document_three:
+  id: 48
+  local_id: 6
+  article_type: 'BlogPost'
+  article_id: 4
+  title: Motd Blog Post Two Trashed Document Three
+  content: 'Lorem ipsum'
+  trashed: true
+
+trashed_blog_post_one_document_one:
+  id: 49
+  local_id: 1
+  article_type: 'BlogPost'
+  article_id: 5
+  title: Trashed Blog Post One Document One
+  content: 'Lorem ipsum'
+  trashed: false
+
+trashed_blog_post_one_document_two:
+  id: 50
+  local_id: 2
+  article_type: 'BlogPost'
+  article_id: 5
+  title: Trashed Blog Post One Document Two
+  content: 'Lorem ipsum'
+  trashed: false
+
+trashed_blog_post_one_document_three:
+  id: 51
+  local_id: 3
+  article_type: 'BlogPost'
+  article_id: 5
+  title: Trashed Blog Post One Document Three
+  content: 'Lorem ipsum'
+  trashed: false
+
+trashed_blog_post_one_trashed_document_one:
+  id: 52
+  local_id: 4
+  article_type: 'BlogPost'
+  article_id: 5
+  title: Trashed Blog Post One Trashed Document One
+  content: 'Lorem ipsum'
+  trashed: true
+
+trashed_blog_post_one_trashed_document_two:
+  id: 53
+  local_id: 5
+  article_type: 'BlogPost'
+  article_id: 5
+  title: Trashed Blog Post One Trashed Document Two
+  content: 'Lorem ipsum'
+  trashed: true
+
+trashed_blog_post_one_trashed_document_three:
+  id: 54
+  local_id: 6
+  article_type: 'BlogPost'
+  article_id: 5
+  title: Trashed Blog Post One Trashed Document Three
+  content: 'Lorem ipsum'
+  trashed: true
+
+trashed_blog_post_two_document_one:
+  id: 55
+  local_id: 1
+  article_type: 'BlogPost'
+  article_id: 6
+  title: Trashed Blog Post Two Document One
+  content: 'Lorem ipsum'
+  trashed: false
+
+trashed_blog_post_two_document_two:
+  id: 56
+  local_id: 2
+  article_type: 'BlogPost'
+  article_id: 6
+  title: Trashed Blog Post Two Document Two
+  content: 'Lorem ipsum'
+  trashed: false
+
+trashed_blog_post_two_document_three:
+  id: 57
+  local_id: 3
+  article_type: 'BlogPost'
+  article_id: 6
+  title: Trashed Blog Post Two Document Three
+  content: 'Lorem ipsum'
+  trashed: false
+
+trashed_blog_post_two_trashed_document_one:
+  id: 58
+  local_id: 4
+  article_type: 'BlogPost'
+  article_id: 6
+  title: Trashed Blog Post Two Trashed Document One
+  content: 'Lorem ipsum'
+  trashed: true
+
+trashed_blog_post_two_trashed_document_two:
+  id: 59
+  local_id: 5
+  article_type: 'BlogPost'
+  article_id: 6
+  title: Trashed Blog Post Two Trashed Document Two
+  content: 'Lorem ipsum'
+  trashed: true
+
+trashed_blog_post_two_trashed_document_three:
+  id: 60
+  local_id: 6
+  article_type: 'BlogPost'
+  article_id: 6
+  title: Trashed Blog Post Two Trashed Document Three
+  content: 'Lorem ipsum'
+  trashed: true
+
+trashed_motd_blog_post_one_document_one:
+  id: 61
+  local_id: 1
+  article_type: 'BlogPost'
+  article_id: 7
+  title: Trashed Motd Blog Post One Document One
+  content: 'Lorem ipsum'
+  trashed: false
+
+trashed_motd_blog_post_one_document_two:
+  id: 62
+  local_id: 2
+  article_type: 'BlogPost'
+  article_id: 7
+  title: Trashed Motd Blog Post One Document Two
+  content: 'Lorem ipsum'
+  trashed: false
+
+trashed_motd_blog_post_one_document_three:
+  id: 63
+  local_id: 3
+  article_type: 'BlogPost'
+  article_id: 7
+  title: Trashed Motd Blog Post One Document Three
+  content: 'Lorem ipsum'
+  trashed: false
+
+trashed_motd_blog_post_one_trashed_document_one:
+  id: 64
+  local_id: 4
+  article_type: 'BlogPost'
+  article_id: 7
+  title: Trashed Motd Blog Post One Trashed Document One
+  content: 'Lorem ipsum'
+  trashed: true
+
+trashed_motd_blog_post_one_trashed_document_two:
+  id: 65
+  local_id: 5
+  article_type: 'BlogPost'
+  article_id: 7
+  title: Trashed Motd Blog Post One Trashed Document Two
+  content: 'Lorem ipsum'
+  trashed: true
+
+trashed_motd_blog_post_one_trashed_document_three:
+  id: 66
+  local_id: 6
+  article_type: 'BlogPost'
+  article_id: 7
+  title: Trashed Motd Blog Post One Trashed Document Three
+  content: 'Lorem ipsum'
+  trashed: true
+
+trashed_motd_blog_post_two_document_one:
+  id: 67
+  local_id: 1
+  article_type: 'BlogPost'
+  article_id: 8
+  title: Trashed Motd Blog Post Two Document One
+  content: 'Lorem ipsum'
+  trashed: false
+
+trashed_motd_blog_post_two_document_two:
+  id: 68
+  local_id: 2
+  article_type: 'BlogPost'
+  article_id: 8
+  title: Trashed Motd Blog Post Two Document Two
+  content: 'Lorem ipsum'
+  trashed: false
+
+trashed_motd_blog_post_two_document_three:
+  id: 69
+  local_id: 3
+  article_type: 'BlogPost'
+  article_id: 8
+  title: Trashed Motd Blog Post Two Document Three
+  content: 'Lorem ipsum'
+  trashed: false
+
+trashed_motd_blog_post_two_trashed_document_one:
+  id: 70
+  local_id: 4
+  article_type: 'BlogPost'
+  article_id: 8
+  title: Trashed Motd Blog Post Two Trashed Document One
+  content: 'Lorem ipsum'
+  trashed: true
+
+trashed_motd_blog_post_two_trashed_document_two:
+  id: 71
+  local_id: 5
+  article_type: 'BlogPost'
+  article_id: 8
+  title: Trashed Motd Blog Post Two Trashed Document Two
+  content: 'Lorem ipsum'
+  trashed: true
+
+trashed_motd_blog_post_two_trashed_document_three:
+  id: 72
+  local_id: 6
+  article_type: 'BlogPost'
+  article_id: 8
+  title: Trashed Motd Blog Post Two Trashed Document Three
+  content: 'Lorem ipsum'
+  trashed: true
+

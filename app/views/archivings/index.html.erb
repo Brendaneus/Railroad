@@ -1,3 +1,7 @@
+<% content_for :header_extension do %>
+	/ <%= link_to "Archives", archivings_path %>
+<% end %>
+
 <% if admin_user? %>
 
 	<div class="admin control">

@@ -1,21 +1,29 @@
-<% if admin_user? && untrashed_user? %>
-
-	<div class="admin control">
-		<%= link_to "Edit Document", edit_article_document_path( @article, @document ) %>
-
-		<%= link_to "Trash Document", trash_article_document_path( @article, @document ) unless @document.trashed? %>
-
-		<%= link_to "Restore Document", untrash_article_document_path( @article, @document ) if @document.trashed? %>
-
-		<%= link_to "Delete Document", article_document_path( @article, @document ), method: :delete, data: { confirm: 'Really delete this document?'} if @document.trashed? %>
-	</div>
-
+<% content_for :header_extension do %>
+	/ <%= articles_path(@article, link: true) %>
+	<% if @article.trashed? %>
+		/ <%= trashed_articles_path(@article, link: true) %>
+	<% end %>
+	/ <%= article_path(@article, link: true) %>
+	<% unless @version ||= nil %>
+		/ <%= article_document_path(@article, @document, link: true) %>
+	<% else %>
+		/ <%= link_to @source.title, archiving_document_path(@article, @source) %>
+		/ <%= link_to "History", archiving_document_versions_path(@article, @source) %>
+		/ <%= link_to @version.name, archiving_document_version_path(@article, @document, @version) %>
+	<% end %>
 <% end %>
 
-<%= render 'heading' %>
+<%= render 'documents/show_control' unless @version ||= nil %>
+<%= render 'documents/version_control' if @version ||= nil %>
 
-<%= render 'upload', document: @document %>
+<%= render 'documents/heading' %>
 
-<p><%= simple_format @document.content if @document.content.present? %></p>
+<%= render 'documents/upload', document: @document %>
+
+<% if @document.content.present? %>
+
+	<p><%= simple_format @document.content %></p>
+
+<% end %>
 
 <%= render 'shared/timestamps', object: @document %>

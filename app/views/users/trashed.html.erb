@@ -1,3 +1,8 @@
+<% content_for :header_extension do %>
+	/ <%= link_to "Users", users_path %>
+	/ <%= link_to "Trash", trashed_users_path %>
+<% end %>
+
 <main>
 	<%= (render @users) || (tag.h2 "There's no one here...") %>
 </main>

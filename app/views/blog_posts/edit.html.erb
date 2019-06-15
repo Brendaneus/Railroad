@@ -1,4 +1,13 @@
-<%= render 'heading', title_prefix: 'Editing ' %>
+<% content_for :header_extension do %>
+	/ <%= link_to "Blogs", blog_posts_path %>
+	<% if @blog_post.trashed? %>
+		/ <%= link_to "Trash", trashed_blog_posts_path %>
+	<% end %>
+	/ <%= link_to @blog_post.title, blog_post_path(@blog_post) %>
+	/ <%= link_to "Edit", edit_blog_post_path(@blog_post) %>
+<% end %>
+
+<%= render 'heading' %>
 
 <%= render 'shared/error_messages', object: @blog_post %>
 

@@ -1,13 +1,13 @@
 require 'test_helper'
 
 class UserTest < ActiveSupport::TestCase
-	
+
 	def setup
-		load_users( user_modifiers: {},	user_numbers: ['one'] )
+		load_users
 	end
 
 	test "should associate with sessions" do
-		loop_users(reload: true) do |user, user_key|
+		loop_users do |user, user_key|
 			assert user.sessions == load_sessions( flat_array: true, only: {user: user_key} )
 		end
 	end
@@ -15,7 +15,7 @@ class UserTest < ActiveSupport::TestCase
 	test "should dependent destroy sessions" do
 		load_sessions
 
-		loop_users(reload: true) do |user, user_key|
+		loop_users do |user, user_key|
 			user.destroy
 			
 			assert_raise(ActiveRecord::RecordNotFound) { user.reload }
@@ -99,7 +99,7 @@ class UserTest < ActiveSupport::TestCase
 	end
 
 	test "should validate uniqueness of name (case-insensitive)" do
-		loop_users(reload: true) do |user|
+		loop_users do |user|
 			loop_users do |other_user|
 				unless user.id == other_user.id
 					user.name = other_user.name.downcase
@@ -135,7 +135,7 @@ class UserTest < ActiveSupport::TestCase
 	end
 
 	test "should validate uniqueness of email (case-insensitive)" do
-		loop_users(reload: true) do |user|
+		loop_users do |user|
 			loop_users do |other_user|
 				unless user.id == other_user.id
 					user.email = other_user.email.downcase

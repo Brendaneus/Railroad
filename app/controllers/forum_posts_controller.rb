@@ -6,7 +6,7 @@ class ForumPostsController < ApplicationController
 	before_action :require_untrashed_user, except: [:index, :trashed, :show]
 	before_action :require_authorize_or_admin_for_trashed, only: :show
 	before_action :set_avatar_bucket, unless: -> { Rails.env.test? }
-	after_action :mark_activity, only: [:trash, :untrash, :create, :update, :destroy], if: :logged_in?
+	after_action :mark_activity, only: [:create, :update, :trash, :untrash, :destroy], if: :logged_in?
 
 	def index
 		@forum_posts = ForumPost.non_trashed.includes(:user, :comments).non_stickies.order(created_at: :desc)
@@ -14,13 +14,13 @@ class ForumPostsController < ApplicationController
 	end
 
 	def trashed
-		raise "I'M BROKEN FUCK"
 		if admin_user?
 			@forum_posts = ForumPost.trashed.includes(:user, :comments).order(updated_at: :desc)
-		else
+		elsif logged_in?
 			@forum_posts = current_user.forum_posts.trashed.includes(:user, :comments).order(updated_at: :desc)
+		else
+			redirect_to root_url
 		end
-		redirect_to root_url
 	end
 
 	def show
@@ -69,10 +69,6 @@ class ForumPostsController < ApplicationController
 			flash.now[:failure] = "There was a problem updating this post."
 			render :edit
 		end
-	end
-
-	def trashed
-		@forum_posts = ForumPost.trashed.includes(:user, :comments)
 	end
 
 	def trash

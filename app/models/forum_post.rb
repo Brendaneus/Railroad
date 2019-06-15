@@ -1,16 +1,12 @@
 class ForumPost < ApplicationRecord
 
+	include Commentable
 	include Editable
 	include Ownable
+	include Trashable
 
 	belongs_to :user, optional: true
-	has_many :comments, as: :post, dependent: :destroy
-	has_many :commenters, -> { distinct },
-						  through: :comments,
-						  source: :user
 
-	scope :trashed, -> { where(trashed: true) }
-	scope :non_trashed, -> { where(trashed: false) }
 	scope :motds, -> { where(motd: true) }
 	scope :stickies, -> { where(sticky: true) }
 	scope :non_stickies, -> { where(sticky: false) }

@@ -1,0 +1,64 @@
+<% content_for :header_extension do %>
+	<% if @citation.class == Archiving %>
+		/ <%= link_to "Archives", archivings_path %>
+		<% if @citation.trashed? %>
+			/ <%= link_to "Trash", trashed_archivings_path %>
+		<% end %>
+		/ <%= link_to @citation.title, archiving_path(@citation) %>
+	<% else %>
+		/ <%= link_to "Archives", archivings_path %>
+		<% if @citation.article.trashed? %>
+			/ <%= link_to "Trash", trashed_archivings_path %>
+		<% end %>
+		/ <%= link_to @citation.article.title, archiving_path(@citation.article) %>
+		/ <%= link_to @citation.title, citation_path(@citation) %>
+	<% end %>
+	/ <%= link_to "Suggestions", citation_suggestions_path(@citation) %>
+	<% if @suggestion.trashed? %>
+		/ <%= link_to "Trash", trashed_citation_suggestions_path(@citation) %>
+	<% end %>
+	/ <%= link_to @suggestion.name, citation_suggestion_path(@citation, @suggestion) %>
+<% end %>
+
+<% if authorized_for? @suggestion.user %>
+
+	<div class="<%= ( admin_user? ) ? "admin " : "" %>control">
+		<%= link_to "Edit Post", edit_citation_suggestion_path( @citation, @suggestion ) if untrashed_user? %>
+
+		<%= link_to "Trash Post", trash_citation_suggestion_path( @citation, @suggestion ) unless @suggestion.trashed? %>
+
+		<%= link_to "Restore Post", untrash_citation_suggestion_path( @citation, @suggestion ) if @suggestion.trashed? %>
+
+		<%= link_to "Delete Post", citation_suggestion_path( @citation, @suggestion ), method: :delete, data: { confirm: 'Really delete this suggestion?'} if @suggestion.trashed? && admin_user? && untrashed_user? %>
+
+		<%= link_to "Merge Post", merge_citation_suggestion_path( @citation, @suggestion ), method: :patch, data: { confirm: 'Really merge this suggestion?' } if admin_user? && untrashed_user? %>
+	</div>
+
+<% end %>
+
+<main>
+	<%#= render 'heading' %>
+
+	<% if @suggestion.title.present? %>
+		<div class="diff">
+			<%= simple_format "<del><span class='symbol'>-</span>#{@citation.title}</del>", {}, wrapper_tag: 'h1' %>
+			<%= simple_format "<ins><span class='symbol'>+</span>#{@suggestion.title}</ins>", {}, wrapper_tag: 'h1' %>
+		</div>
+	<% else %>
+		<h1><%= @citation.title %></h1>
+	<% end %>
+
+	<% if @suggestion.content.present? %>
+		<%= simple_format formatted_diff(@citation.content, @suggestion.content), {class: "diff"}, wrapper_tag: 'div' %>
+	<% else %>
+		<%= simple_format @citation.content %>
+	<% end %>
+
+	<%= render 'shared/timestamps', object: @suggestion, owner: @suggestion.user.name %>
+
+	<%= render 'shared/details', object: @suggestion, new_comment: true %>
+
+	<%= render 'comments/form', comment: @new_comment, form_url: citation_suggestion_comments_path( @citation, @suggestion ) unless trashed_user? %>
+
+	<%= render @comments %>
+</main>

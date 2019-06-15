@@ -1,30 +1,72 @@
-<% user_numbers = ['one', 'two'] %>
-<% user_modifiers = ['trashed', 'admin'] %>
+user_one:
+  id: 1
+  name: 'User One'
+  email: 'user_one@example.com'
+  password_digest: '$2a$04$zvcRQ672Y1C3biTTTBLLS./otDr8BvMtOnJoFCQPXBq6hmgyrpXWS'
+  bio: 'Hi, my name is User One'
+  admin: false
+  trashed: false
 
-<% id = 1 %>
+user_two:
+  id: 2
+  name: 'User Two'
+  email: 'user_two@example.com'
+  password_digest: '$2a$04$kz9kzYZEEpVuotKpwRvvt.XoVjlQCS09ibeWx0ze6PbCRMslo.sfS'
+  bio: 'Hi, my name is User Two'
+  admin: false
+  trashed: false
 
-<% user_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a %>
-<% user_modifier_states_sets.map! { |user_modifier_states| user_modifiers.zip(user_modifier_states).to_h } %>
-<% user_modifier_states_sets.reverse.each do |user_modifier_states| %>
+admin_user_one:
+  id: 3
+  name: 'Admin User One'
+  email: 'admin_user_one@example.com'
+  password_digest: '$2a$04$20m1go4WtJOnXZs.hCl/Me/l7Xk0Dzp8IAlx3HOY08IaYQEr9wf/G'
+  bio: 'Hi, my name is Admin User One'
+  admin: true
+  trashed: false
 
-  <% user_numbers.each do |user_number| %>
+admin_user_two:
+  id: 4
+  name: 'Admin User Two'
+  email: 'admin_user_two@example.com'
+  password_digest: '$2a$04$RdQ5RLoH93dp3gZ.MSve.OXylrLyfZn2nW85o.ijCk2ifoeHrvO4C'
+  bio: 'Hi, my name is Admin User Two'
+  admin: true
+  trashed: false
 
-    <% user_ref = "" %>
-    <% user_modifier_states.each do |user_modifier, state| %>
-      <% user_ref += (user_modifier + "_") if state %>
-    <% end %>
-    <% user_ref += "user_" + user_number %>
+trashed_user_one:
+  id: 5
+  name: 'Trashed User One'
+  email: 'trashed_user_one@example.com'
+  password_digest: '$2a$04$r2CBr/rk5E4px3hys.P7..c98pBpc6BY3/m4gst1jG/2m3kCGSvpC'
+  bio: 'Hi, my name is Trashed User One'
+  admin: false
+  trashed: true
 
-<%= user_ref %>:
-  id: <%= id %>
-  name: <%= user_ref.split("_").map(&:capitalize).join(" ") %>
-  email: <%= user_ref + "@example.com" %>
-  password_digest: <%= User.digest('password') %>
-  bio: <%= "Hi, my name is " + user_ref.split("_").map(&:capitalize).join(" ") %>
-  admin: <%= user_modifier_states['admin'] %>
-  trashed: <%= user_modifier_states['trashed'] %>
+trashed_user_two:
+  id: 6
+  name: 'Trashed User Two'
+  email: 'trashed_user_two@example.com'
+  password_digest: '$2a$04$daQl.nPqIv8hU29FRDlf2uyP6SQc9bRicfqXVPNn0ZFXqSfsjmkaG'
+  bio: 'Hi, my name is Trashed User Two'
+  admin: false
+  trashed: true
 
-    <% id += 1 %>
-  <% end %>
+trashed_admin_user_one:
+  id: 7
+  name: 'Trashed Admin User One'
+  email: 'trashed_admin_user_one@example.com'
+  password_digest: '$2a$04$1QTyHoq1RtDWFgF5zqwhEOkR6zvjoj3.zqvbaEfmX8baKbEoijcmK'
+  bio: 'Hi, my name is Trashed Admin User One'
+  admin: true
+  trashed: true
 
-<% end %>
+trashed_admin_user_two:
+  id: 8
+  name: 'Trashed Admin User Two'
+  email: 'trashed_admin_user_two@example.com'
+  password_digest: '$2a$04$npImM/hFrKeHzttd9cyIju4oXNidphKCI5HRwYovxl7nSZruzj4x2'
+  bio: 'Hi, my name is Trashed Admin User Two'
+  admin: true
+  trashed: true
+

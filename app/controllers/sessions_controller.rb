@@ -6,7 +6,7 @@ class SessionsController < ApplicationController
 	before_action :require_authorize_or_admin, only: [:index, :show]
 	before_action :require_authorize_or_untrashed_admin, only: [:edit, :update, :destroy]
 	before_action :set_user, except: [:new_login, :login, :logout]
-	after_action :mark_activity, only: [:login, :create, :update, :destroy], if: :logged_in?
+	after_action :mark_activity, only: [:create, :update, :destroy, :login, :logout], if: :logged_in?
 
 	def index
 		@sessions = @user.sessions

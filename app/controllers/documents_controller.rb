@@ -7,7 +7,7 @@ class DocumentsController < ApplicationController
 	before_action :set_article
 	before_action :require_admin_for_trashed, only: :show
 	before_action :set_document_bucket, unless: -> { Rails.env.test? }
-	after_action :mark_activity, only: [:trash, :untrash, :create, :update, :destroy], if: :logged_in?
+	after_action :mark_activity, only: [:create, :update, :trash, :untrash, :destroy], if: :logged_in?
 
 	def show
 		set_article
@@ -92,8 +92,8 @@ class DocumentsController < ApplicationController
 
 		def set_article
 			begin
-				article_class = params[:model_name].constantize
-				article_foreign_key = params[:model_name].foreign_key
+				article_class = params[:article_class].constantize
+				article_foreign_key = params[:article_class].foreign_key
 				@article = article_class.find(params[article_foreign_key])
 			rescue
 				flash[:error] = "There was a problem finding the article for this document."

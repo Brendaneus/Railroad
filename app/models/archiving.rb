@@ -1,17 +1,20 @@
 class Archiving < ApplicationRecord
 	
 	include Editable
+	include Suggestable
+	include Trashable
 	
 	has_many :documents, as: :article, dependent: :destroy
-
-	scope :trashed, -> { where(trashed: true) }
-	scope :non_trashed, -> { where(trashed: false) }
+	has_many :suggestions, as: :citation, dependent: :destroy
 
 	validates :title, presence: true,
-					  uniqueness: { case_sensitive: false },
-					  length: { maximum: 64 }
-	validates :content, presence: true,
-						length: { maximum: 4096 }
+					  uniqueness: { case_sensitive: false }
+	validates :content, presence: true
 
+	private
+
+		def set_whodunnit
+			
+		end
 
 end

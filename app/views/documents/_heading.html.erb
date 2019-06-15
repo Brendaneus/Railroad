@@ -1,5 +1,1 @@
-<h1><%= (title_prefix ||= "") %><%= link_to(@article.title, @article) + ": " + @document.title %></h1>
-
-<% if @document.trashed? %>
-	<h2 class="subtle">Currently trashed</h2>
-<% end %>
+<h1><%= @document.title %></h1>

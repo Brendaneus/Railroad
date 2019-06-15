@@ -1,28 +1,56 @@
-<% blog_numbers = ['one', 'two'] %>
-<% blog_modifiers = ['trashed', 'motd'] %>
+blog_post_one:
+  id: 1
+  title: 'Blog Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  trashed: false
 
-<% id = 1 %>
+blog_post_two:
+  id: 2
+  title: 'Blog Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  trashed: false
 
-<% blog_modifier_states_sets = [true, false].repeated_permutation(blog_modifiers.count).to_a %>
-<% blog_modifier_states_sets.map! { |blog_modifier_states| blog_modifiers.zip(blog_modifier_states).to_h } %>
-<% blog_modifier_states_sets.reverse.each do |blog_modifier_states| %>
+motd_blog_post_one:
+  id: 3
+  title: 'Motd Blog Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  trashed: false
 
-  <% blog_numbers.each do |blog_number| %>
+motd_blog_post_two:
+  id: 4
+  title: 'Motd Blog Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  trashed: false
 
-    <% blog_ref = "" %>
-    <% blog_modifier_states.each do |blog_modifier, state| %>
-      <% blog_ref += (blog_modifier + "_") if state %>
-    <% end %>
-    <% blog_ref += "blog_post_" + blog_number %>
+trashed_blog_post_one:
+  id: 5
+  title: 'Trashed Blog Post One'
+  content: 'Lorem ipsum'
+  motd: false
+  trashed: true
 
-<%= blog_ref %>:
-  id: <%= id %>
-  title: <%= blog_ref.split("_").map(&:capitalize).join(" ") %>
-  content: "Lorem ipsum"
-  motd: <%= blog_modifier_states['motd'] %>
-  trashed: <%= blog_modifier_states['trashed'] %>
+trashed_blog_post_two:
+  id: 6
+  title: 'Trashed Blog Post Two'
+  content: 'Lorem ipsum'
+  motd: false
+  trashed: true
 
-    <% id += 1 %>
-  <% end %>
+trashed_motd_blog_post_one:
+  id: 7
+  title: 'Trashed Motd Blog Post One'
+  content: 'Lorem ipsum'
+  motd: true
+  trashed: true
 
-<% end %>
+trashed_motd_blog_post_two:
+  id: 8
+  title: 'Trashed Motd Blog Post Two'
+  content: 'Lorem ipsum'
+  motd: true
+  trashed: true
+

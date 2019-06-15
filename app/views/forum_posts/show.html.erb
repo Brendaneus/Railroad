@@ -1,3 +1,11 @@
+<% content_for :header_extension do %>
+	/ <%= link_to "Forums", forum_posts_path %>
+	<% if @forum_post.trashed? %>
+		/ <%= link_to "Trash", trashed_forum_posts_path %>
+	<% end %>
+	/ <%= link_to @forum_post.title, forum_post_path(@forum_post) %>
+<% end %>
+
 <% if authorized_for? @forum_post.user %>
 
 	<div class="<%= ( admin_user? ) ? "admin " : "" %>control">
@@ -19,9 +27,9 @@
 	
 	<%= render 'shared/details', object: @forum_post, new_comment: true %>
 
-	<%= render 'shared/timestamps', object: @forum_post, owned: true %>
+	<%= render 'shared/timestamps', object: @forum_post, owner: @forum_post.user.name %>
 
-	<%= render 'comments/form', comment: @new_comment, form_url: forum_post_comments_path(@forum_post) %>
+	<%= render 'comments/form', comment: @new_comment, form_url: forum_post_comments_path(@forum_post) unless trashed_user? %>
 
 	<%= render @comments %>
 </main>

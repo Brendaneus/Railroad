@@ -1,0 +1,10 @@
+<% if admin_user? %>
+
+	<div class="admin control">
+		<%#= link_to "Restore", restore_archiving_version_path(@archiving, @version), method: :patch %>
+		<%= link_to "Delete", archiving_version_path(@archiving, @version), method: :delete if untrashed_user? %>
+		<%= link_to "Hide", hide_archiving_version_path(@archiving, @version), method: :patch unless @version.hidden? %>
+		<%= link_to "UnHide", unhide_archiving_version_path(@archiving, @version), method: :patch if @version.hidden? %>
+	</div>
+
+<% end %>

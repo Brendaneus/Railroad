@@ -3,6 +3,17 @@
 }
 
 
+/* Header */
+
+h1.header {
+	display: block;
+	a {
+	padding: 8px;
+		display: inline-block;
+	}
+}
+
+
 /* Nav Bar */
 
 nav {
@@ -21,12 +32,19 @@ nav {
 
 /* Base */
 
+.upload {
+	display: block;
+}
 .subtle {
 	font-style: italic;
 	color: #999;
+	display: inline-block;
 	&.right {
 		float: right;
 	}
+}
+.check_box * {
+	display: inline-block;
 }
 .collapsed {
 	display: none;
@@ -56,10 +74,25 @@ nav {
 		}
 	}
 }
+.control {
+	display: inline-block;
+	padding: 5px;
+	border: thin solid blue;
+	background-color: #eef;
+	&.admin {
+		border: thin solid red;
+		background-color: #fee;
+	}
+}
 
 
-/* Blog & Posts */
+/* Containers */
 
+a.container.trashed {
+	&:hover {
+		background: #222;
+	}
+}
 .container {
 	padding: 5px;
 	border: thin solid black;
@@ -98,9 +131,9 @@ nav {
 	}
 	&.trashed {
 		background: #ddd;
-		&:hover {
-			background: #222;
-		}
+	}
+	&.hidden {
+		background: #ddd;
 	}
 	&.current {
 		border: thick solid skyblue;
@@ -114,23 +147,51 @@ form {
 	div {
 		margin: 5px 0px;
 	}
-	.check_box * {
-		display: inline-block;
-	}
 	.submit {
 		display: block;
 	}
 }
 
-/* Model Control */
 
-.control {
-	display: inline-block;
-	padding: 5px;
-	border: thin solid blue;
-	background-color: #eef;
-	&.admin {
-		border: thin solid red;
-		background-color: #fee;
+/* Diff */
+
+.diff {
+	ul {
+		padding: 0;
+		margin: 0;
+		li {
+			list-style-position: outside;
+			list-style-type: none;
+		}
+	}
+	span {
+	}
+	del {
+		text-decoration: none;
+		border-bottom: thin solid red;
+		strong {
+			color: crimson;
+		}
+		.symbol {
+			font-weight: bold;
+			color: crimson;
+			display: inline-block;
+			width: 10px;
+			text-align: center;
+		}
+	}
+	ins {
+		text-decoration: none;
+		border-bottom: thin solid blue;
+		strong {
+			color: blue;
+		}
+		.symbol {
+			font-weight: bold;
+			color: blue;
+			display: inline-block;
+			width: 10px;
+			text-align: center;
+		}
 	}
 }

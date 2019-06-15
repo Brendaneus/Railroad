@@ -1,6 +1,15 @@
+<% content_for :header_extension do %>
+	/ <%= link_to "Forums", forum_posts_path %>
+	<% if @forum_post.trashed? %>
+		/ <%= link_to "Trash", trashed_forum_posts_path %>
+	<% end %>
+	/ <%= link_to @forum_post.title, forum_post_path(@forum_post) %>
+	/ <%= link_to "Edit", edit_forum_post_path(@forum_post) %>
+<% end %>
+
 <%= render 'shared/error_messages', object: @forum_post %>
 
-<%= render 'heading', title_prefix: "Editing " %>
+<%= render 'heading' %>
 
 <%= render 'shared/timestamps', object: @forum_post %>
 

@@ -1,0 +1,31 @@
+<% content_for :header_extension do %>
+	<% if @citation.class == Archiving %>
+		/ <%= link_to "Archives", archivings_path %>
+		<% if @citation.trashed? %>
+			/ <%= link_to "Trash", trashed_archivings_path %>
+		<% end %>
+		/ <%= link_to @citation.title, archiving_path(@citation) %>
+	<% else %>
+		/ <%= link_to "Archives", archivings_path %>
+		<% if @citation.article.trashed? %>
+			/ <%= link_to "Trash", trashed_archivings_path %>
+		<% end %>
+		/ <%= link_to @citation.article.title, archiving_path(@citation.article) %>
+		/ <%= link_to @citation.title, citation_path(@citation) %>
+	<% end %>
+	/ <%= link_to "Suggestions", citation_suggestions_path(@citation) %>
+<% end %>
+
+<% if logged_in? %>
+
+	<div class="<%= (admin_user?) ? "admin " : "" %>control">
+		<%= link_to "Trashed Suggestions", trashed_citation_suggestions_path(@citation) %>
+
+		<%= link_to "New Suggestion", new_citation_suggestion_path(@citation) if untrashed_user? %>
+	</div>
+
+<% end %>
+
+<main>
+	<%= (render @suggestions) || (tag.h2 "There are currently no Suggestions for this #{params[:citation_class]}.") %>
+</main>
