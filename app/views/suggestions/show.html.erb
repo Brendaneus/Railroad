@@ -20,18 +20,18 @@
 	/ <%= link_to @suggestion.name, citation_suggestion_path(@citation, @suggestion) %>
 <% end %>
 
-<% if authorized_for? @suggestion.user %>
+<% if authorized_for?(@suggestion.user) && untrashed_user? %>
 
 	<div class="<%= ( admin_user? ) ? "admin " : "" %>control">
 		<%= link_to "Edit Post", edit_citation_suggestion_path( @citation, @suggestion ) if untrashed_user? %>
 
-		<%= link_to "Trash Post", trash_citation_suggestion_path( @citation, @suggestion ) unless @suggestion.trashed? %>
+		<%= link_to "Trash Post", trash_citation_suggestion_path( @citation, @suggestion ) unless @suggestion.trashed? || trashed_user? %>
 
-		<%= link_to "Restore Post", untrash_citation_suggestion_path( @citation, @suggestion ) if @suggestion.trashed? %>
+		<%= link_to "Restore Post", untrash_citation_suggestion_path( @citation, @suggestion ) if @suggestion.trashed? && untrashed_user? %>
 
 		<%= link_to "Delete Post", citation_suggestion_path( @citation, @suggestion ), method: :delete, data: { confirm: 'Really delete this suggestion?'} if @suggestion.trashed? && admin_user? && untrashed_user? %>
 
-		<%= link_to "Merge Post", merge_citation_suggestion_path( @citation, @suggestion ), method: :patch, data: { confirm: 'Really merge this suggestion?' } if admin_user? && untrashed_user? %>
+		<%= link_to "Merge Post", merge_citation_suggestion_path( @citation, @suggestion ), method: :patch, data: { confirm: 'Really merge this suggestion?' } unless @suggestion.trashed? || (!admin_user? || trashed_user?) %>
 	</div>
 
 <% end %>
@@ -54,11 +54,11 @@
 		<%= simple_format @citation.content %>
 	<% end %>
 
-	<%= render 'shared/timestamps', object: @suggestion, owner: @suggestion.user.name %>
+	<%= render 'shared/timestamps', object: @suggestion, owner: (@suggestion.owned? ? @suggestion.user.name : nil) %>
 
 	<%= render 'shared/details', object: @suggestion, new_comment: true %>
 
-	<%= render 'comments/form', comment: @new_comment, form_url: citation_suggestion_comments_path( @citation, @suggestion ) unless trashed_user? %>
+	<%= render 'comments/form', comment: @new_comment, form_url: citation_suggestion_comments_path( @citation, @suggestion ) unless (@suggestion.trashed? || @suggestion.citation_or_article_trashed?) || trashed_user? %>
 
 	<%= render @comments %>
 </main>

@@ -54,6 +54,7 @@ Rails.application.configure do
 
   config.action_dispatch.use_cookies_with_metadata = false
 
+  # Speeds up tests by cutting down database transactions
   config.after_initialize do
     PaperTrail.enabled = false
   end

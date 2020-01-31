@@ -7,93 +7,119 @@ class ArchivingsControllerTest < ActionDispatch::IntegrationTest
 	end
 
 	test "should get index" do
+		load_archivings
+
 		# Guest
 		get archivings_url
 		assert_response :success
 
-		loop_archivings( reload: true, archiving_modifiers: {'trashed' => false} ) do |archiving|
-			assert_select 'main a[href=?]', archiving_path(archiving), 1
-		end
-		loop_archivings( reload: true, reset: false, archiving_modifiers: {'trashed' => true} ) do |archiving|
-			assert_select 'main a[href=?]', archiving_path(archiving), 0
-		end
+		# control panel
 		assert_select 'div.admin.control', 0
 		assert_select 'a[href=?]', trashed_archivings_path, 0
 		assert_select 'a[href=?]', new_archiving_path, 0
 
-		# User
-		loop_users do |user|
-			login_as user
+		# untrashed archiving links
+		loop_archivings( archiving_modifiers: { 'trashed' => false } ) do |archiving|
+			assert_select 'main a[href=?]', archiving_path(archiving), 1
+		end
+		loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving|
+			assert_select 'main a[href=?]', archiving_path(archiving), 0
+		end
+
+		# Non-Admin User
+		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => false }) do |user|
+			log_in_as user
 
 			get archivings_url
 			assert_response :success
 
-			loop_archivings( archiving_modifiers: {'trashed' => false} ) do |archiving|
+			# control panel
+			assert_select 'div.admin.control', 0
+			assert_select 'a[href=?]', trashed_archivings_path, 0
+			assert_select 'a[href=?]', new_archiving_path, 0
+
+			# untrashed archiving links
+			loop_archivings( archiving_modifiers: { 'trashed' => false } ) do |archiving|
 				assert_select 'main a[href=?]', archiving_path(archiving), 1
 			end
-			loop_archivings( archiving_modifiers: {'trashed' => true} ) do |archiving|
+			loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving|
 				assert_select 'main a[href=?]', archiving_path(archiving), 0
 			end
 
-			if user.admin?
-				assert_select 'div.admin.control' do
-					assert_select 'a[href=?]', trashed_archivings_path, 1
-					assert_select 'a[href=?]', new_archiving_path, !user.trashed?
-				end
-			else
-				assert_select 'div.admin.control', 0
-				assert_select 'a[href=?]', trashed_archivings_path, 0
-				assert_select 'a[href=?]', new_archiving_path, 0
-			end
-
-			logout
-		end
-	end
-
-	test "should get trashed only for admin" do
-		# Guest
-		get trashed_archivings_url
-		assert flash[:warning]
-		assert_response :redirect
-
-		# Non-Admin User
-		loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |user|
-			login_as user
-
-			get trashed_archivings_url
-			assert flash[:warning]
-			assert_response :redirect
-
-			logout
+			log_out
 		end
 
 		# Admin User
-		loop_users( user_modifiers: {'trashed' => nil, 'admin' => true} ) do |user|
-			login_as user
+		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => true }) do |user|
+			log_in_as user
+
+			get archivings_url
+			assert_response :success
+
+			# control panel
+			assert_select 'div.admin.control' do
+				assert_select 'a[href=?]', trashed_archivings_path, 1
+				assert_select 'a[href=?]', new_archiving_path, !user.trashed?
+			end
+
+			# untrashed archiving links
+			loop_archivings( archiving_modifiers: { 'trashed' => false } ) do |archiving|
+				assert_select 'main a[href=?]', archiving_path(archiving), 1
+			end
+			loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving|
+				assert_select 'main a[href=?]', archiving_path(archiving), 0
+			end
+
+			log_out
+		end
+	end
+
+	test "should get trashed (only admins)" do
+		load_archivings
+
+		# Guest
+		get trashed_archivings_url
+		assert_response :redirect
+
+		# Non-Admin User
+		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => false } ) do |user|
+			log_in_as user
+
+			get trashed_archivings_url
+			assert_response :redirect
+
+			log_out
+		end
+
+		# Admin User
+		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => true } ) do |user|
+			log_in_as user
 
 			get trashed_archivings_url
 			assert_response :success
 
-			loop_archivings( reload: true, archiving_modifiers: {'trashed' => true} ) do |archiving|
+			# trashed archivings
+			loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving|
 				assert_select 'main a[href=?]', archiving_path(archiving), 1
 			end
-			loop_archivings( reload: true, reset: false, archiving_modifiers: {'trashed' => false} ) do |archiving|
+			loop_archivings( archiving_modifiers: { 'trashed' => false } ) do |archiving|
 				assert_select 'main a[href=?]', archiving_path(archiving), 0
 			end
 
-			logout
+			log_out
 		end
 	end
 
-	test "should get show" do
+	test "should get show (only admins on trashed)" do
 		load_archivings
 		load_documents
 
 		# Guest
-		loop_archivings( archiving_modifiers: {'trashed' => false} ) do |archiving, archiving_key|
+		loop_archivings( archiving_modifiers: { 'trashed' => false } ) do |archiving, archiving_key|
 			get archiving_url(archiving)
 			assert_response :success
 
+			# control panel
 			assert_select 'div.control' do
 				assert_select 'a[href=?]', archiving_versions_path(archiving), 1
 				assert_select 'a[href=?]', archiving_suggestions_path(archiving), 1
@@ -105,35 +131,36 @@ class ArchivingsControllerTest < ActionDispatch::IntegrationTest
 			assert_select 'a[href=?][data-method=delete]', archiving_path(archiving), 0
 			assert_select 'a[href=?]', new_archiving_document_path(archiving), 0
 
-			loop_documents( blog_numbers: [], document_modifiers: {'trashed' => false},
-					only: {archiving: archiving_key} ) do |document|
+			# untrashed document links
+			loop_documents( blog_numbers: [],
+					only: { archiving: archiving_key },
+					document_modifiers: { 'trashed' => false } ) do |document|
 				assert_select 'main a[href=?]', archiving_document_path(archiving, document), 1
 			end
-			loop_documents( blog_numbers: [], document_modifiers: {'trashed' => true},
-					only: {archiving: archiving_key} ) do |document|
+			loop_documents( blog_numbers: [],
+					only: { archiving: archiving_key },
+					document_modifiers: { 'trashed' => true } ) do |document|
 				assert_select 'main a[href=?]', archiving_document_path(archiving, document), 0
 			end
-			loop_documents( blog_numbers: [],
-					except: {archiving: archiving_key} ) do |document|
+			loop_documents( except: { archiving: archiving_key } ) do |document|
 				assert_select 'main a[href=?]', archiving_document_path(archiving, document), 0
 			end
 		end
 
-		loop_archivings( archiving_modifiers: {'trashed' => true} ) do |archiving|
+		loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving|
 			get archiving_url(archiving)
-			assert flash[:warning]
 			assert_redirected_to archivings_url
 		end
 
-		# User
-		loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |user|
-			login_as user
+		# Non-Admin User
+		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => false } ) do |user|
+			log_in_as user
 
-			loop_archivings( archiving_modifiers: {'trashed' => false} ) do |archiving, archiving_key|
+			loop_archivings( archiving_modifiers: { 'trashed' => false } ) do |archiving, archiving_key|
 				get archiving_url(archiving)
 				assert_response :success
 
-				
+				# control panel
 				assert_select 'div.control' do
 					assert_select 'a[href=?]', archiving_versions_path(archiving), 1
 					assert_select 'a[href=?]', archiving_suggestions_path(archiving), 1
@@ -145,32 +172,34 @@ class ArchivingsControllerTest < ActionDispatch::IntegrationTest
 				assert_select 'a[href=?][data-method=delete]', archiving_path(archiving), 0
 				assert_select 'a[href=?]', new_archiving_document_path(archiving), 0
 
-				loop_documents( blog_numbers: [], document_modifiers: {'trashed' => false},
-						only: {archiving: archiving_key} ) do |document|
+				# untrashed document links
+				loop_documents( blog_numbers: [],
+						only: { archiving: archiving_key },
+						document_modifiers: { 'trashed' => false } ) do |document|
 					assert_select 'main a[href=?]', archiving_document_path(archiving, document), 1
 				end
-				loop_documents( blog_numbers: [], document_modifiers: {'trashed' => true},
-						only: {archiving: archiving_key} ) do |document|
+				loop_documents( blog_numbers: [],
+						only: { archiving: archiving_key },
+						document_modifiers: { 'trashed' => true } ) do |document|
 					assert_select 'main a[href=?]', archiving_document_path(archiving, document), 0
 				end
-				loop_documents( blog_numbers: [],
-						except: {archiving: archiving_key} ) do |document|
+				loop_documents( except: { archiving: archiving_key } ) do |document|
 					assert_select 'main a[href=?]', archiving_document_path(archiving, document), 0
 				end
 			end
 
-			loop_archivings( archiving_modifiers: {'trashed' => true} ) do |archiving|
+			loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving|
 				get archiving_url(archiving)
 				assert flash[:warning]
 				assert_redirected_to archivings_url
 			end
 
-			logout
+			log_out
 		end
 
-		# Admin
-		loop_users( user_modifiers: {'trashed' => nil, 'admin' => true} ) do |user|
-			login_as user
+		# Admin User
+		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => true } ) do |user|
+			log_in_as user
 
 			loop_archivings do |archiving, archiving_key|
 				get archiving_url(archiving)
@@ -178,419 +207,427 @@ class ArchivingsControllerTest < ActionDispatch::IntegrationTest
 
 				assert_select 'div.admin.control' do
 					assert_select 'a[href=?]', edit_archiving_path(archiving), !user.trashed?
-					assert_select 'a[href=?]', trash_archiving_path(archiving), !archiving.trashed?
-					assert_select 'a[href=?]', untrash_archiving_path(archiving), archiving.trashed?
+					assert_select 'a[href=?]', trash_archiving_path(archiving), !archiving.trashed? && !user.trashed?
+					assert_select 'a[href=?]', untrash_archiving_path(archiving), archiving.trashed? && !user.trashed?
 					assert_select 'a[href=?][data-method=delete]', archiving_path(archiving), archiving.trashed? && !user.trashed?
 					assert_select 'a[href=?]', new_archiving_document_path(archiving), !user.trashed?
 					assert_select 'a[href=?]', archiving_versions_path(archiving), 1
 					assert_select 'a[href=?]', archiving_suggestions_path(archiving), 1
 				end
 
+				# document links
 				loop_documents( blog_numbers: [],
-						only: {archiving: archiving_key} ) do |document|
+						only: { archiving: archiving_key } ) do |document|
 					assert_select 'main a[href=?]', archiving_document_path(archiving, document), 1
 				end
-				loop_documents( blog_numbers: [],
-						except: {archiving: archiving_key} ) do |document|
+				loop_documents( except: { archiving: archiving_key } ) do |document|
 					assert_select 'main a[href=?]', archiving_document_path(archiving, document), 0
 				end
 			end
 
-			logout
+			log_out
 		end
 	end
 
-	test "should get new only for [Untrashed] admins" do
+	test "should get new (only untrashed admins)" do
 		# Guest
 		get new_archiving_url
-		assert flash[:warning]
 		assert_response :redirect
 
 		# Non-Admin
-		loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |user|
-			login_as user
+		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => false } ) do |user|
+			log_in_as user
 
 			get new_archiving_url
-			assert flash[:warning]
 			assert_response :redirect
 
-			logout
+			log_out
 		end
 
 		# Admin, Trashed
-		loop_users( user_modifiers: {'trashed' => true, 'admin' => true} ) do |user|
-			login_as user
+		loop_users( user_modifiers: { 'trashed' => true, 'admin' => true } ) do |user|
+			log_in_as user
 
 			get new_archiving_url
-			assert flash[:warning]
 			assert_response :redirect
 
-			logout
+			log_out
 		end
 
 		# Admin, UnTrashed
-		loop_users( user_modifiers: {'trashed' => false, 'admin' => true} ) do |user|
-			login_as user
+		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user|
+			log_in_as user
 
 			get new_archiving_url
 			assert_response :success
 
-			logout
+			log_out
 		end
 	end
 
-	test "should post create only for [untrashed] admins" do
+	test "should post create (only untrashed admins)" do
 		# Guest
 		assert_no_difference 'Archiving.count' do
-			post archivings_url, params: { archiving: { title: "Guest's New Archiving", content: "Sample Text" } }
+			post archivings_url, params: { archiving: {
+				title: "Guest's New Archiving",
+				content: "Sample Text"
+			} }
 		end
-		assert flash[:warning]
 
 		# Non-Admin
-		loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |user|
-			login_as user
+		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => false } ) do |user|
+			log_in_as user
 
 			assert_no_difference 'Archiving.count' do
-				post archivings_url, params: { archiving: { title: user.name.possessive + " New Archiving", content: "Sample Text" } }
+				post archivings_url, params: { archiving: {
+					title: user.name.possessive + " New Archiving",
+					content: "Sample Text"
+				} }
 			end
-			assert flash[:warning]
 			assert_response :redirect
 
-			logout
+			log_out
 		end
 
 		# Admin, Trashed
-		loop_users( user_modifiers: {'trashed' => true, 'admin' => true} ) do |user|
-			login_as user
+		loop_users( user_modifiers: { 'trashed' => true, 'admin' => true } ) do |user|
+			log_in_as user
 
 			assert_no_difference 'Archiving.count' do
-				post archivings_url, params: { archiving: { title: user.name.possessive + " New Archiving", content: "Sample Text" } }
+				post archivings_url, params: { archiving: {
+					title: user.name.possessive + " New Archiving",
+					content: "Sample Text"
+				} }
 			end
-			assert flash[:warning]
 			assert_response :redirect
 
-			logout
+			log_out
 		end
 
 		# Admin, UnTrashed
-		loop_users( user_modifiers: {'trashed' => false, 'admin' => true} ) do |user|
-			login_as user
+		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user|
+			log_in_as user
 
 			assert_difference 'Archiving.count', 1 do
-				post archivings_url, params: { archiving: { title: user.name.possessive + " New Archiving", content: "Sample Text" } }
+				post archivings_url, params: { archiving: {
+					title: user.name.possessive + " New Archiving",
+					content: "Sample Text"
+				} }
 			end
-			assert flash[:success]
 
-			logout
+			log_out
 		end
 	end
 
-	test "should get edit only for [untrashed] admins" do
+	test "should get edit (only untrashed admins)" do
+		load_archivings
+
 		# Guest
-		loop_archivings(reload: true) do |archiving|
+		loop_archivings do |archiving|
 			get edit_archiving_url(archiving)
-			assert flash[:warning]
 			assert_response :redirect
 		end
 
 		# Non-Admin
-		loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |user|
-			login_as user
+		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => false } ) do |user|
+			log_in_as user
 
 			loop_archivings do |archiving|
 				get edit_archiving_url(archiving)
-				assert flash[:warning]
 				assert_response :redirect
 			end
 
-			logout
+			log_out
 		end
 
 		# Admin, Trashed
-		loop_users( user_modifiers: {'trashed' => true, 'admin' => true} ) do |user|
-			login_as user
+		loop_users( user_modifiers: { 'trashed' => true, 'admin' => true } ) do |user|
+			log_in_as user
 
 			loop_archivings do |archiving|
 				get edit_archiving_url(archiving)
-				assert flash[:warning]
 				assert_response :redirect
 			end
 
-			logout
+			log_out
 		end
 
 		# Admin, UnTrashed
-		loop_users( user_modifiers: {'trashed' => false, 'admin' => true} ) do |user|
-			login_as user
+		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user|
+			log_in_as user
 
 			loop_archivings do |archiving|
 				get edit_archiving_url(archiving)
 				assert_response :success
 			end
 
-			logout
+			log_out
 		end
 	end
 
-	test "should patch update for [untrashed] admins" do
+	test "should patch update (only untrashed admins)" do
+		load_archivings
+
 		# Guest
-		loop_archivings(reload: true) do |archiving, archiving_key|
+		loop_archivings do |archiving, archiving_key|
 			assert_no_changes -> { archiving.title } do
-				patch archiving_url(archiving), params: { archiving: { title: "Guest's Edited Archiving" } }
+				patch archiving_url(archiving), params: { archiving: {
+					title: "Guest's Edited Archiving"
+				} }
 				archiving.reload
 			end
-			assert flash[:warning]
 			assert_response :redirect
 		end
 
 		# Non-Admin
-		loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |user|
-			login_as user
+		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => false } ) do |user|
+			log_in_as user
 
 			loop_archivings do |archiving, archiving_key|
 				assert_no_changes -> { archiving.title } do
-					patch archiving_url(archiving), params: { archiving: { title: user.name.possessive + " Edited " + archiving_key.split('_').map(&:capitalize).join(' ') } }
+					patch archiving_url(archiving), params: { archiving: {
+						title: user.name.possessive + " Edited " + archiving_key.split('_').map(&:capitalize).join(' ')
+					} }
 					archiving.reload
 				end
-				assert flash[:warning]
 				assert_response :redirect
 			end
 
-			logout
+			log_out
 		end
 
 		# Admin, Trashed
-		loop_users( user_modifiers: {'trashed' => true, 'admin' => true} ) do |user|
-			login_as user
+		loop_users( user_modifiers: { 'trashed' => true, 'admin' => true } ) do |user|
+			log_in_as user
 
 			loop_archivings do |archiving, archiving_key|
 				assert_no_changes -> { archiving.title } do
-					patch archiving_url(archiving), params: { archiving: { title: user.name.possessive + " Edited " + archiving_key.split('_').map(&:capitalize).join(' ') } }
+					patch archiving_url(archiving), params: { archiving: {
+						title: user.name.possessive + " Edited " + archiving_key.split('_').map(&:capitalize).join(' ')
+					} }
 					archiving.reload
 				end
-				assert flash[:warning]
 				assert_response :redirect
 			end
 
-			logout
+			log_out
 		end
 
 		# Admin, UnTrashed
-		loop_users( user_modifiers: {'trashed' => false, 'admin' => true} ) do |user|
-			login_as user
+		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user|
+			log_in_as user
 
 			loop_archivings do |archiving, archiving_key|
+				old_title = archiving.title
+
 				assert_changes -> { archiving.title } do
-					patch archiving_url(archiving), params: { archiving: { title: user.name.possessive + " Edited " + archiving_key.split('_').map(&:capitalize).join(' ') } }
+					patch archiving_url(archiving), params: { archiving: {
+						title: user.name.possessive + " Edited " + archiving_key.split('_').map(&:capitalize).join(' ')
+					} }
 					archiving.reload
 				end
-				assert flash[:success]
 				assert_response :redirect
+
+				archiving.update_columns(title: old_title)
 			end
 
-			logout
+			log_out
 		end
 	end
 
-	test "should get trash update only for admins" do
+	test "should get trash update (only admins)" do
+		load_archivings
+
 		# Guest
-		loop_archivings( reload: true, archiving_modifiers: {'trashed' => false} ) do |archiving|
-			assert_no_changes -> { archiving.trashed }, from: false do
-				assert_no_changes -> { archiving.updated_at } do
+		loop_archivings( archiving_modifiers: { 'trashed' => false } ) do |archiving|
+			assert_no_changes -> { archiving.updated_at } do
+				assert_no_changes -> { archiving.trashed? }, from: false do
 					get trash_archiving_url(archiving)
 					archiving.reload
 				end
 			end
-			assert flash[:warning]
 			assert_response :redirect
 		end
 
-		# Non-Admin
-		loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |user|
-			login_as user
+		# Non-Admin User
+		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => false } ) do |user|
+			log_in_as user
 
-			loop_archivings( archiving_modifiers: {'trashed' => false} ) do |archiving|
-				assert_no_changes -> { archiving.trashed }, from: false do
-					assert_no_changes -> { archiving.updated_at } do
+			loop_archivings( archiving_modifiers: { 'trashed' => false } ) do |archiving|
+				assert_no_changes -> { archiving.updated_at } do
+					assert_no_changes -> { archiving.trashed? }, from: false do
 						get trash_archiving_url(archiving)
 						archiving.reload
 					end
 				end
-				assert flash[:warning]
 				assert_response :redirect
 			end
 
-			logout
+			log_out
 		end
 
-		# Admin, Trashed
-		loop_users( user_modifiers: {'trashed' => true, 'admin' => true} ) do |user|
-			login_as user
+		# Admin User, Trashed
+		loop_users( user_modifiers: { 'trashed' => true, 'admin' => true } ) do |user|
+			log_in_as user
 
-			loop_archivings( archiving_modifiers: {'trashed' => false} ) do |archiving|
-				assert_no_changes -> { archiving.trashed }, from: false do
-					assert_no_changes -> { archiving.updated_at } do
+			loop_archivings( archiving_modifiers: { 'trashed' => false } ) do |archiving|
+				assert_no_changes -> { archiving.updated_at } do
+					assert_no_changes -> { archiving.trashed? }, from: false do
 						get trash_archiving_url(archiving)
 						archiving.reload
 					end
 				end
-				assert flash[:warning]
 				assert_response :redirect
 			end
 
-			logout
+			log_out
 		end
 
-		# Admin, UnTrashed
-		loop_users( user_modifiers: {'trashed' => false, 'admin' => true} ) do |user|
-			login_as user
+		# Admin User, UnTrashed
+		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user|
+			log_in_as user
 
-			loop_archivings( archiving_modifiers: {'trashed' => false} ) do |archiving|
-				assert_changes -> { archiving.trashed }, from: false, to: true do
-					assert_no_changes -> { archiving.updated_at } do
+			loop_archivings( archiving_modifiers: { 'trashed' => false } ) do |archiving|
+				assert_no_changes -> { archiving.updated_at } do
+					assert_changes -> { archiving.trashed? }, from: false, to: true do
 						get trash_archiving_url(archiving)
 						archiving.reload
 					end
 				end
-				assert flash[:success]
 				assert_response :redirect
 
 				archiving.update_columns(trashed: false)
 			end
 
-			logout
+			log_out
 		end
 	end
 
 	test "should get untrash update only for admins" do
+		load_archivings
+
 		# Guest
-		loop_archivings( reload: true, archiving_modifiers: {'trashed' => true} ) do |archiving|
-			assert_no_changes -> { archiving.trashed }, from: true do
-				assert_no_changes -> { archiving.updated_at } do
+		loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving|
+			assert_no_changes -> { archiving.updated_at } do
+				assert_no_changes -> { archiving.trashed? }, from: true do
 					get untrash_archiving_url(archiving)
 					archiving.reload
 				end
 			end
-			assert flash[:warning]
 			assert_response :redirect
 		end
 
 		# Non-Admin
-		loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |user|
-			login_as user
+		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => false } ) do |user|
+			log_in_as user
 
-			loop_archivings( archiving_modifiers: {'trashed' => true} ) do |archiving|
-				assert_no_changes -> { archiving.trashed }, from: true do
-					assert_no_changes -> { archiving.updated_at } do
+			loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving|
+				assert_no_changes -> { archiving.updated_at } do
+					assert_no_changes -> { archiving.trashed? }, from: true do
 						get untrash_archiving_url(archiving)
 						archiving.reload
 					end
 				end
-				assert flash[:warning]
 				assert_response :redirect
 			end
 
-			logout
+			log_out
 		end
 
 		# Admin, Trashed
-		loop_users( user_modifiers: {'trashed' => true, 'admin' => true} ) do |user|
-			login_as user
+		loop_users( user_modifiers: { 'trashed' => true, 'admin' => true } ) do |user|
+			log_in_as user
 
-			loop_archivings( archiving_modifiers: {'trashed' => true} ) do |archiving|
-				assert_no_changes -> { archiving.trashed }, from: true do
-					assert_no_changes -> { archiving.updated_at } do
+			loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving|
+				assert_no_changes -> { archiving.updated_at } do
+					assert_no_changes -> { archiving.trashed? }, from: true do
 						get untrash_archiving_url(archiving)
 						archiving.reload
 					end
 				end
-				assert flash[:warning]
 				assert_response :redirect
 			end
 
-			logout
+			log_out
 		end
 
 		# Admin, UnTrashed
-		loop_users( user_modifiers: {'trashed' => false, 'admin' => true} ) do |user|
-			login_as user
+		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user|
+			log_in_as user
 
-			loop_archivings( archiving_modifiers: {'trashed' => true} ) do |archiving|
-				assert_changes -> { archiving.trashed }, from: true, to: false do
-					assert_no_changes -> { archiving.updated_at } do
+			loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving|
+				assert_no_changes -> { archiving.updated_at } do
+					assert_changes -> { archiving.trashed? }, from: true, to: false do
 						get untrash_archiving_url(archiving)
 						archiving.reload
 					end
 				end
-				assert flash[:success]
 				assert_response :redirect
 				
 				archiving.update_columns(trashed: true)
 			end
 
-			logout
+			log_out
 		end
 	end
 
 	test "should delete destroy only for admin" do
+		load_archivings
+
 		# Guest
-		loop_archivings(reload: true) do |archiving|
+		loop_archivings do |archiving|
 			assert_no_difference 'Archiving.count' do
 				delete archiving_url(archiving)
 			end
 			assert_nothing_raised { archiving.reload }
-			assert flash[:warning]
 			assert_response :redirect
 		end
 
-		# Non-Admin
-		loop_users( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |user|
-			login_as user
+		# Non-Admin User
+		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => false } ) do |user|
+			log_in_as user
 
 			loop_archivings do |archiving|
 				assert_no_difference 'Archiving.count' do
 					delete archiving_url(archiving)
 				end
 				assert_nothing_raised { archiving.reload }
-				assert flash[:warning]
 				assert_response :redirect
 			end
 
-			logout
+			log_out
 		end
 
-		# Admin, Trashed
-		loop_users( user_modifiers: {'trashed' => true, 'admin' => true} ) do |user|
-			login_as user
+		# Admin User, Trashed
+		loop_users( user_modifiers: { 'trashed' => true, 'admin' => true } ) do |user|
+			log_in_as user
 
 			loop_archivings do |archiving|
 				assert_no_difference 'Archiving.count' do
 					delete archiving_url(archiving)
 				end
 				assert_nothing_raised { archiving.reload }
-				assert flash[:warning]
 				assert_response :redirect
 			end
 
-			logout
+			log_out
 		end
 
-		# Admin, UnTrashed
-		loop_users( user_modifiers: {'trashed' => false, 'admin' => true} ) do |user, user_key|
-			login_as user
+		# Admin User, UnTrashed
+		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user, user_key|
+			log_in_as user
 
 			loop_archivings( archiving_numbers: [user_key.split('_').last] ) do |archiving|
 				assert_difference 'Archiving.count', -1 do
 					delete archiving_url(archiving)
 				end
 				assert_raise(ActiveRecord::RecordNotFound) { archiving.reload }
-				assert flash[:success]
 				assert_response :redirect
 				
 				archiving.update(trashed: true)
 			end
 
-			logout
+			log_out
 		end
 	end
 

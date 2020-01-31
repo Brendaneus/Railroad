@@ -3,254 +3,94 @@ user_one_session_one:
   user_id: 1
   name: 'User One Session One'
   ip: '192.168.1.1'
-  remember_digest: '$2a$04$eX3Ne4Xj1tU3327eyPJZ1.u8IfQZxFFziv18cbrbG7q19YU0UBN1S'
-  last_active: 2019-06-13 00:40:59 -0500
+  remember_digest: '$2a$04$im5dMIY2fMBSzE8W02ii4OV8HdPZcE4tHGxsAjJaSp7veLX2vtQbS'
+  last_active: 2020-01-31 01:07:17 -0600
 
 user_one_session_two:
   id: 2
   user_id: 1
   name: 'User One Session Two'
   ip: '192.168.1.2'
-  remember_digest: '$2a$04$f8o2QJbUlbnVNvXNfiFqCu9O155b8.s6KC33UleblQ58Jn9/4uSD6'
-  last_active: 2019-06-13 00:40:59 -0500
+  remember_digest: '$2a$04$JfbbgH3IEnaE5Kg7bEsdwOR.X8IG41XPlB.badrVNLsrkwnko9QjG'
+  last_active: 2020-01-31 01:07:17 -0600
 
 user_one_session_three:
   id: 3
   user_id: 1
   name: 'User One Session Three'
   ip: '192.168.1.3'
-  remember_digest: '$2a$04$5PW70MStgyW6d.2jXwEa.enSOnEze5POWQiL9JZD2YE/ioNzFZC1K'
-  last_active: 2019-06-13 00:40:59 -0500
-
-user_one_session_four:
-  id: 4
-  user_id: 1
-  name: 'User One Session Four'
-  ip: '192.168.1.4'
-  remember_digest: '$2a$04$l/evUcvHh5I.O7A/mtEFm.uAguKuJVYx.5axOFuW7eJPTgKGoaFWy'
-  last_active: 2019-06-13 00:40:59 -0500
-
-user_two_session_one:
-  id: 5
-  user_id: 2
-  name: 'User Two Session One'
-  ip: '192.168.2.1'
-  remember_digest: '$2a$04$DAffx6mItt4ybSXMRTH64.DeM66y/vLz3GKJAYA3f6WA4GgW.luGO'
-  last_active: 2019-06-13 00:40:59 -0500
-
-user_two_session_two:
-  id: 6
-  user_id: 2
-  name: 'User Two Session Two'
-  ip: '192.168.2.2'
-  remember_digest: '$2a$04$ytURzx0TGuEWOSwHWovCWO0KjXcLq7t/.yykudaypsJHhDUheM5hK'
-  last_active: 2019-06-13 00:40:59 -0500
-
-user_two_session_three:
-  id: 7
-  user_id: 2
-  name: 'User Two Session Three'
-  ip: '192.168.2.3'
-  remember_digest: '$2a$04$KClji9S2LnhsL4aGR5fGN.fzQBk/pBGJjDWuLO6RpLapHKJlN67BG'
-  last_active: 2019-06-13 00:40:59 -0500
-
-user_two_session_four:
-  id: 8
-  user_id: 2
-  name: 'User Two Session Four'
-  ip: '192.168.2.4'
-  remember_digest: '$2a$04$6B9cS96JPkQX5rDIOQlzderrYlGVoTA45nbvOZqx6OZHZUGk.uB2O'
-  last_active: 2019-06-13 00:40:59 -0500
+  remember_digest: '$2a$04$dC39CKtAS0EkO5m5q569tON.CJrDmN0mdqDHo7B0tNVlsj1rsXZ/K'
+  last_active: 2020-01-31 01:07:17 -0600
 
 admin_user_one_session_one:
-  id: 9
-  user_id: 3
+  id: 4
+  user_id: 2
   name: 'Admin User One Session One'
-  ip: '192.168.3.1'
-  remember_digest: '$2a$04$.Eq1.qxzq.hGt2YijQYC8ePthGSMIdgIOWO8RUr9bxrREIpTx6Lk.'
-  last_active: 2019-06-13 00:40:59 -0500
+  ip: '192.168.2.1'
+  remember_digest: '$2a$04$lkmvEVTZ2Tqn.wYvUwRG/O3uhbSJpwiL06PX8sNXMYoR8pZ9oY7mm'
+  last_active: 2020-01-31 01:07:17 -0600
 
 admin_user_one_session_two:
-  id: 10
-  user_id: 3
+  id: 5
+  user_id: 2
   name: 'Admin User One Session Two'
-  ip: '192.168.3.2'
-  remember_digest: '$2a$04$XrjIT47IyDMuJi/Gso3km.H2Jr1MNV.zbJIAwy6L/cAVcSdU9so/u'
-  last_active: 2019-06-13 00:41:00 -0500
+  ip: '192.168.2.2'
+  remember_digest: '$2a$04$YEUxfaSo8Aj6hxEaFH2Hd.dagDA6aaIJtTUE1i3LPhQBw79X.l3Ce'
+  last_active: 2020-01-31 01:07:17 -0600
 
 admin_user_one_session_three:
-  id: 11
-  user_id: 3
+  id: 6
+  user_id: 2
   name: 'Admin User One Session Three'
-  ip: '192.168.3.3'
-  remember_digest: '$2a$04$DzZOdUYobepWxEk8.FOLe.8VEpnUYdFCc/ccM5TDxTdwGbz91Z0Ka'
-  last_active: 2019-06-13 00:41:00 -0500
-
-admin_user_one_session_four:
-  id: 12
-  user_id: 3
-  name: 'Admin User One Session Four'
-  ip: '192.168.3.4'
-  remember_digest: '$2a$04$aZBCEOYjyO7NNOL/cgMsG.Gwn/5wyP5oACfzwx8NvfrowfQwXFKp2'
-  last_active: 2019-06-13 00:41:00 -0500
-
-admin_user_two_session_one:
-  id: 13
-  user_id: 4
-  name: 'Admin User Two Session One'
-  ip: '192.168.4.1'
-  remember_digest: '$2a$04$m03Z.uIG//URfsybzWC4B.gO.8mjDUZ0y8YwOtDGoTMA8rvD1ddsi'
-  last_active: 2019-06-13 00:41:00 -0500
-
-admin_user_two_session_two:
-  id: 14
-  user_id: 4
-  name: 'Admin User Two Session Two'
-  ip: '192.168.4.2'
-  remember_digest: '$2a$04$JMr4BuDCUcq4CdfNAGg6NObAoITaeUR.6qRmS77ush7rKbMH5A1gW'
-  last_active: 2019-06-13 00:41:00 -0500
-
-admin_user_two_session_three:
-  id: 15
-  user_id: 4
-  name: 'Admin User Two Session Three'
-  ip: '192.168.4.3'
-  remember_digest: '$2a$04$haKCKP9zqbdAjyY3JRU89uQu1ZMHuM/CbPJf9aA.jTBDHW.OQLAPS'
-  last_active: 2019-06-13 00:41:00 -0500
-
-admin_user_two_session_four:
-  id: 16
-  user_id: 4
-  name: 'Admin User Two Session Four'
-  ip: '192.168.4.4'
-  remember_digest: '$2a$04$RDuzL3uYFRekKUJ.fS5XFerPW1AblHvHvWo8kvXzAYGaRg4ZKlp3S'
-  last_active: 2019-06-13 00:41:00 -0500
+  ip: '192.168.2.3'
+  remember_digest: '$2a$04$yDm7X4poMztXA7YnEmkj9ubUGZiEefhlNPJ.AxKpIxGYDpMV/XPom'
+  last_active: 2020-01-31 01:07:17 -0600
 
 trashed_user_one_session_one:
-  id: 17
-  user_id: 5
+  id: 7
+  user_id: 3
   name: 'Trashed User One Session One'
-  ip: '192.168.5.1'
-  remember_digest: '$2a$04$vn8EsBDetooNPzOVO77LReEFANXrCebItohJ88xVQFIm6UOZ18iBi'
-  last_active: 2019-06-13 00:41:00 -0500
+  ip: '192.168.3.1'
+  remember_digest: '$2a$04$A56f4CdQH5fdMHbbMSQHW.alf5.lwv7FnMVU65lVGzCgAxi23ea2.'
+  last_active: 2020-01-31 01:07:17 -0600
 
 trashed_user_one_session_two:
-  id: 18
-  user_id: 5
+  id: 8
+  user_id: 3
   name: 'Trashed User One Session Two'
-  ip: '192.168.5.2'
-  remember_digest: '$2a$04$k4eMVxu0ZpD2MSYH2NngOeEnS6BJh0Duotes9yoQxf9jUF8FafIlC'
-  last_active: 2019-06-13 00:41:00 -0500
+  ip: '192.168.3.2'
+  remember_digest: '$2a$04$Pu1VrKXWLWiNxSMrNIrWleqqkpEQLB9oYp5Tyq0c4NMDVncCgJUMa'
+  last_active: 2020-01-31 01:07:17 -0600
 
 trashed_user_one_session_three:
-  id: 19
-  user_id: 5
+  id: 9
+  user_id: 3
   name: 'Trashed User One Session Three'
-  ip: '192.168.5.3'
-  remember_digest: '$2a$04$BwG7j7xyVOspSDB62SRVUuz.1UYB.ZkMmjA8uYrabQhy30.p0gGE6'
-  last_active: 2019-06-13 00:41:00 -0500
-
-trashed_user_one_session_four:
-  id: 20
-  user_id: 5
-  name: 'Trashed User One Session Four'
-  ip: '192.168.5.4'
-  remember_digest: '$2a$04$2yAfQ5B4Lqu3m2kyr8H2n.hHDfQVZttmaPxizUavnjgNvu9FBba6a'
-  last_active: 2019-06-13 00:41:00 -0500
-
-trashed_user_two_session_one:
-  id: 21
-  user_id: 6
-  name: 'Trashed User Two Session One'
-  ip: '192.168.6.1'
-  remember_digest: '$2a$04$ikXpCGTNUB1TlqvrwPde.OaVeEcLLWbiwVxC8v4E9qoMHMqiCCcDW'
-  last_active: 2019-06-13 00:41:00 -0500
-
-trashed_user_two_session_two:
-  id: 22
-  user_id: 6
-  name: 'Trashed User Two Session Two'
-  ip: '192.168.6.2'
-  remember_digest: '$2a$04$/Uso.SE05yu3jr7W3mgfeOQxLVQgUlOg5uraJUGRUf//O/k1qiSfO'
-  last_active: 2019-06-13 00:41:00 -0500
-
-trashed_user_two_session_three:
-  id: 23
-  user_id: 6
-  name: 'Trashed User Two Session Three'
-  ip: '192.168.6.3'
-  remember_digest: '$2a$04$uccCiJT3F.tUq4c62CPsKeMcuqjdGwUnWzpSDEHVMfdFy./rNCGVi'
-  last_active: 2019-06-13 00:41:00 -0500
-
-trashed_user_two_session_four:
-  id: 24
-  user_id: 6
-  name: 'Trashed User Two Session Four'
-  ip: '192.168.6.4'
-  remember_digest: '$2a$04$fOac4kk2XhOK4xaFuvey.uSRSYO7iV3Gl2Kq3mcN0gbVDcPRgxgdi'
-  last_active: 2019-06-13 00:41:00 -0500
+  ip: '192.168.3.3'
+  remember_digest: '$2a$04$eHHRY4nYNJWTs9STsGTuyO.tiy7gNUfZohFG4Q1lCdfGIld3Kqji2'
+  last_active: 2020-01-31 01:07:17 -0600
 
 trashed_admin_user_one_session_one:
-  id: 25
-  user_id: 7
+  id: 10
+  user_id: 4
   name: 'Trashed Admin User One Session One'
-  ip: '192.168.7.1'
-  remember_digest: '$2a$04$oqrRz6uz445qh8waW7x0LubqJ8Ix/bYzMbJX82gX1rRMNIij94PPm'
-  last_active: 2019-06-13 00:41:00 -0500
+  ip: '192.168.4.1'
+  remember_digest: '$2a$04$KTDWQhefOuTpRrDXgrr03eEsCvEKZlw/LdUx.1zOCiR9ncnmCn99K'
+  last_active: 2020-01-31 01:07:17 -0600
 
 trashed_admin_user_one_session_two:
-  id: 26
-  user_id: 7
+  id: 11
+  user_id: 4
   name: 'Trashed Admin User One Session Two'
-  ip: '192.168.7.2'
-  remember_digest: '$2a$04$ltJA6/8IU9EenFGnyIQlpuvwTGKqw/HJRlTK0krLC0rthdFLUCLEW'
-  last_active: 2019-06-13 00:41:00 -0500
+  ip: '192.168.4.2'
+  remember_digest: '$2a$04$n0QBpUkxpnW6i8T/k0f12On9xG.Yv3fwwwCbefT0MUC9Cm8A0Uugu'
+  last_active: 2020-01-31 01:07:17 -0600
 
 trashed_admin_user_one_session_three:
-  id: 27
-  user_id: 7
+  id: 12
+  user_id: 4
   name: 'Trashed Admin User One Session Three'
-  ip: '192.168.7.3'
-  remember_digest: '$2a$04$vZyc.lE696kUakH47XO93.GaxfdsPOclfauKeZ5UYRfXyY.Xw6Rma'
-  last_active: 2019-06-13 00:41:00 -0500
-
-trashed_admin_user_one_session_four:
-  id: 28
-  user_id: 7
-  name: 'Trashed Admin User One Session Four'
-  ip: '192.168.7.4'
-  remember_digest: '$2a$04$kWf78uhWTcpB/pfefKXwWeaaWPzUQ.jgq3vwuEE9i/RLZYuYbDNk2'
-  last_active: 2019-06-13 00:41:00 -0500
-
-trashed_admin_user_two_session_one:
-  id: 29
-  user_id: 8
-  name: 'Trashed Admin User Two Session One'
-  ip: '192.168.8.1'
-  remember_digest: '$2a$04$AyV5ogAfknVpj7Ec80LY4uJLntJTDmb7kV7Y6lZob1uulS/7i3Lke'
-  last_active: 2019-06-13 00:41:00 -0500
-
-trashed_admin_user_two_session_two:
-  id: 30
-  user_id: 8
-  name: 'Trashed Admin User Two Session Two'
-  ip: '192.168.8.2'
-  remember_digest: '$2a$04$aVngFOso9CzDKgm6Z7L7juES9bs1r7RXU6kXnmbjJTmviyw0KJybC'
-  last_active: 2019-06-13 00:41:00 -0500
-
-trashed_admin_user_two_session_three:
-  id: 31
-  user_id: 8
-  name: 'Trashed Admin User Two Session Three'
-  ip: '192.168.8.3'
-  remember_digest: '$2a$04$OjaBHrPR5Qbm3iWHGtqNl.Z4NvUH373daeoNbPiQyXtsdJbKHUava'
-  last_active: 2019-06-13 00:41:00 -0500
-
-trashed_admin_user_two_session_four:
-  id: 32
-  user_id: 8
-  name: 'Trashed Admin User Two Session Four'
-  ip: '192.168.8.4'
-  remember_digest: '$2a$04$HIp0M03mjN5aScYueAzZGO2Gy7BSynjnxDHbSIiOr4IN7.C.GbuWS'
-  last_active: 2019-06-13 00:41:00 -0500
+  ip: '192.168.4.3'
+  remember_digest: '$2a$04$amRg4u71/DGkB.jRm61TMOzMTaDR4NWQ783wudUaiLlEeVBLW0FcW'
+  last_active: 2020-01-31 01:07:17 -0600
 

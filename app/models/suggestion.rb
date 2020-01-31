@@ -3,22 +3,35 @@ class Suggestion < ApplicationRecord
 	include Commentable
 	include Editable
 	include Ownable
-	include Suggestable
 	include Trashable
 
 	belongs_to :citation, polymorphic: true
-	belongs_to :user, optional: true
+	belongs_to :user
 
-	before_validation :set_matching_to_nil
+	before_validation :set_matching_to_nil, if: -> { citation.present? }
 
 	validates :name, presence: :true,
-					 length: {maximum: 128}
-	validate :unique_local_name, if: -> { self.name.present? }
+									 length: { maximum: 128 }
+	validate :unique_local_name, if: -> { self.name.present? && citation.present? }
 	validate :title_or_content_present
 	validate :unique_archiving_title,
-		if: -> { self.title.present? && (citation.class == Archiving) }
+		if: -> { self.title.present? && citation.present? && (citation.class == Archiving) }
 	validate :unique_local_title,
-		if: -> { self.title.present? && (citation.class == Document) }
+		if: -> { self.title.present? && citation.present? && (citation.class == Document) }
+	validates :title, length: { maximum: 64 }
+	validates :content, length: { maximum: 4096 }
+
+	def citation_or_article_trashed?
+		if self.citation.class == Document
+			self.citation.trashed? || self.citation.article.trashed?
+		else
+			self.citation.trashed?
+		end
+	end
+
+	def citing? record
+		self.citation == record
+	end
 
 	private
 
@@ -40,15 +53,13 @@ class Suggestion < ApplicationRecord
 		end
 
 		def unique_archiving_title
-			if other_suggestion = ( Archiving.where('lower(title) = ?', title.downcase).first ||
-					citation.suggestions.where.not(id: id).where('lower(title) = ?', title.downcase).first )
+			if other_suggestion = ( Archiving.where('lower(title) = ?', title.downcase).first )
 				errors.add(:title, "is already taken")
 			end
 		end
 
 		def unique_local_title
-			if other_suggestion = ( citation.article.documents.where('lower(title) = ?', title.downcase).first ||
-					citation.suggestions.where.not(id: id).where('lower(title) = ?', title.downcase).first )
+			if other_suggestion = ( citation.article.documents.where('lower(title) = ?', title.downcase).first )
 				errors.add(:title, "is already taken")
 			end
 		end

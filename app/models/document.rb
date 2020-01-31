@@ -8,18 +8,14 @@ class Document < ApplicationRecord
 	has_many :suggestions, as: :citation, dependent: :destroy
 	has_one_attached :upload
 
-	validates_presence_of :local_id, unless: :new_record?
-	validate :unique_local_id, unless: :new_record?
+	validates_presence_of :local_id, unless: -> { article.nil? || new_record? }
+	validate :unique_local_id, unless: -> { article.nil? || new_record? }
 	# validates :upload, attached: true # Currently unsupported by ActiveStorage
 	validates :title, presence: true
-	validate :unique_local_title
+	validate :unique_local_title, unless: -> { article.nil? }
 
-	before_create :auto_increment_local_id
+	before_create :auto_increment_local_id, unless: -> { article.nil? }
 
-
-	def article_trashed?
-		article.trashed?
-	end
 
 	def suggestable?
 		article.class == Archiving

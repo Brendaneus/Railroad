@@ -5,7 +5,8 @@ class DocumentsController < ApplicationController
 	before_action :require_admin, except: [:index, :show]
 	before_action :require_untrashed_user, except: [:index, :trashed, :show]
 	before_action :set_article
-	before_action :require_admin_for_trashed, only: :show
+	before_action :require_admin_for_trashed_document_or_article, only: [:show]
+
 	before_action :set_document_bucket, unless: -> { Rails.env.test? }
 	after_action :mark_activity, only: [:create, :update, :trash, :untrash, :destroy], if: :logged_in?
 
@@ -101,8 +102,8 @@ class DocumentsController < ApplicationController
 			end
 		end
 
-		def require_admin_for_trashed
-			unless admin_user? || !Document.find( params[:id] ).trashed?
+		def require_admin_for_trashed_document_or_article
+			if (@article.trashed? || Document.find( params[:id] ).trashed?) && !admin_user?
 				flash[:warning] = "This document has been trashed and cannot be viewed."
 				redirect_to article_path( @article )
 			end

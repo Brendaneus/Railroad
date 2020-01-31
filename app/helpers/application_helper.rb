@@ -33,7 +33,7 @@ module ApplicationHelper
 		end
 
 		if (object.class == ForumPost) || (object.class == Comment)
-			class_attr += "owned " if object.owned_by? current_user
+			class_attr += "owned " if object.owned? by: current_user
 		end
 
 		if ( (object.class == User) && logged_in_as?(object) ) || ( (object.class == Session) && remembered_as?(object) )

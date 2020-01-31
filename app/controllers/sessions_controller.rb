@@ -5,6 +5,7 @@ class SessionsController < ApplicationController
 	before_action :require_non_remembered, only: [:new, :create]
 	before_action :require_authorize_or_admin, only: [:index, :show]
 	before_action :require_authorize_or_untrashed_admin, only: [:edit, :update, :destroy]
+
 	before_action :set_user, except: [:new_login, :login, :logout]
 	after_action :mark_activity, only: [:create, :update, :destroy, :login, :logout], if: :logged_in?
 
@@ -56,7 +57,7 @@ class SessionsController < ApplicationController
 		forget if current_session == @session
 		if @session.destroy
 			flash[:success] = "Session removed."
-			redirect_to root_path
+			redirect_to user_sessions_path(@user)
 		else
 			flash[:failure] = "There was a problem deleting the session."
 			redirect_back fallback_location: root_path
@@ -71,6 +72,7 @@ class SessionsController < ApplicationController
 	def login
 		@session = Session.new
 		if ( @user = User.find_by(email: params[:email]) ) && @user.authenticate( params[:password] )
+			log_out
 			if params[:remember] == "1"
 				@session = @user.sessions.build(session_params)
 				@session.ip = request.remote_ip if params[:save_ip]
@@ -83,7 +85,7 @@ class SessionsController < ApplicationController
 							flash[:warning] = "There was a problem removing your old session."
 						end
 					end
-					log_in @user
+					log_in_as @user
 					remember @session
 					flash[:success] = "Now logged in as #{@user.name} under #{@session.name}."
 					redirect_to root_path
@@ -92,7 +94,7 @@ class SessionsController < ApplicationController
 					render :new_login
 				end
 			else
-				log_in @user
+				log_in_as @user
 				flash[:success] = "Now logged in as #{@user.name}."
 				redirect_to root_path
 			end

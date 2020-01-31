@@ -3,7 +3,7 @@ include FactoryHelper
 
 def setup_users( reset: true, flat_array: false,
 	modifiers: {'trashed' => nil, 'admin' => nil},
-	numbers: ['one', 'two'],
+	numbers: ['one'],
 	only: {user: nil},
 	except: {user: nil} )
 
@@ -49,8 +49,8 @@ end
 
 def setup_sessions(reset: true, flat_array: false,
 	user_modifiers: {'trashed' => nil, 'admin' => nil},
-	user_numbers: ['one', 'two'],
-	session_numbers: ['one', 'two'],
+	user_numbers: ['one'],
+	session_numbers: ['one'],
 	only: {user: nil, session: nil, user_session: nil},
 	except: {user: nil, session: nil, user_session: nil} )
 
@@ -119,7 +119,7 @@ end
 
 def setup_archivings( reset: true, flat_array: false,
 	archiving_modifiers: {'trashed' => nil},
-	archiving_numbers: ['one', 'two'],
+	archiving_numbers: ['one'],
 	except: {archiving: nil},
 	only: {archiving: nil} )
 
@@ -161,7 +161,7 @@ end
 
 def setup_blog_posts( reset: true, flat_array: false,
 	blog_post_modifiers: {'trashed' => nil, 'motd' => nil},
-	blog_post_numbers: ['one', 'two'],
+	blog_post_numbers: ['one'],
 	except: {blog_post: nil},
 	only: {blog_post: nil} )
 
@@ -204,9 +204,9 @@ end
 
 def setup_forum_posts( reset: true, flat_array: false,
 	user_modifiers: {'trashed' => nil, 'admin' => nil},
-	user_numbers: ['one', 'two'],
+	user_numbers: ['one'],
 	forum_post_modifiers: {'trashed' => nil, 'sticky' => nil, 'motd' => nil},
-	forum_post_numbers: ['one', 'two'],
+	forum_post_numbers: ['one'],
 	except: {user: nil, forum_post: nil},
 	only: {user: nil, forum_post: nil, user_forum_post: nil} )
 

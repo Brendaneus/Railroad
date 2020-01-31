@@ -1,7 +1,8 @@
 require 'factory_helpers.rb'
 include FactoryHelper
 
-def write_users
+def write_users verbose: false
+	print "WRITING USERS..." if verbose
 	File.open('test/fixtures/users.yml', 'w') {|f| f.truncate(0)}
 
 	loop_model(name: :user) do |user_hash|
@@ -16,9 +17,11 @@ def write_users
 			f.write "  trashed: #{user_hash[:modifier_states][:trashed]}\n\n"
 		end
 	end
+	puts " DONE" if verbose
 end
 
-def write_sessions
+def write_sessions verbose: false
+	print "SESSIONS..." if verbose
 	File.open('test/fixtures/sessions.yml', 'w') {|f| f.truncate(0)}
 
 	loop_model(name: :user) do |user_hash|
@@ -34,9 +37,11 @@ def write_sessions
 			end
 		end
 	end
+	puts " DONE" if verbose
 end
 
-def write_archivings
+def write_archivings verbose: false
+	print "ARCHIVINGS..." if verbose
 	File.open('test/fixtures/archivings.yml', 'w') {|f| f.truncate(0)}
 
 	loop_model(name: :archiving) do |archiving_hash|
@@ -48,9 +53,11 @@ def write_archivings
 			f.write "  trashed: #{archiving_hash[:modifier_states][:trashed]}\n\n"
 		end
 	end
+	puts " DONE" if verbose
 end
 
-def write_blog_posts
+def write_blog_posts verbose: false
+	print "BLOG POSTS..." if verbose
 	File.open("test/fixtures/blog_posts.yml", "w") {|f| f.truncate(0)}
 
 	loop_model(name: :blog_post) do |blog_post_hash|
@@ -63,9 +70,11 @@ def write_blog_posts
 			f.write "  trashed: #{blog_post_hash[:modifier_states][:trashed]}\n\n"
 		end
 	end
+	puts " DONE" if verbose
 end
 
-def write_forum_posts
+def write_forum_posts verbose: false
+	print "FORUM POSTS..." if verbose
 	File.open("test/fixtures/forum_posts.yml", "w") {|f| f.truncate(0)}
 
 	loop_model(name: :user) do |user_hash|
@@ -82,9 +91,11 @@ def write_forum_posts
 			end
 		end
 	end
+	puts " DONE" if verbose
 end
 
-def write_documents
+def write_documents verbose: false
+	print "DOCUMENTS..." if verbose
 	File.open("test/fixtures/documents.yml", "w") {|f| f.truncate(0)}
 
 	id_offset = 0
@@ -117,9 +128,11 @@ def write_documents
 			end
 		end
 	end
+	puts " DONE" if verbose
 end
 
-def write_suggestions
+def write_suggestions verbose: false
+	print "SUGGESTIONS..." if verbose
 	File.open("test/fixtures/suggestions.yml", "w") {|f| f.truncate(0)}
 
 	id = 1
@@ -161,9 +174,183 @@ def write_suggestions
 			document_id += 1
 		end
 	end
+	puts " DONE" if verbose
 end
 
-def write_comments
+# Change titles to "(...) Version #{version_number}" ?
+def write_versions verbose: false
+	print "VERSIONS..." if verbose
+	File.open("test/fixtures/versions.yml", "w") {|f| f.truncate(0)}
+
+	id = 1
+	document_id = 1
+	loop_model(name: :archiving) do |archiving_hash|
+		version_number = 1
+		File.open("test/fixtures/versions.yml", "a") do |f|
+			f.write "#{archiving_hash[:ref] + '_original_version'}:\n"
+			f.write "  id: #{id}\n"
+			f.write "  item_type: 'Archiving'\n"
+			f.write "  item_id: #{archiving_hash[:id]}\n"
+			f.write "  event: 'create'\n"
+			f.write "  name: #{(archiving_hash[:ref] + '_original_version').split('_').map(&:capitalize).join(' ')}\n"
+			f.write "  whodunnit: 'Overseer'\n"
+			f.write "  hidden: false\n"
+			f.write "  object:\n"
+			f.write "  object_changes: \"---\\n" +
+				"id:\\n- \\n- #{archiving_hash[:id]}\\n" +
+				"title:\\n- \\n- #{archiving_hash[:ref].split('_').map(&:capitalize).join(' ') + ' Original Version'}\\n" +
+				"content:\\n- \\n- Lorum Ipsum\\n" +
+				"trashed:\\n- \\n- false\\n" +
+				"created_at:\\n- \\n- &1 #{DateTime.now.to_s(:db)} Z\\n" +
+				"updated_at:\\n- \\n- *1\"\n\n"
+		end
+		version_number += 1
+		id += 1
+		loop_model(name: :version) do |version_hash|
+			File.open("test/fixtures/versions.yml", "a") do |f|
+				f.write "#{archiving_hash[:ref] + '_' + version_hash[:ref]}:\n"
+				f.write "  id: #{id}\n"
+				f.write "  item_type: 'Archiving'\n"
+				f.write "  item_id: #{archiving_hash[:id]}\n"
+				f.write "  event: 'update'\n"
+				f.write "  name: 'Manual Update'\n"
+				f.write "  whodunnit: 'Overseer'\n"
+				f.write "  hidden: #{version_hash[:modifier_states][:hidden]}\n"
+				f.write "  object:  \"---\\n" +
+					"id: #{archiving_hash[:id]}\\n" +
+					"title: #{(archiving_hash[:ref]).split('_').map(&:capitalize).join(' ') + ' Update ' + (version_number - 1).to_s}\\n" +
+					"content: Lorum Ipsum\\n" +
+					"trashed: false\\n" +
+					"created_at: #{DateTime.now.to_s(:db)} Z\\n" +
+					"updated_at: #{DateTime.now.to_s(:db)} Z\"\n"
+				f.write "  object_changes: \"---\\n" +
+					"title:\\n" +
+					"- #{(archiving_hash[:ref]).split('_').map(&:capitalize).join(' ') + ' Update ' + (version_number - 1).to_s}\\n" +
+					"- #{(archiving_hash[:ref]).split('_').map(&:capitalize).join(' ') + ' Update ' + (version_number).to_s}\\n" +
+					"updated_at:\\n" +
+					"- &1 #{DateTime.now.to_s(:db)} Z\\n" +
+					"- &1 #{DateTime.now.to_s(:db)} Z\"\n\n"
+			end
+			version_number += 1
+			id += 1
+		end
+		File.open("test/fixtures/versions.yml", "a") do |f|
+			f.write "#{archiving_hash[:ref] + '_current_version'}:\n"
+			f.write "  id: #{id}\n"
+			f.write "  item_type: 'Archiving'\n"
+			f.write "  item_id: #{archiving_hash[:id]}\n"
+			f.write "  event: 'create'\n"
+			f.write "  name: #{(archiving_hash[:ref] + '_current_version').split('_').map(&:capitalize).join(' ')}\n"
+			f.write "  whodunnit: 'Overseer'\n"
+			f.write "  hidden: false\n"
+			f.write "  object: \"---\\n" +
+				"id: #{archiving_hash[:id]}\\n" +
+				"title: #{(archiving_hash[:ref]).split('_').map(&:capitalize).join(' ') + ' Update ' + (version_number - 1).to_s}\\n" +
+				"content: Lorum Ipsum\\n" +
+				"trashed: false\\n" +
+				"created_at: #{DateTime.now.to_s(:db)} Z\\n" +
+				"updated_at: #{DateTime.now.to_s(:db)} Z\"\n"
+			f.write "  object_changes: \"---\\n" +
+				"title:\\n" +
+				"- #{(archiving_hash[:ref]).split('_').map(&:capitalize).join(' ') + ' Update ' + (version_number - 1).to_s}\\n" +
+				"- #{archiving_hash[:ref].split('_').map(&:capitalize).join(' ') + ' Fixture Version'}\\n" +
+				"updated_at:\\n" +
+				"- &1 #{DateTime.now.to_s(:db)} Z\\n" +
+				"- &1 #{DateTime.now.to_s(:db)} Z\"\n\n"
+		end
+		id += 1
+		loop_model(name: :document) do |document_hash|
+			version_number = 1
+			File.open("test/fixtures/versions.yml", "a") do |f|
+				f.write "#{archiving_hash[:ref] + '_' + document_hash[:ref] + '_original_version'}:\n"
+				f.write "  id: #{id}\n"
+				f.write "  item_type: 'Document'\n"
+				f.write "  item_id: #{document_id}\n"
+				f.write "  event: 'create'\n"
+				f.write "  name: #{(archiving_hash[:ref] + '_' + document_hash[:ref] + '_original_version').split('_').map(&:capitalize).join(' ')}\n"
+				f.write "  whodunnit: 'Overseer'\n"
+				f.write "  hidden: false\n"
+				f.write "  object:\n"
+				f.write "  object_changes: \"---\\n" +
+					"id:\\n- \\n- #{document_id}\\n" +
+					"article_type:\\n- \\n- Archiving\\n" +
+					"article_id:\\n- \\n- #{archiving_hash[:id]}\\n" +
+					"local_id:\\n- \\n- #{document_hash[:id]}\\n" +
+					"title:\\n- \\n- #{(archiving_hash[:ref] + '_' + document_hash[:ref]).split('_').map(&:capitalize).join(' ') + ' Original Version'}\\n" +
+					"content:\\n- \\n- Lorum Ipsum\\n" +
+					"trashed:\\n- \\n- false\\n" +
+					"created_at:\\n- \\n- &1 #{DateTime.now.to_s(:db)} Z\\n" +
+					"updated_at:\\n- \\n- *1\"\n\n"
+			end
+			version_number += 1
+			id += 1
+			loop_model(name: :version) do |version_hash|
+				File.open("test/fixtures/versions.yml", "a") do |f|
+					f.write "#{archiving_hash[:ref] + '_' + document_hash[:ref] + '_' + version_hash[:ref]}:\n"
+					f.write "  id: #{id}\n"
+					f.write "  item_type: 'Document'\n"
+					f.write "  item_id: #{document_id}\n"
+					f.write "  event: 'update'\n"
+					f.write "  name: #{(archiving_hash[:ref] + '_' + document_hash[:ref] + '_' + version_hash[:ref]).split('_').map(&:capitalize).join(' ')}\n"
+					f.write "  whodunnit: 'Overseer'\n"
+					f.write "  hidden: #{version_hash[:modifier_states][:hidden]}\n"
+					f.write "  object:  \"---\\n" +
+						"id: #{document_id}\\n" +
+						"article_type: Archiving\\n" +
+						"article_id: #{archiving_hash[:id]}\\n" +
+						"local_id: #{document_hash[:id]}\\n" +
+						"title: #{(archiving_hash[:ref] + '_' + document_hash[:ref]).split('_').map(&:capitalize).join(' ') + ' Update ' + (version_number - 1).to_s}\\n" +
+						"content: Lorum Ipsum\\n" +
+						"trashed: false\\n" +
+						"created_at: &1 #{DateTime.now.to_s(:db)} Z\\n" +
+						"updated_at: &1 #{DateTime.now.to_s(:db)} Z\"\n"
+					f.write "  object_changes: \"---\\n" +
+						"title:\\n" +
+						"- #{(archiving_hash[:ref] + '_' + document_hash[:ref]).split('_').map(&:capitalize).join(' ') + ' Update ' + (version_number - 1).to_s}\\n" +
+						"- #{(archiving_hash[:ref] + '_' + document_hash[:ref]).split('_').map(&:capitalize).join(' ') + ' Update ' + (version_number).to_s}\\n" +
+						"updated_at:\\n" +
+						"- &1 #{DateTime.now.to_s(:db)} Z\\n" +
+						"- &1 #{DateTime.now.to_s(:db)} Z\"\n\n"
+				end
+				version_number += 1
+				id += 1
+			end
+			File.open("test/fixtures/versions.yml", "a") do |f|
+				f.write "#{archiving_hash[:ref] + '_' + document_hash[:ref] + '_current_version'}:\n"
+				f.write "  id: #{id}\n"
+				f.write "  item_type: 'Document'\n"
+				f.write "  item_id: #{document_id}\n"
+				f.write "  event: 'create'\n"
+				f.write "  name: #{(archiving_hash[:ref] + '_' + document_hash[:ref] + '_current_version').split('_').map(&:capitalize).join(' ')}\n"
+				f.write "  whodunnit: 'Overseer'\n"
+				f.write "  hidden: false\n"
+				f.write "  object: \"---\\n" +
+					"id: #{document_id}\\n" +
+					"article_type: Archiving\\n" +
+					"article_id: #{archiving_hash[:id]}\\n" +
+					"local_id: #{document_hash[:id]}\\n" +
+					"title: #{(archiving_hash[:ref] + '_' + document_hash[:ref]).split('_').map(&:capitalize).join(' ') + ' Update ' + (version_number - 1).to_s}\\n" +
+					"content: Lorum Ipsum\\n" +
+					"trashed: false\\n" +
+					"created_at: &1 #{DateTime.now.to_s(:db)} Z\\n" +
+					"updated_at: &1 #{DateTime.now.to_s(:db)} Z\"\n"
+				f.write "  object_changes: \"---\\n" +
+					"title:\\n" +
+					"- #{(archiving_hash[:ref] + '_' + document_hash[:ref]).split('_').map(&:capitalize).join(' ') + ' Update ' + (version_number - 1).to_s}\\n" +
+					"- #{(archiving_hash[:ref] + '_' + document_hash[:ref]).split('_').map(&:capitalize).join(' ') + ' Fixture Version'}\\n" +
+					"updated_at:\\n" +
+					"- &1 #{DateTime.now.to_s(:db)} Z\\n" +
+					"- &1 #{DateTime.now.to_s(:db)} Z\"\n\n"
+			end
+			document_id += 1
+			id += 1
+		end
+	end
+	puts " DONE" if verbose
+end
+
+def write_comments verbose: false
+	print "COMMENTS..." if verbose
 	File.open("test/fixtures/comments.yml", "w") {|f| f.truncate(0)}
 
 	id = 1
@@ -292,13 +479,86 @@ def write_comments
 			forum_post_id += 1
 		end
 	end
+	puts " DONE" if verbose
 end
 
-write_users
-write_sessions
-write_archivings
-write_blog_posts
-write_forum_posts
-write_documents
-write_suggestions
-write_comments
+def clear_users verbose: false
+	puts "CLEARING USERS" if verbose
+	File.open('test/fixtures/users.yml', 'w') {|f| f.truncate(0)}
+end
+
+def clear_sessions verbose: false
+	puts "CLEARING SESSIONS" if verbose
+	File.open('test/fixtures/sessions.yml', 'w') {|f| f.truncate(0)}
+end
+
+def clear_archivings verbose: false
+	puts "CLEARING ARCHIVINGS" if verbose
+	File.open('test/fixtures/archivings.yml', 'w') {|f| f.truncate(0)}
+end
+
+def clear_blog_posts verbose: false
+	puts "CLEARING BLOG POSTS" if verbose
+	File.open('test/fixtures/blog_posts.yml', 'w') {|f| f.truncate(0)}
+end
+
+def clear_forum_posts verbose: false
+	puts "CLEARING FORUM POSTS" if verbose
+	File.open('test/fixtures/forum_posts.yml', 'w') {|f| f.truncate(0)}
+end
+
+def clear_documents verbose: false
+	puts "CLEARING DOCUMENTS" if verbose
+	File.open('test/fixtures/documents.yml', 'w') {|f| f.truncate(0)}
+end
+
+def clear_suggestions verbose: false
+	puts "CLEARING SUGGESTIONS" if verbose
+	File.open('test/fixtures/suggestions.yml', 'w') {|f| f.truncate(0)}
+end
+
+def clear_versions verbose: false
+	puts "CLEARING VERSIONS" if verbose
+	File.open('test/fixtures/versions.yml', 'w') {|f| f.truncate(0)}
+end
+
+def clear_comments verbose: false
+	puts "CLEARING COMMENTS" if verbose
+	File.open('test/fixtures/comments.yml', 'w') {|f| f.truncate(0)}
+end
+
+def clear_fixtures *kept, verbose: false
+	if verbose
+		puts
+		puts "CLEARING FIXTURES"
+		puts
+	end
+	clear_users(verbose: verbose) unless kept.include?(:users)
+	clear_sessions(verbose: verbose) unless kept.include?(:sessions)
+	clear_archivings(verbose: verbose) unless kept.include?(:archivings)
+	clear_blog_posts(verbose: verbose) unless kept.include?(:blog_posts)
+	clear_forum_posts(verbose: verbose) unless kept.include?(:forum_posts)
+	clear_documents(verbose: verbose) unless kept.include?(:documents)
+	clear_suggestions(verbose: verbose) unless kept.include?(:suggestions)
+	clear_versions(verbose: verbose) unless kept.include?(:versions)
+	clear_comments(verbose: verbose) unless kept.include?(:comments)
+	puts if verbose
+end
+
+def write_fixtures *groups, verbose: true, all: false
+	if verbose
+		puts
+		puts "WRITING FIXTURES"
+		puts
+	end
+	write_users(verbose: verbose) if all || groups.include?(:users)
+	write_sessions(verbose: verbose) if all || groups.include?(:sessions)
+	write_archivings(verbose: verbose) if all || groups.include?(:archivings)
+	write_blog_posts(verbose: verbose) if all || groups.include?(:blog_posts)
+	write_forum_posts(verbose: verbose) if all || groups.include?(:forum_posts)
+	write_documents(verbose: verbose) if all || groups.include?(:documents)
+	write_suggestions(verbose: verbose) if all || groups.include?(:suggestions)
+	write_versions(verbose: verbose) if all || groups.include?(:versions)
+	write_comments(verbose: verbose) if all || groups.include?(:comments)
+	puts if verbose
+end

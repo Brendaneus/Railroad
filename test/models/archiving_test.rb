@@ -15,10 +15,28 @@ class ArchivingTest < ActiveSupport::TestCase
 		end
 	end
 
+	test "should associate with suggestions" do
+		loop_archivings do |archiving, archiving_key|
+			assert archiving.suggestions ==
+				load_suggestions( flat_array: true,
+					document_numbers: [],
+					only: { archiving: archiving_key } )
+		end
+	end
+
+	test "should associate with versions" do
+		loop_archivings do |archiving, archiving_key|	
+			assert archiving.versions ==
+				load_versions( flat_array: true,
+					document_numbers: [],
+					only: { archiving: archiving_key } )
+		end
+	end
+
 	test "should dependant destroy documents" do
 		load_documents( blog_modifiers: {}, blog_numbers: [] )
 
-		loop_archivings(reload: true) do |archiving, archiving_key|
+		loop_archivings do |archiving, archiving_key|
 			archiving.destroy
 			
 			assert_raise(ActiveRecord::RecordNotFound) { archiving.reload }
@@ -27,14 +45,6 @@ class ArchivingTest < ActiveSupport::TestCase
 				only: {archiving: archiving_key} ) do |document|
 				assert_raise(ActiveRecord::RecordNotFound) { document.reload }
 			end
-		end
-	end
-
-	test "should associate with suggestions" do
-		loop_archivings do |archiving, archiving_key|
-			assert archiving.suggestions ==
-				load_suggestions( flat_array: true,
-					document_numbers: [], only: {archiving: archiving_key} )
 		end
 	end
 
@@ -81,12 +91,88 @@ class ArchivingTest < ActiveSupport::TestCase
 		end
 	end
 
-	test "should validate presence of title" do
-		@archivings['archiving_one'].title = "";
-		assert_not @archivings['archiving_one'].valid?
+	# Could use a more thorough collection of users
+	# to allow more parallel testing mergability of unassociated suggestions
+	test "should merge suggestions and save version with name (prefer trashed state)" do
+		load_suggestions
 
-		@archivings['archiving_one'].title = "    ";
-		assert_not @archivings['archiving_one'].valid?
+		with_versioning do
+			loop_archivings do |archiving, archiving_key|
+				# Archiving Suggestions, Unassociated
+				loop_suggestions( document_numbers: [],
+					except: { archiving: archiving_key },
+					user_numbers: [] ) do |suggestion|
+
+					assert_no_difference 'archiving.versions.count' do
+						assert_raise { archiving.merge(suggestion) }
+					end
+				end
+
+				# Document Suggestions
+				loop_suggestions( include_archivings: false ) do |suggestion|
+					assert_no_difference 'archiving.versions.count' do
+						assert_raise { archiving.merge(suggestion) }
+					end
+				end
+			end
+
+			# Archivings, Un-Trashed
+			loop_archivings( archiving_modifiers: { 'trashed' => false } ) do |archiving, archiving_key|
+
+				# Archiving Suggestions, Associated, Un-Trashed
+				loop_suggestions( document_numbers: [],
+					only: { archiving: archiving_key },
+					suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
+
+					assert_difference 'archiving.versions.count', 1 do
+						assert_no_changes -> { archiving.trashed? }, from: false do
+							archiving.merge(suggestion)
+							archiving.reload
+						end
+					end
+				end
+
+				# Archiving Suggestions, Associated, Trashed
+				loop_suggestions( document_numbers: [],
+					only: { archiving: archiving_key },
+					suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
+
+					assert_difference 'archiving.versions.count', 1 do
+						assert_changes -> { archiving.trashed? }, from: false, to: true do
+							archiving.merge(suggestion)
+							archiving.reload
+						end
+					end
+					archiving.update_columns(trashed: false)
+				end
+			end
+
+			# Archivings, Trashed
+			loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving, archiving_key|
+
+				# Archiving Suggestions, Associated
+				loop_suggestions( document_numbers: [],
+					only: { archiving: archiving_key } ) do |suggestion|
+
+					assert_difference 'archiving.versions.count', 1 do
+						assert_no_changes -> { archiving.trashed? }, from: true do
+							archiving.merge(suggestion)
+							archiving.reload
+						end
+					end
+				end
+			end
+		end
+	end
+
+	test "should validate presence of title" do
+		loop_archivings do |archiving|
+			archiving.title = "";
+			assert_not archiving.valid?
+
+			archiving.title = "    ";
+			assert_not archiving.valid?
+		end
 	end
 
 	test "should validate uniqueness of title (case-insensitive)" do
@@ -106,33 +192,39 @@ class ArchivingTest < ActiveSupport::TestCase
 	end
 
 	test "should validate length of title (max: 64)" do
-		@archivings['archiving_one'].title = "X"
-		assert @archivings['archiving_one'].valid?
+		loop_archivings do |archiving|
+			archiving.title = "X"
+			assert archiving.valid?
 
-		@archivings['archiving_one'].title = "X" * 64
-		assert @archivings['archiving_one'].valid?
+			archiving.title = "X" * 64
+			assert archiving.valid?
 
-		@archivings['archiving_one'].title = "X" * 65
-		assert_not @archivings['archiving_one'].valid?
+			archiving.title = "X" * 65
+			assert_not archiving.valid?
+		end
 	end
 
 	test "should validate presence of content" do
-		@archivings['archiving_one'].content = "";
-		assert_not @archivings['archiving_one'].valid?
+		loop_archivings do |archiving|
+			archiving.content = "";
+			assert_not archiving.valid?
 
-		@archivings['archiving_one'].content = "    ";
-		assert_not @archivings['archiving_one'].valid?
+			archiving.content = "    ";
+			assert_not archiving.valid?
+		end
 	end
 
 	test "should validate length of content (max: 1024)" do
-		@archivings['archiving_one'].content = "X"
-		assert @archivings['archiving_one'].valid?
+		loop_archivings do |archiving|
+			archiving.content = "X"
+			assert archiving.valid?
 
-		@archivings['archiving_one'].content = "X" * 4096
-		assert @archivings['archiving_one'].valid?
+			archiving.content = "X" * 4096
+			assert archiving.valid?
 
-		@archivings['archiving_one'].content = "X" * 4097
-		assert_not @archivings['archiving_one'].valid?
+			archiving.content = "X" * 4097
+			assert_not archiving.valid?
+		end
 	end
 
 	test "should default trashed as false" do
@@ -149,10 +241,12 @@ class ArchivingTest < ActiveSupport::TestCase
 	end
 
 	test "should check for edits" do
-		assert_not @archivings['archiving_one'].edited?
+		loop_archivings do |archiving|
+			assert_not archiving.edited?
 		
-		@archivings['archiving_one'].updated_at = Time.now + 1
-		assert @archivings['archiving_one'].edited?
+			archiving.updated_at = Time.now + 1
+			assert archiving.edited?
+		end
 	end
 
 end

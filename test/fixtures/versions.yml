@@ -1,0 +1,264 @@
+archiving_one_original_version:
+  id: 1
+  item_type: 'Archiving'
+  item_id: 1
+  event: 'create'
+  name: Archiving One Original Version
+  whodunnit: 'Overseer'
+  hidden: false
+  object:
+  object_changes: "---\nid:\n- \n- 1\ntitle:\n- \n- Archiving One Original Version\ncontent:\n- \n- Lorum Ipsum\ntrashed:\n- \n- false\ncreated_at:\n- \n- &1 2020-01-31 01:07:17 Z\nupdated_at:\n- \n- *1"
+
+archiving_one_version_one:
+  id: 2
+  item_type: 'Archiving'
+  item_id: 1
+  event: 'update'
+  name: 'Manual Update'
+  whodunnit: 'Overseer'
+  hidden: false
+  object:  "---\nid: 1\ntitle: Archiving One Update 1\ncontent: Lorum Ipsum\ntrashed: false\ncreated_at: 2020-01-31 01:07:17 Z\nupdated_at: 2020-01-31 01:07:17 Z"
+  object_changes: "---\ntitle:\n- Archiving One Update 1\n- Archiving One Update 2\nupdated_at:\n- &1 2020-01-31 01:07:17 Z\n- &1 2020-01-31 01:07:17 Z"
+
+archiving_one_hidden_version_one:
+  id: 3
+  item_type: 'Archiving'
+  item_id: 1
+  event: 'update'
+  name: 'Manual Update'
+  whodunnit: 'Overseer'
+  hidden: true
+  object:  "---\nid: 1\ntitle: Archiving One Update 2\ncontent: Lorum Ipsum\ntrashed: false\ncreated_at: 2020-01-31 01:07:17 Z\nupdated_at: 2020-01-31 01:07:17 Z"
+  object_changes: "---\ntitle:\n- Archiving One Update 2\n- Archiving One Update 3\nupdated_at:\n- &1 2020-01-31 01:07:17 Z\n- &1 2020-01-31 01:07:17 Z"
+
+archiving_one_current_version:
+  id: 4
+  item_type: 'Archiving'
+  item_id: 1
+  event: 'create'
+  name: Archiving One Current Version
+  whodunnit: 'Overseer'
+  hidden: false
+  object: "---\nid: 1\ntitle: Archiving One Update 3\ncontent: Lorum Ipsum\ntrashed: false\ncreated_at: 2020-01-31 01:07:17 Z\nupdated_at: 2020-01-31 01:07:17 Z"
+  object_changes: "---\ntitle:\n- Archiving One Update 3\n- Archiving One Fixture Version\nupdated_at:\n- &1 2020-01-31 01:07:17 Z\n- &1 2020-01-31 01:07:17 Z"
+
+archiving_one_document_one_original_version:
+  id: 5
+  item_type: 'Document'
+  item_id: 1
+  event: 'create'
+  name: Archiving One Document One Original Version
+  whodunnit: 'Overseer'
+  hidden: false
+  object:
+  object_changes: "---\nid:\n- \n- 1\narticle_type:\n- \n- Archiving\narticle_id:\n- \n- 1\nlocal_id:\n- \n- 1\ntitle:\n- \n- Archiving One Document One Original Version\ncontent:\n- \n- Lorum Ipsum\ntrashed:\n- \n- false\ncreated_at:\n- \n- &1 2020-01-31 01:07:17 Z\nupdated_at:\n- \n- *1"
+
+archiving_one_document_one_version_one:
+  id: 6
+  item_type: 'Document'
+  item_id: 1
+  event: 'update'
+  name: Archiving One Document One Version One
+  whodunnit: 'Overseer'
+  hidden: false
+  object:  "---\nid: 1\narticle_type: Archiving\narticle_id: 1\nlocal_id: 1\ntitle: Archiving One Document One Update 1\ncontent: Lorum Ipsum\ntrashed: false\ncreated_at: &1 2020-01-31 01:07:17 Z\nupdated_at: &1 2020-01-31 01:07:17 Z"
+  object_changes: "---\ntitle:\n- Archiving One Document One Update 1\n- Archiving One Document One Update 2\nupdated_at:\n- &1 2020-01-31 01:07:17 Z\n- &1 2020-01-31 01:07:17 Z"
+
+archiving_one_document_one_hidden_version_one:
+  id: 7
+  item_type: 'Document'
+  item_id: 1
+  event: 'update'
+  name: Archiving One Document One Hidden Version One
+  whodunnit: 'Overseer'
+  hidden: true
+  object:  "---\nid: 1\narticle_type: Archiving\narticle_id: 1\nlocal_id: 1\ntitle: Archiving One Document One Update 2\ncontent: Lorum Ipsum\ntrashed: false\ncreated_at: &1 2020-01-31 01:07:17 Z\nupdated_at: &1 2020-01-31 01:07:17 Z"
+  object_changes: "---\ntitle:\n- Archiving One Document One Update 2\n- Archiving One Document One Update 3\nupdated_at:\n- &1 2020-01-31 01:07:17 Z\n- &1 2020-01-31 01:07:17 Z"
+
+archiving_one_document_one_current_version:
+  id: 8
+  item_type: 'Document'
+  item_id: 1
+  event: 'create'
+  name: Archiving One Document One Current Version
+  whodunnit: 'Overseer'
+  hidden: false
+  object: "---\nid: 1\narticle_type: Archiving\narticle_id: 1\nlocal_id: 1\ntitle: Archiving One Document One Update 3\ncontent: Lorum Ipsum\ntrashed: false\ncreated_at: &1 2020-01-31 01:07:17 Z\nupdated_at: &1 2020-01-31 01:07:17 Z"
+  object_changes: "---\ntitle:\n- Archiving One Document One Update 3\n- Archiving One Document One Fixture Version\nupdated_at:\n- &1 2020-01-31 01:07:17 Z\n- &1 2020-01-31 01:07:17 Z"
+
+archiving_one_trashed_document_one_original_version:
+  id: 9
+  item_type: 'Document'
+  item_id: 2
+  event: 'create'
+  name: Archiving One Trashed Document One Original Version
+  whodunnit: 'Overseer'
+  hidden: false
+  object:
+  object_changes: "---\nid:\n- \n- 2\narticle_type:\n- \n- Archiving\narticle_id:\n- \n- 1\nlocal_id:\n- \n- 2\ntitle:\n- \n- Archiving One Trashed Document One Original Version\ncontent:\n- \n- Lorum Ipsum\ntrashed:\n- \n- false\ncreated_at:\n- \n- &1 2020-01-31 01:07:17 Z\nupdated_at:\n- \n- *1"
+
+archiving_one_trashed_document_one_version_one:
+  id: 10
+  item_type: 'Document'
+  item_id: 2
+  event: 'update'
+  name: Archiving One Trashed Document One Version One
+  whodunnit: 'Overseer'
+  hidden: false
+  object:  "---\nid: 2\narticle_type: Archiving\narticle_id: 1\nlocal_id: 2\ntitle: Archiving One Trashed Document One Update 1\ncontent: Lorum Ipsum\ntrashed: false\ncreated_at: &1 2020-01-31 01:07:17 Z\nupdated_at: &1 2020-01-31 01:07:17 Z"
+  object_changes: "---\ntitle:\n- Archiving One Trashed Document One Update 1\n- Archiving One Trashed Document One Update 2\nupdated_at:\n- &1 2020-01-31 01:07:17 Z\n- &1 2020-01-31 01:07:17 Z"
+
+archiving_one_trashed_document_one_hidden_version_one:
+  id: 11
+  item_type: 'Document'
+  item_id: 2
+  event: 'update'
+  name: Archiving One Trashed Document One Hidden Version One
+  whodunnit: 'Overseer'
+  hidden: true
+  object:  "---\nid: 2\narticle_type: Archiving\narticle_id: 1\nlocal_id: 2\ntitle: Archiving One Trashed Document One Update 2\ncontent: Lorum Ipsum\ntrashed: false\ncreated_at: &1 2020-01-31 01:07:17 Z\nupdated_at: &1 2020-01-31 01:07:17 Z"
+  object_changes: "---\ntitle:\n- Archiving One Trashed Document One Update 2\n- Archiving One Trashed Document One Update 3\nupdated_at:\n- &1 2020-01-31 01:07:17 Z\n- &1 2020-01-31 01:07:17 Z"
+
+archiving_one_trashed_document_one_current_version:
+  id: 12
+  item_type: 'Document'
+  item_id: 2
+  event: 'create'
+  name: Archiving One Trashed Document One Current Version
+  whodunnit: 'Overseer'
+  hidden: false
+  object: "---\nid: 2\narticle_type: Archiving\narticle_id: 1\nlocal_id: 2\ntitle: Archiving One Trashed Document One Update 3\ncontent: Lorum Ipsum\ntrashed: false\ncreated_at: &1 2020-01-31 01:07:17 Z\nupdated_at: &1 2020-01-31 01:07:17 Z"
+  object_changes: "---\ntitle:\n- Archiving One Trashed Document One Update 3\n- Archiving One Trashed Document One Fixture Version\nupdated_at:\n- &1 2020-01-31 01:07:17 Z\n- &1 2020-01-31 01:07:17 Z"
+
+trashed_archiving_one_original_version:
+  id: 13
+  item_type: 'Archiving'
+  item_id: 2
+  event: 'create'
+  name: Trashed Archiving One Original Version
+  whodunnit: 'Overseer'
+  hidden: false
+  object:
+  object_changes: "---\nid:\n- \n- 2\ntitle:\n- \n- Trashed Archiving One Original Version\ncontent:\n- \n- Lorum Ipsum\ntrashed:\n- \n- false\ncreated_at:\n- \n- &1 2020-01-31 01:07:17 Z\nupdated_at:\n- \n- *1"
+
+trashed_archiving_one_version_one:
+  id: 14
+  item_type: 'Archiving'
+  item_id: 2
+  event: 'update'
+  name: 'Manual Update'
+  whodunnit: 'Overseer'
+  hidden: false
+  object:  "---\nid: 2\ntitle: Trashed Archiving One Update 1\ncontent: Lorum Ipsum\ntrashed: false\ncreated_at: 2020-01-31 01:07:17 Z\nupdated_at: 2020-01-31 01:07:17 Z"
+  object_changes: "---\ntitle:\n- Trashed Archiving One Update 1\n- Trashed Archiving One Update 2\nupdated_at:\n- &1 2020-01-31 01:07:17 Z\n- &1 2020-01-31 01:07:17 Z"
+
+trashed_archiving_one_hidden_version_one:
+  id: 15
+  item_type: 'Archiving'
+  item_id: 2
+  event: 'update'
+  name: 'Manual Update'
+  whodunnit: 'Overseer'
+  hidden: true
+  object:  "---\nid: 2\ntitle: Trashed Archiving One Update 2\ncontent: Lorum Ipsum\ntrashed: false\ncreated_at: 2020-01-31 01:07:17 Z\nupdated_at: 2020-01-31 01:07:17 Z"
+  object_changes: "---\ntitle:\n- Trashed Archiving One Update 2\n- Trashed Archiving One Update 3\nupdated_at:\n- &1 2020-01-31 01:07:17 Z\n- &1 2020-01-31 01:07:17 Z"
+
+trashed_archiving_one_current_version:
+  id: 16
+  item_type: 'Archiving'
+  item_id: 2
+  event: 'create'
+  name: Trashed Archiving One Current Version
+  whodunnit: 'Overseer'
+  hidden: false
+  object: "---\nid: 2\ntitle: Trashed Archiving One Update 3\ncontent: Lorum Ipsum\ntrashed: false\ncreated_at: 2020-01-31 01:07:17 Z\nupdated_at: 2020-01-31 01:07:17 Z"
+  object_changes: "---\ntitle:\n- Trashed Archiving One Update 3\n- Trashed Archiving One Fixture Version\nupdated_at:\n- &1 2020-01-31 01:07:17 Z\n- &1 2020-01-31 01:07:17 Z"
+
+trashed_archiving_one_document_one_original_version:
+  id: 17
+  item_type: 'Document'
+  item_id: 3
+  event: 'create'
+  name: Trashed Archiving One Document One Original Version
+  whodunnit: 'Overseer'
+  hidden: false
+  object:
+  object_changes: "---\nid:\n- \n- 3\narticle_type:\n- \n- Archiving\narticle_id:\n- \n- 2\nlocal_id:\n- \n- 1\ntitle:\n- \n- Trashed Archiving One Document One Original Version\ncontent:\n- \n- Lorum Ipsum\ntrashed:\n- \n- false\ncreated_at:\n- \n- &1 2020-01-31 01:07:17 Z\nupdated_at:\n- \n- *1"
+
+trashed_archiving_one_document_one_version_one:
+  id: 18
+  item_type: 'Document'
+  item_id: 3
+  event: 'update'
+  name: Trashed Archiving One Document One Version One
+  whodunnit: 'Overseer'
+  hidden: false
+  object:  "---\nid: 3\narticle_type: Archiving\narticle_id: 2\nlocal_id: 1\ntitle: Trashed Archiving One Document One Update 1\ncontent: Lorum Ipsum\ntrashed: false\ncreated_at: &1 2020-01-31 01:07:17 Z\nupdated_at: &1 2020-01-31 01:07:17 Z"
+  object_changes: "---\ntitle:\n- Trashed Archiving One Document One Update 1\n- Trashed Archiving One Document One Update 2\nupdated_at:\n- &1 2020-01-31 01:07:17 Z\n- &1 2020-01-31 01:07:17 Z"
+
+trashed_archiving_one_document_one_hidden_version_one:
+  id: 19
+  item_type: 'Document'
+  item_id: 3
+  event: 'update'
+  name: Trashed Archiving One Document One Hidden Version One
+  whodunnit: 'Overseer'
+  hidden: true
+  object:  "---\nid: 3\narticle_type: Archiving\narticle_id: 2\nlocal_id: 1\ntitle: Trashed Archiving One Document One Update 2\ncontent: Lorum Ipsum\ntrashed: false\ncreated_at: &1 2020-01-31 01:07:17 Z\nupdated_at: &1 2020-01-31 01:07:17 Z"
+  object_changes: "---\ntitle:\n- Trashed Archiving One Document One Update 2\n- Trashed Archiving One Document One Update 3\nupdated_at:\n- &1 2020-01-31 01:07:17 Z\n- &1 2020-01-31 01:07:17 Z"
+
+trashed_archiving_one_document_one_current_version:
+  id: 20
+  item_type: 'Document'
+  item_id: 3
+  event: 'create'
+  name: Trashed Archiving One Document One Current Version
+  whodunnit: 'Overseer'
+  hidden: false
+  object: "---\nid: 3\narticle_type: Archiving\narticle_id: 2\nlocal_id: 1\ntitle: Trashed Archiving One Document One Update 3\ncontent: Lorum Ipsum\ntrashed: false\ncreated_at: &1 2020-01-31 01:07:17 Z\nupdated_at: &1 2020-01-31 01:07:17 Z"
+  object_changes: "---\ntitle:\n- Trashed Archiving One Document One Update 3\n- Trashed Archiving One Document One Fixture Version\nupdated_at:\n- &1 2020-01-31 01:07:17 Z\n- &1 2020-01-31 01:07:17 Z"
+
+trashed_archiving_one_trashed_document_one_original_version:
+  id: 21
+  item_type: 'Document'
+  item_id: 4
+  event: 'create'
+  name: Trashed Archiving One Trashed Document One Original Version
+  whodunnit: 'Overseer'
+  hidden: false
+  object:
+  object_changes: "---\nid:\n- \n- 4\narticle_type:\n- \n- Archiving\narticle_id:\n- \n- 2\nlocal_id:\n- \n- 2\ntitle:\n- \n- Trashed Archiving One Trashed Document One Original Version\ncontent:\n- \n- Lorum Ipsum\ntrashed:\n- \n- false\ncreated_at:\n- \n- &1 2020-01-31 01:07:17 Z\nupdated_at:\n- \n- *1"
+
+trashed_archiving_one_trashed_document_one_version_one:
+  id: 22
+  item_type: 'Document'
+  item_id: 4
+  event: 'update'
+  name: Trashed Archiving One Trashed Document One Version One
+  whodunnit: 'Overseer'
+  hidden: false
+  object:  "---\nid: 4\narticle_type: Archiving\narticle_id: 2\nlocal_id: 2\ntitle: Trashed Archiving One Trashed Document One Update 1\ncontent: Lorum Ipsum\ntrashed: false\ncreated_at: &1 2020-01-31 01:07:17 Z\nupdated_at: &1 2020-01-31 01:07:17 Z"
+  object_changes: "---\ntitle:\n- Trashed Archiving One Trashed Document One Update 1\n- Trashed Archiving One Trashed Document One Update 2\nupdated_at:\n- &1 2020-01-31 01:07:17 Z\n- &1 2020-01-31 01:07:17 Z"
+
+trashed_archiving_one_trashed_document_one_hidden_version_one:
+  id: 23
+  item_type: 'Document'
+  item_id: 4
+  event: 'update'
+  name: Trashed Archiving One Trashed Document One Hidden Version One
+  whodunnit: 'Overseer'
+  hidden: true
+  object:  "---\nid: 4\narticle_type: Archiving\narticle_id: 2\nlocal_id: 2\ntitle: Trashed Archiving One Trashed Document One Update 2\ncontent: Lorum Ipsum\ntrashed: false\ncreated_at: &1 2020-01-31 01:07:17 Z\nupdated_at: &1 2020-01-31 01:07:17 Z"
+  object_changes: "---\ntitle:\n- Trashed Archiving One Trashed Document One Update 2\n- Trashed Archiving One Trashed Document One Update 3\nupdated_at:\n- &1 2020-01-31 01:07:17 Z\n- &1 2020-01-31 01:07:17 Z"
+
+trashed_archiving_one_trashed_document_one_current_version:
+  id: 24
+  item_type: 'Document'
+  item_id: 4
+  event: 'create'
+  name: Trashed Archiving One Trashed Document One Current Version
+  whodunnit: 'Overseer'
+  hidden: false
+  object: "---\nid: 4\narticle_type: Archiving\narticle_id: 2\nlocal_id: 2\ntitle: Trashed Archiving One Trashed Document One Update 3\ncontent: Lorum Ipsum\ntrashed: false\ncreated_at: &1 2020-01-31 01:07:17 Z\nupdated_at: &1 2020-01-31 01:07:17 Z"
+  object_changes: "---\ntitle:\n- Trashed Archiving One Trashed Document One Update 3\n- Trashed Archiving One Trashed Document One Fixture Version\nupdated_at:\n- &1 2020-01-31 01:07:17 Z\n- &1 2020-01-31 01:07:17 Z"
+

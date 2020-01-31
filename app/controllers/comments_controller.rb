@@ -3,9 +3,13 @@ class CommentsController < ApplicationController
 	include CommentsHelper
 
 	before_action :set_post
+	before_action :require_admin_for_trashed_dependency#, except: [:trash, :untrash]
 	before_action :require_authorize, except: [:create]
-	before_action :require_untrashed_user, only: [:create, :update, :destroy], if: :logged_in?
+	before_action :require_untrashed_user, except: [:create]
+	before_action :require_untrashed_commenter, only: [:create]
+	# before_action :require_untrashed_user, only: [:create, :update, :destroy], if: :logged_in?
 	before_action :require_admin, only: [:destroy]
+
 	after_action :mark_activity, if: :logged_in?
 
 	def create
@@ -71,10 +75,30 @@ class CommentsController < ApplicationController
 			params.require(:comment).permit(:content)
 		end
 
+		def require_untrashed_commenter
+			if logged_in? && trashed_user?
+				flash[:warning] = "Your account is inactive.  You must visit your profile page to reactivate before continuing."
+				redirect_back fallback_location: current_user
+			end
+		end
+
 		def require_authorize
-			unless ( Comment.find( params[:id] ).owned_by? current_user ) || ( admin_user? && untrashed_user? )
+			unless ( Comment.find( params[:id] ).owned?(by: current_user) ) || ( admin_user? && untrashed_user? )
 				flash[:warning] = "You aren't allowed to do that."
 				redirect_to login_path
+			end
+		end
+
+		# Change to fallback redirect to relevant post path?
+		def require_admin_for_trashed_dependency
+			if @post.trashed? && !admin_user?
+				flash[:warning] = "This post has been trashed and cannot accept changes."
+				redirect_back fallback_location: root_path
+			elsif @post.class == Suggestion
+				if (@post.citation.trashed? || ((@post.citation.class == Document) && @post.citation.article.trashed?)) && !admin_user?
+					flash[:warning] = "This post's dependencies has been trashed and cannot accept changes."
+					redirect_back fallback_location: root_path
+				end
 			end
 		end
 

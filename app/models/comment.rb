@@ -12,17 +12,12 @@ class Comment < ApplicationRecord
 	validates :content, presence: true,
 						length: { maximum: 512 }
 
-
-	def post_trashed?
-		post.trashed?
-	end
-
 	def post_owner_trashed?
 		post.owner_trashed?
 	end
 
-	def owner_or_post_trashed?
-		user_trashed? || post_trashed?
-	end
+	# def owner_or_post_trashed?
+	# 	owner_trashed? || post.trashed?
+	# end
 
 end

@@ -6,7 +6,7 @@
 		<%= safe_user_link_to(comment.user) %> wrote:
 	</h4>
 
-	<% if untrashed_user? && ( admin_user? || comment.owned_by?(current_user) ) %>
+	<% if untrashed_user? && ( admin_user? || comment.owned?(by: current_user) ) %>
 
 		<%= render 'comments/form', comment: comment, form_url: post_comment_path(comment.post, comment) %>
 

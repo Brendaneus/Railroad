@@ -11,9 +11,9 @@
 	<div class="admin control">
 		<%= link_to "Edit Post", edit_blog_post_path( @blog_post ) if untrashed_user? %>
 		
-		<%= link_to "Trash Post", trash_blog_post_path( @blog_post ) unless @blog_post.trashed? %>
+		<%= link_to "Trash Post", trash_blog_post_path( @blog_post ) unless @blog_post.trashed? || trashed_user? %>
 		
-		<%= link_to "Restore Post", untrash_blog_post_path( @blog_post ) if @blog_post.trashed? %>
+		<%= link_to "Restore Post", untrash_blog_post_path( @blog_post ) if @blog_post.trashed? && untrashed_user? %>
 		
 		<%= link_to "Delete Post", @blog_post, method: :delete, data: { confirm: 'Really delete this post?'} if @blog_post.trashed? && untrashed_user? %>
 		
@@ -33,7 +33,7 @@
 
 	<%= render @documents %>
 
-	<%= render 'comments/form', comment: @new_comment, form_url: blog_post_comments_path(@blog_post) %>
+	<%= render 'comments/form', comment: @new_comment, form_url: blog_post_comments_path(@blog_post) unless trashed_user? %>
 
 	<%= render @comments %>
 </main>

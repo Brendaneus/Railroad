@@ -3,7 +3,7 @@
 	<% if @user.trashed? %>
 		/ <%= link_to "Trash", trashed_users_path %>
 	<% end %>
-	/ <%= link_to @user.name, user_path(@user) %>
+	/ <%= link_to @user.name, user_path( @user ) %>
 <% end %>
 
 <% if (authorized_for? @user) || admin_user? %>
@@ -19,7 +19,7 @@
 
 			<%= link_to "Restore Profile", untrash_user_path( @user ) if @user.trashed? %>
 
-			<%= link_to "Delete Profile", @user, method: :delete if admin_user? && @user.trashed? %>
+			<%= link_to "Delete Profile", user_path( @user ), method: :delete if admin_user? && @user.trashed? %>
 
 		<% end %>
 	</div>

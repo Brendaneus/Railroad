@@ -11,8 +11,8 @@ class Session < ApplicationRecord
 					 length: { maximum: 64 }
 	validate :unique_local_name
 	validates :remember_digest, presence: true,
-								uniqueness: {case_sensitive: false}
-	before_validation :set_name, unless: -> {name.present?}
+								uniqueness: { case_sensitive: false }
+	before_validation :set_name, unless: -> { name.present? }
 	before_validation :set_remember_digest, unless: :persisted?
 
 

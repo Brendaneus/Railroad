@@ -2,7 +2,7 @@ require 'fixture_loaders'
 
 def loop_users( reload: false, reset: true,
 	user_modifiers: {'trashed' => nil, 'admin' => nil},
-	user_numbers: ['one', 'two'],
+	user_numbers: ['one'],
 	except: {user: nil},
 	only: {user: nil} )
 
@@ -30,10 +30,10 @@ def loop_users( reload: false, reset: true,
 			user_ref += "user_" + user_number
 
 			if except.values.any?
-				next if user_ref == except[:user]
+				next if except[:user] == user_ref
 			end
 			if only.values.any?
-				next if only[:user] && ( user_ref != only[:user] )
+				next if only[:user] && ( only[:user] != user_ref )
 			end
 
 			yield @users[user_ref], user_ref
@@ -43,9 +43,9 @@ end
 
 def loop_sessions( reload: false, reset: true,
 	user_modifiers: {'trashed' => nil, 'admin' => nil},
-	user_numbers: ['one', 'two'],
-	session_numbers: ['one', 'two', 'three', 'four'],
-	except: {user: nil, session: nil},
+	user_numbers: ['one'],
+	session_numbers: ['one', 'two', 'three'],
+	except: {user: nil, session: nil, user_session: nil},
 	only: {user: nil, session: nil, user_session: nil} )
 
 	load_sessions( reset: reset,
@@ -56,7 +56,6 @@ def loop_sessions( reload: false, reset: true,
 		only: only ) if reload
 
 	user_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a
-
 	user_modifier_states_sets.map! { |user_modifier_states|
 		user_modifiers.keys.zip(user_modifier_states).to_h.merge(user_modifiers) do |user_modifier, state, set_state|
 			set_state.nil? ? state : set_state
@@ -64,7 +63,6 @@ def loop_sessions( reload: false, reset: true,
 	}.uniq!
 
 	user_modifier_states_sets.reverse.each do |user_modifier_states|
-
 		user_numbers.each do |user_number|
 
 			user_ref = ""
@@ -74,22 +72,22 @@ def loop_sessions( reload: false, reset: true,
 			user_ref += "user_" + user_number
 
 			if except.values.any?
-				next if user_ref == except[:user]
+				next if except[:user] == user_ref
 			end
 			if only.values.any?
-				next if only[:user] && ( user_ref != only[:user] )
+				next if only[:user] && ( only[:user] != user_ref )
 			end
 
 			session_numbers.each do |session_number|
-
 				session_ref = "session_" + session_number
 
 				if except.values.any?
-					next if session_ref == except[:session]
+					next if except[:session] == session_ref
+					next if except[:user_session] == (user_ref + '_' + session_ref)
 				end
 				if only.values.any?
-					next if only[:session] && ( session_ref != only[:session] )
-					next if only[:user_session] && ( (user_ref + '_' + session_ref) != only[:user_session] )
+					next if only[:session] && ( only[:session] != session_ref )
+					next if only[:user_session] && ( only[:user_session] != (user_ref + '_' + session_ref) )
 				end
 
 				yield @sessions[user_ref][session_ref], session_ref, user_ref
@@ -100,7 +98,7 @@ end
 
 def loop_archivings( reload: false, reset: true,
 	archiving_modifiers: {'trashed' => nil},
-	archiving_numbers: ['one', 'two'],
+	archiving_numbers: ['one'],
 	except: {archiving: nil},
 	only: {archiving: nil} )
 
@@ -129,10 +127,10 @@ def loop_archivings( reload: false, reset: true,
 			archiving_ref += "archiving_" + archiving_number
 
 			if except.values.any?
-				next if archiving_ref == except[:archiving]
+				next if except[:archiving] == archiving_ref
 			end
 			if only.values.any?
-				next if only[:archiving] && ( archiving_ref != only[:archiving] )
+				next if only[:archiving] && ( only[:archiving] != archiving_ref )
 			end
 
 			yield @archivings[archiving_ref], archiving_ref
@@ -142,7 +140,7 @@ end
 
 def loop_blog_posts( reload: false, reset: true,
 	blog_modifiers: {'trashed' => nil, 'motd' => nil},
-	blog_numbers: ['one', 'two'],
+	blog_numbers: ['one'],
 	except: {blog_post: nil},
 	only: {blog_post: nil} )
 
@@ -170,10 +168,10 @@ def loop_blog_posts( reload: false, reset: true,
 			blog_ref += "blog_post_" + blog_number
 
 			if except.values.any?
-				next if blog_ref == except[:blog_post]
+				next if except[:blog_post] == blog_ref
 			end
 			if only.values.any?
-				next if only[:blog_post] && ( blog_ref != only[:blog_post] )
+				next if only[:blog_post] && ( only[:blog_post] != blog_ref )
 			end
 
 			yield @blog_posts[blog_ref], blog_ref
@@ -183,10 +181,10 @@ end
 
 def loop_forum_posts( reload: false, reset: true,
 	user_modifiers: {'trashed' => nil, 'admin' => nil},
-	user_numbers: ['one', 'two'],
+	user_numbers: ['one'],
 	forum_modifiers: {'trashed' => nil, 'sticky' => nil, 'motd' => nil},
-	forum_numbers: ['one', 'two'],
-	except: {user: nil, forum_post: nil},
+	forum_numbers: ['one'],
+	except: {user: nil, forum_post: nil, user_forum_post: nil},
 	only: {user: nil, forum_post: nil, user_forum_post: nil} )
 
 	load_forum_posts( reset: reset,
@@ -216,10 +214,10 @@ def loop_forum_posts( reload: false, reset: true,
 			user_ref += "user_" + user_number
 
 			if except.values.any?
-				next if user_ref == except[:user]
+				next if except[:user] == user_ref
 			end
 			if only.values.any?
-				next if only[:user] && ( user_ref != only[:user] )
+				next if only[:user] && ( only[:user] != user_ref )
 			end
 
 			forum_modifier_states_sets = [true, false].repeated_permutation(forum_modifiers.count).to_a
@@ -242,11 +240,11 @@ def loop_forum_posts( reload: false, reset: true,
 					forum_ref += "forum_post_" + forum_number
 
 					if except.values.any?
-						next if forum_ref == except[:forum_post]
+						next if except[:forum_post] == forum_ref
 					end
 					if only.values.any?
-						next if only[:forum_post] && ( forum_ref != only[:forum_post] )
-						next if only[:user_forum_post] && ( (user_ref + '_' + forum_ref) != only[:user_forum_post] )
+						next if only[:forum_post] && ( only[:forum_post] != forum_ref )
+						next if only[:user_forum_post] && ( only[:user_forum_post] != (user_ref + '_' + forum_ref) )
 					end
 
 					yield @forum_posts[user_ref][forum_ref], forum_ref, user_ref
@@ -257,11 +255,11 @@ def loop_forum_posts( reload: false, reset: true,
 end
 
 def loop_documents( reload: false, reset: true,
-	archiving_numbers: ['one', 'two'],
+	archiving_numbers: ['one'],
 	archiving_modifiers: {'trashed' => nil},
-	blog_numbers: ['one', 'two'],
+	blog_numbers: ['one'],
 	blog_modifiers: {'trashed' => nil, 'motd' => nil},
-	document_numbers: ['one', 'two', 'three'],
+	document_numbers: ['one'],
 	document_modifiers: {'trashed' => nil},
 	except: {archiving: nil, blog_post: nil, document: nil,
 		archiving_document: nil, blog_post_document: nil},
@@ -297,10 +295,10 @@ def loop_documents( reload: false, reset: true,
 			archiving_ref += "archiving_" + archiving_number
 
 			if except.values.any?
-				next if archiving_ref == except[:archiving]
+				next if except[:archiving] == archiving_ref
 			end
 			if only.values.any?
-				next if only[:archiving] && ( archiving_ref != only[:archiving] )
+				next if only[:archiving] && ( only[:archiving] != archiving_ref )
 			end
 
 			document_modifier_states_sets = [true, false].repeated_permutation(document_modifiers.count).to_a
@@ -321,12 +319,12 @@ def loop_documents( reload: false, reset: true,
 					document_ref += "document_" + document_number
 
 					if except.values.any?
-						next if document_ref == except[:document]
-						next if (archiving_ref + '_' + document_ref) == except[:archiving_document]
+						next if except[:document] == document_ref
+						next if except[:archiving_document] == (archiving_ref + '_' + document_ref)
 					end
 					if only.values.any?
-						next if only[:document] && ( document_ref != only[:document] )
-						next if only[:archiving_document] && ( (archiving_ref + '_' + document_ref) != only[:archiving_document] )
+						next if only[:document] && ( only[:document] != document_ref )
+						next if only[:archiving_document] && ( only[:archiving_document] != (archiving_ref + '_' + document_ref) )
 					end
 
 					yield @documents[archiving_ref][document_ref], document_ref, archiving_ref
@@ -353,10 +351,10 @@ def loop_documents( reload: false, reset: true,
 			blog_ref += "blog_post_" + blog_number
 
 			if except.values.any?
-				next if blog_ref == except[:blog_post]
+				next if except[:blog_post] == blog_ref
 			end
 			if only.values.any?
-				next if only[:blog_post] && ( blog_ref != only[:blog_post] )
+				next if only[:blog_post] && ( only[:blog_post] != blog_ref )
 			end
 
 			document_modifier_states_sets = [true, false].repeated_permutation(document_modifiers.count).to_a
@@ -377,12 +375,12 @@ def loop_documents( reload: false, reset: true,
 					document_ref += "document_" + document_number
 
 					if except.values.any?
-						next if document_ref == except[:document]
-						next if (blog_ref + '_' + document_ref) == except[:blog_post_document]
+						next if except[:document] == document_ref
+						next if except[:blog_post_document] == (blog_ref + '_' + document_ref)
 					end
 					if only.values.any?
-						next if only[:document] && ( document_ref != only[:document] )
-						next if only[:blog_post_document] && ( (blog_ref + '_' + document_ref) != only[:blog_post_document] )
+						next if only[:document] && ( only[:document] != document_ref )
+						next if only[:blog_post_document] && ( only[:blog_post_document] != (blog_ref + '_' + document_ref) )
 					end
 
 					yield @documents[blog_ref][document_ref], document_ref, blog_ref
@@ -394,14 +392,14 @@ end
 
 def loop_suggestions( reload: false, reset: true,
 	archiving_modifiers: {'trashed' => nil},
-	archiving_numbers: ['one', 'two'],
+	archiving_numbers: ['one'],
 	include_archivings: true,
 	document_modifiers: {'trashed' => nil},	
-	document_numbers: ['one', 'two', 'three'],
+	document_numbers: ['one'],
 	user_modifiers: {'trashed' => nil, 'admin' => nil},
-	user_numbers: ['one', 'two'],
+	user_numbers: ['one'],
 	suggestion_modifiers: {'trashed' => nil},
-	suggestion_numbers: ['one', 'two'],
+	suggestion_numbers: ['one'],
 	except: {archiving: nil, blog_post: nil, document: nil,
 		archiving_document: nil, blog_post_document: nil,
 		user: nil, suggestion: nil, user_suggestion: nil},
@@ -412,7 +410,7 @@ def loop_suggestions( reload: false, reset: true,
 	load_suggestions( reset: reset,
 		archiving_modifiers: archiving_modifiers,
 		archiving_numbers: archiving_numbers,
-		document_modifiers: document_modifiers,	
+		document_modifiers: document_modifiers,
 		document_numbers: document_numbers,
 		user_modifiers: user_modifiers,
 		user_numbers: user_numbers,
@@ -421,15 +419,34 @@ def loop_suggestions( reload: false, reset: true,
 		except: except, only: only ) if reload
 
 	archiving_modifier_states_sets = [true, false].repeated_permutation(archiving_modifiers.count).to_a
-	
 	archiving_modifier_states_sets.map! { |archiving_modifier_states|
 		archiving_modifiers.keys.zip(archiving_modifier_states).to_h.merge(archiving_modifiers) do |archiving_modifier, state, set_state|
 			set_state.nil? ? state : set_state
 		end
 	}.uniq!
 
-	archiving_modifier_states_sets.reverse.each do |archiving_modifier_states|
+	document_modifier_states_sets = [true, false].repeated_permutation(document_modifiers.count).to_a
+	document_modifier_states_sets.map! { |document_modifier_states|
+		document_modifiers.keys.zip(document_modifier_states).to_h.merge(document_modifiers) do |document_modifier, state, set_state|
+			set_state.nil? ? state : set_state
+		end
+	}.uniq!
 
+	user_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a
+	user_modifier_states_sets.map! { |user_modifier_states|
+		user_modifiers.keys.zip(user_modifier_states).to_h.merge(user_modifiers) do |user_modifier, state, set_state|
+			set_state.nil? ? state : set_state
+		end
+	}.uniq!
+
+	suggestion_modifier_states_sets = [true, false].repeated_permutation(suggestion_modifiers.count).to_a
+	suggestion_modifier_states_sets.map! { |suggestion_modifier_states|
+		suggestion_modifiers.keys.zip(suggestion_modifier_states).to_h.merge(suggestion_modifiers) do |suggestion_modifier, state, set_state|
+			set_state.nil? ? state : set_state
+		end
+	}.uniq!
+
+	archiving_modifier_states_sets.reverse.each do |archiving_modifier_states|
 		archiving_numbers.each do |archiving_number|
 
 			archiving_ref = ""
@@ -439,24 +456,15 @@ def loop_suggestions( reload: false, reset: true,
 			archiving_ref += "archiving_" + archiving_number
 
 			if except.values.any?
-				next if archiving_ref == except[:archiving]
+				next if except[:archiving] == archiving_ref 
 			end
 			if only.values.any?
-				next if only[:archiving] && ( archiving_ref != only[:archiving] )
+				next if only[:archiving] && ( only[:archiving] != archiving_ref )
 			end
-
-			user_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a
-
-			user_modifier_states_sets.map! { |user_modifier_states|
-				user_modifiers.keys.zip(user_modifier_states).to_h.merge(user_modifiers) do |user_modifier, state, set_state|
-					set_state.nil? ? state : set_state
-				end
-			}.uniq!
 
 			if include_archivings
 
 				user_modifier_states_sets.reverse.each do |user_modifier_states|
-
 					user_numbers.each do |user_number|
 
 						user_ref = ""
@@ -466,22 +474,13 @@ def loop_suggestions( reload: false, reset: true,
 						user_ref += "user_" + user_number
 
 						if except.values.any?
-							next if user_ref == except[:user]
+							next if except[:user] == user_ref
 						end
 						if only.values.any?
-							next if only[:user] && ( user_ref != only[:user] )
+							next if only[:user] && ( only[:user] != user_ref )
 						end
 
-						suggestion_modifier_states_sets = [true, false].repeated_permutation(suggestion_modifiers.count).to_a
-
-						suggestion_modifier_states_sets.map! { |suggestion_modifier_states|
-							suggestion_modifiers.keys.zip(suggestion_modifier_states).to_h.merge(suggestion_modifiers) do |suggestion_modifier, state, set_state|
-								set_state.nil? ? state : set_state
-							end
-						}.uniq!
-
 						suggestion_modifier_states_sets.reverse.each do |suggestion_modifier_states|
-
 							suggestion_numbers.each do |suggestion_number|
 
 								suggestion_ref = ""
@@ -491,28 +490,20 @@ def loop_suggestions( reload: false, reset: true,
 								suggestion_ref += "suggestion_" + suggestion_number
 
 								if except.values.any?
-									next if suggestion_ref == except[:suggestion]
-									next if (user_ref + '_' + suggestion_ref) == except[:user_suggestion]
+									next if except[:suggestion] == suggestion_ref
+									next if except[:user_suggestion] == (user_ref + '_' + suggestion_ref)
 								end
 								if only.values.any?
-									next if only[:suggestion] && ( suggestion_ref != only[:suggestion] )
-									next if only[:user_suggestion] && ( (user_ref + '_' + suggestion_ref) != only[:user_suggestion] )
+									next if only[:suggestion] && ( only[:suggestion] != suggestion_ref )
+									next if only[:user_suggestion] && ( only[:user_suggestion] != (user_ref + '_' + suggestion_ref) )
 								end
 
 								yield @suggestions[archiving_ref][user_ref][suggestion_ref], suggestion_ref, user_ref, archiving_ref
 							end
-						end
+						end # Suggestions
 					end
-				end
-			end
-
-			document_modifier_states_sets = [true, false].repeated_permutation(document_modifiers.count).to_a
-
-			document_modifier_states_sets.map! { |document_modifier_states|
-				document_modifiers.keys.zip(document_modifier_states).to_h.merge(document_modifiers) do |document_modifier, state, set_state|
-					set_state.nil? ? state : set_state
-				end
-			}.uniq!
+				end # Users
+			end # include_archivings
 
 			document_modifier_states_sets.reverse.each do |document_modifier_states|
 				document_numbers.each do |document_number|
@@ -524,24 +515,15 @@ def loop_suggestions( reload: false, reset: true,
 					document_ref += "document_" + document_number
 
 					if except.values.any?
-						next if document_ref == except[:document]
-						next if (archiving_ref + '_' + document_ref) == except[:archiving_document]
+						next if except[:document] == document_ref
+						next if except[:archiving_document] == (archiving_ref + '_' + document_ref)
 					end
 					if only.values.any?
-						next if only[:document] && ( document_ref != only[:document] )
-						next if only[:archiving_document] && ( (archiving_ref + '_' + document_ref) != only[:archiving_document] )
+						next if only[:document] && ( only[:document] != document_ref )
+						next if only[:archiving_document] && ( only[:archiving_document] != (archiving_ref + '_' + document_ref) )
 					end
 
-					user_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a
-
-					user_modifier_states_sets.map! { |user_modifier_states|
-						user_modifiers.keys.zip(user_modifier_states).to_h.merge(user_modifiers) do |user_modifier, state, set_state|
-							set_state.nil? ? state : set_state
-						end
-					}.uniq!
-
 					user_modifier_states_sets.reverse.each do |user_modifier_states|
-
 						user_numbers.each do |user_number|
 
 							user_ref = ""
@@ -551,22 +533,13 @@ def loop_suggestions( reload: false, reset: true,
 							user_ref += "user_" + user_number
 
 							if except.values.any?
-								next if user_ref == except[:user]
+								next if except[:user] == user_ref
 							end
 							if only.values.any?
-								next if only[:user] && ( user_ref != only[:user] )
+								next if only[:user] && ( only[:user] != user_ref )
 							end
 
-							suggestion_modifier_states_sets = [true, false].repeated_permutation(suggestion_modifiers.count).to_a
-
-							suggestion_modifier_states_sets.map! { |suggestion_modifier_states|
-								suggestion_modifiers.keys.zip(suggestion_modifier_states).to_h.merge(suggestion_modifiers) do |suggestion_modifier, state, set_state|
-									set_state.nil? ? state : set_state
-								end
-							}.uniq!
-
 							suggestion_modifier_states_sets.reverse.each do |suggestion_modifier_states|
-
 								suggestion_numbers.each do |suggestion_number|
 
 									suggestion_ref = ""
@@ -576,46 +549,228 @@ def loop_suggestions( reload: false, reset: true,
 									suggestion_ref += "suggestion_" + suggestion_number
 
 									if except.values.any?
-										next if suggestion_ref == except[:suggestion]
-										next if (user_ref + '_' + suggestion_ref) == except[:user_suggestion]
+										next if except[:suggestion] == suggestion_ref
+										next if except[:user_suggestion] == (user_ref + '_' + suggestion_ref)
 									end
 									if only.values.any?
-										next if only[:suggestion] && ( suggestion_ref != only[:suggestion] )
-										next if only[:user_suggestion] && ( (user_ref + '_' + suggestion_ref) != only[:user_suggestion] )
+										next if only[:suggestion] && ( only[:suggestion] != suggestion_ref )
+										next if only[:user_suggestion] && ( only[:user_suggestion] != (user_ref + '_' + suggestion_ref) )
 									end
 
 									yield @suggestions[archiving_ref][document_ref][user_ref][suggestion_ref], suggestion_ref, user_ref, document_ref, archiving_ref
 								end
-							end
+							end # Suggestions
 						end
-					end
+					end # Users
 				end
-			end
+			end # Documents
 		end
-	end
+	end # Archivings
+end
+
+def loop_versions( reload: false, reset: true,
+	archiving_modifiers: {'trashed' => nil},
+	archiving_numbers: ['one'],
+	include_archivings: true,
+	document_modifiers: {'trashed' => nil},
+	document_numbers: ['one'],
+	version_modifiers: {'hidden' => nil},
+	version_numbers: ['one'],
+	include_original: true,
+	include_current: true,
+	except: {archiving: nil, document: nil, archiving_document: nil,
+		version: nil},
+	only: {archiving: nil, document: nil, archiving_document: nil,
+		version: nil} )
+
+	load_versions( reset: reset,
+		archiving_modifiers: {'trashed' => nil},
+		archiving_numbers: ['one'],
+		include_archivings: true,
+		document_modifiers: {'trashed' => nil},
+		document_numbers: ['one'],
+		version_modifiers: {'hidden' => nil},
+		version_numbers: ['one'],
+		except: except,	only: only ) if reload
+
+	original_ref = 'original_version'
+	current_ref = 'current_version'
+
+	archiving_modifier_states_sets = [true, false].repeated_permutation(archiving_modifiers.count).to_a
+	archiving_modifier_states_sets.map! { |archiving_modifier_states|
+		archiving_modifiers.keys.zip(archiving_modifier_states).to_h.merge(archiving_modifiers) do |archiving_modifier, state, set_state|
+			set_state.nil? ? state : set_state
+		end
+	}.uniq!
+
+	document_modifier_states_sets = [true, false].repeated_permutation(document_modifiers.count).to_a
+	document_modifier_states_sets.map! { |document_modifier_states|
+		document_modifiers.keys.zip(document_modifier_states).to_h.merge(document_modifiers) do |document_modifier, state, set_state|
+			set_state.nil? ? state : set_state
+		end
+	}.uniq!
+
+	version_modifier_states_sets = [true, false].repeated_permutation(version_modifiers.count).to_a
+	version_modifier_states_sets.map! { |version_modifier_states|
+		version_modifiers.keys.zip(version_modifier_states).to_h.merge(version_modifiers) do |version_modifier, state, set_state|
+			set_state.nil? ? state : set_state
+		end
+	}.uniq!
+
+	archiving_modifier_states_sets.reverse.each do |archiving_modifier_states|
+		archiving_numbers.each do |archiving_number|
+
+			archiving_ref = ""
+			archiving_modifier_states.each do |archiving_modifier, state|
+				archiving_ref += (archiving_modifier + "_") if state
+			end
+			archiving_ref += "archiving_" + archiving_number
+
+			if except.values.any?
+				next if except[:archiving] == archiving_ref
+			end
+			if only.values.any?
+				next if only[:archiving] && ( only[:archiving] != archiving_ref )
+			end
+
+			if include_archivings
+
+				if include_original
+			
+					if except.values.any?
+						next if except[:version] == original_ref
+					end
+					if only.values.any?
+						next if only[:version] && ( only[:version] != original_ref )
+					end
+
+					yield @versions[archiving_ref][original_ref], original_ref, archiving_ref
+				end # Original
+
+				version_modifier_states_sets.reverse.each do |version_modifier_states|
+
+					version_numbers.each do |version_number|
+
+						version_ref = ""
+						version_modifier_states.each do |version_modifier, state|
+							version_ref += (version_modifier + "_") if state
+						end
+						version_ref += "version_" + version_number
+
+						if except.values.any?
+							next if except[:version] == version_ref
+						end
+						if only.values.any?
+							next if only[:version] && ( only[:version] != version_ref )
+						end
+
+						yield @versions[archiving_ref][version_ref], version_ref, archiving_ref
+					end
+				end # Versions
+
+				if include_current
+			
+					if except.values.any?
+						next if except[:version] == current_ref
+					end
+					if only.values.any?
+						next if only[:version] && ( only[:version] != current_ref )
+					end
+
+					yield @versions[archiving_ref][current_ref], current_ref, archiving_ref
+				end # Current
+			end # include_archivings
+
+			document_modifier_states_sets.reverse.each do |document_modifier_states|
+				document_numbers.each do |document_number|
+
+					document_ref = ""
+					document_modifier_states.each do |document_modifier, state|
+						document_ref += (document_modifier + "_") if state
+					end
+					document_ref += "document_" + document_number
+
+					if except.values.any?
+						next if except[:document] == document_ref
+						next if except[:archiving_document] == (archiving_ref + '_' + document_ref)
+					end
+					if only.values.any?
+						next if only[:document] && ( only[:document] != document_ref )
+						next if only[:archiving_document] && ( only[:archiving_document] != (archiving_ref + '_' + document_ref) )
+					end
+
+					if include_original
+
+						if except.values.any?
+							next if except[:version] == original_ref
+						end
+						if only.values.any?
+							next if only[:version] && ( only[:version] != original_ref )
+						end
+
+						yield @versions[archiving_ref][document_ref][original_ref], original_ref, document_ref, archiving_ref
+					end # Original
+
+					version_modifier_states_sets.reverse.each do |version_modifier_states|
+						version_numbers.each do |version_number|
+
+							version_ref = ""
+							version_modifier_states.each do |version_modifier, state|
+								version_ref += (version_modifier + "_") if state
+							end
+							version_ref += "version_" + version_number
+
+							if except.values.any?
+								next if except[:version] == version_ref
+							end
+							if only.values.any?
+								next if only[:version] && ( only[:version] != version_ref )
+							end
+
+							yield @versions[archiving_ref][document_ref][version_ref], version_ref, document_ref, archiving_ref
+						end
+					end # Versions
+
+					if include_current
+
+						if except.values.any?
+							next if except[:version] == current_ref
+						end
+						if only.values.any?
+							next if only[:version] && ( only[:version] != current_ref )
+						end
+
+						yield @versions[archiving_ref][document_ref][current_ref], current_ref, document_ref, archiving_ref
+					end # Current
+				end
+			end # Documents
+		end
+	end # Archivings
+
+	return @suggestions
 end
 
 def loop_comments( reload: false, reset: true,
 	archiving_modifiers: {'trashed' => nil},
-	archiving_numbers: ['one', 'two'],
+	archiving_numbers: ['one'],
 	include_archivings: true,
 	document_modifiers: {'trashed' => nil},
-	document_numbers: ['one', 'two', 'three'],
+	document_numbers: ['one'],
 	suggester_modifiers: {'trashed' => nil, 'admin' => nil},
-	suggester_numbers: ['one', 'two'],
+	suggester_numbers: ['one'],
 	suggestion_modifiers: {'trashed' => nil},
-	suggestion_numbers: ['one', 'two'],
+	suggestion_numbers: ['one'],
 	blog_modifiers: {'trashed' => nil, 'motd' => nil},
-	blog_numbers: ['one', 'two'],
+	blog_numbers: ['one'],
 	poster_modifiers: {'trashed' => nil, 'admin' => nil},
-	poster_numbers: ['one', 'two'],
+	poster_numbers: ['one'],
 	forum_modifiers: {'trashed' => nil, 'sticky' => nil, 'motd' => nil},
-	forum_numbers: ['one', 'two'],
+	forum_numbers: ['one'],
 	user_modifiers: {'trashed' => nil, 'admin' => nil},
-	user_numbers: ['one', 'two'],
+	user_numbers: ['one'],
 	guest_users: true,
 	comment_modifiers: {'trashed' => nil},
-	comment_numbers: ['one', 'two'],
+	comment_numbers: ['one'],
 	except: {archiving: nil, document: nil, archiving_document: nil,
 		suggester: nil, suggestion: nil, suggester_suggestion: nil,
 		blog_post: nil, poster: nil, forum_post: nil, poster_forum_post: nil,
@@ -641,9 +796,9 @@ def loop_comments( reload: false, reset: true,
 		poster_numbers: poster_numbers,
 		forum_modifiers: forum_modifiers,
 		forum_numbers: forum_numbers,
-		guest_users: true,
 		user_modifiers: user_modifiers,
 		user_numbers: user_numbers,
+		guest_users: true,
 		comment_modifiers: comment_modifiers,
 		comment_numbers: comment_numbers,
 		except: except,
@@ -652,15 +807,69 @@ def loop_comments( reload: false, reset: true,
 	guest_ref = 'guest_user'
 
 	archiving_modifier_states_sets = [true, false].repeated_permutation(archiving_modifiers.count).to_a
-	
 	archiving_modifier_states_sets.map! { |archiving_modifier_states|
 		archiving_modifiers.keys.zip(archiving_modifier_states).to_h.merge(archiving_modifiers) do |archiving_modifier, state, set_state|
 			set_state.nil? ? state : set_state
 		end
 	}.uniq!
 
-	archiving_modifier_states_sets.reverse.each do |archiving_modifier_states|
+	document_modifier_states_sets = [true, false].repeated_permutation(document_modifiers.count).to_a
+	document_modifier_states_sets.map! { |document_modifier_states|
+		document_modifiers.keys.zip(document_modifier_states).to_h.merge(document_modifiers) do |document_modifier, state, set_state|
+			set_state.nil? ? state : set_state
+		end
+	}.uniq!
 
+	suggester_modifier_states_sets = [true, false].repeated_permutation(suggester_modifiers.count).to_a
+	suggester_modifier_states_sets.map! { |suggester_modifier_states|
+		suggester_modifiers.keys.zip(suggester_modifier_states).to_h.merge(suggester_modifiers) do |suggester_modifier, state, set_state|
+			set_state.nil? ? state : set_state
+		end
+	}.uniq!
+
+	suggestion_modifier_states_sets = [true, false].repeated_permutation(suggestion_modifiers.count).to_a
+	suggestion_modifier_states_sets.map! { |suggestion_modifier_states|
+		suggestion_modifiers.keys.zip(suggestion_modifier_states).to_h.merge(suggestion_modifiers) do |suggestion_modifier, state, set_state|
+			set_state.nil? ? state : set_state
+		end
+	}.uniq!
+
+	blog_modifier_states_sets = [true, false].repeated_permutation(blog_modifiers.count).to_a
+	blog_modifier_states_sets.map! { |blog_modifier_states|
+		blog_modifiers.keys.zip(blog_modifier_states).to_h.merge(blog_modifiers) do |blog_modifier, state, set_state|
+			set_state.nil? ? state : set_state
+		end
+	}.uniq!
+
+	poster_modifier_states_sets = [true, false].repeated_permutation(poster_modifiers.count).to_a
+	poster_modifier_states_sets.map! { |poster_modifier_states|
+		poster_modifiers.keys.zip(poster_modifier_states).to_h.merge(poster_modifiers) do |poster_modifier, state, set_state|
+			set_state.nil? ? state : set_state
+		end
+	}.uniq!
+
+	forum_modifier_states_sets = [true, false].repeated_permutation(forum_modifiers.count).to_a
+	forum_modifier_states_sets.map! { |forum_modifier_states|
+		forum_modifiers.keys.zip(forum_modifier_states).to_h.merge(forum_modifiers) do |forum_modifier, state, set_state|
+			set_state.nil? ? state : set_state
+		end
+	}.uniq!
+
+	user_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a
+	user_modifier_states_sets.map! { |user_modifier_states|
+		user_modifiers.keys.zip(user_modifier_states).to_h.merge(user_modifiers) do |user_modifier, state, set_state|
+			set_state.nil? ? state : set_state
+		end
+	}.uniq!
+
+	comment_modifier_states_sets = [true, false].repeated_permutation(comment_modifiers.count).to_a
+	comment_modifier_states_sets.map! { |comment_modifier_states|
+		comment_modifiers.keys.zip(comment_modifier_states).to_h.merge(comment_modifiers) do |comment_modifier, state, set_state|
+			set_state.nil? ? state : set_state
+		end
+	}.uniq!
+
+	archiving_modifier_states_sets.reverse.each do |archiving_modifier_states|
 		archiving_numbers.each do |archiving_number|
 
 			archiving_ref = ""
@@ -670,20 +879,13 @@ def loop_comments( reload: false, reset: true,
 			archiving_ref += "archiving_" + archiving_number
 
 			if except.values.any?
-				next if archiving_ref == except[:archiving]
+				next if except[:archiving] == archiving_ref
 			end
 			if only.values.any?
-				next if only[:archiving] && ( archiving_ref != only[:archiving] )
+				next if only[:archiving] && ( only[:archiving] != archiving_ref )
 			end
 
 			if include_archivings
-				suggester_modifier_states_sets = [true, false].repeated_permutation(suggester_modifiers.count).to_a
-
-				suggester_modifier_states_sets.map! { |suggester_modifier_states|
-					suggester_modifiers.keys.zip(suggester_modifier_states).to_h.merge(suggester_modifiers) do |suggester_modifier, state, set_state|
-						set_state.nil? ? state : set_state
-					end
-				}.uniq!
 
 				suggester_modifier_states_sets.reverse.each do |suggester_modifier_states|
 					suggester_numbers.each do |suggester_number|
@@ -695,22 +897,13 @@ def loop_comments( reload: false, reset: true,
 						suggester_ref += "user_" + suggester_number
 
 						if except.values.any?
-							next if suggester_ref == except[:suggester]
+							next if except[:suggester] == suggester_ref
 						end
 						if only.values.any?
-							next if only[:suggester] && ( suggester_ref != only[:suggester] )
+							next if only[:suggester] && ( only[:suggester] != suggester_ref )
 						end
 
-						suggestion_modifier_states_sets = [true, false].repeated_permutation(suggestion_modifiers.count).to_a
-
-						suggestion_modifier_states_sets.map! { |suggestion_modifier_states|
-							suggestion_modifiers.keys.zip(suggestion_modifier_states).to_h.merge(suggestion_modifiers) do |suggestion_modifier, state, set_state|
-								set_state.nil? ? state : set_state
-							end
-						}.uniq!
-
 						suggestion_modifier_states_sets.reverse.each do |suggestion_modifier_states|
-
 							suggestion_numbers.each do |suggestion_number|
 
 								suggestion_ref = ""
@@ -720,24 +913,15 @@ def loop_comments( reload: false, reset: true,
 								suggestion_ref += "suggestion_" + suggestion_number
 
 								if except.values.any?
-									next if suggestion_ref == except[:suggestion]
-									next if (suggester_ref + '_' + suggestion_ref) == except[:suggester_suggestion]
+									next if except[:suggestion] == suggestion_ref
+									next if except[:suggester_suggestion] == (suggester_ref + '_' + suggestion_ref)
 								end
 								if only.values.any?
-									next if only[:suggestion] && ( suggestion_ref != only[:suggestion] )
-									next if only[:suggester_suggestion] && ( (suggester_ref + '_' + suggestion_ref) != only[:suggester_suggestion] )
+									next if only[:suggestion] && ( only[:suggestion] != suggestion_ref )
+									next if only[:suggester_suggestion] && ( only[:suggester_suggestion] != (suggester_ref + '_' + suggestion_ref) )
 								end
 
-								user_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a
-
-								user_modifier_states_sets.map! { |user_modifier_states|
-									user_modifiers.keys.zip(user_modifier_states).to_h.merge(user_modifiers) do |user_modifier, state, set_state|
-										set_state.nil? ? state : set_state
-									end
-								}.uniq!
-
 								user_modifier_states_sets.reverse.each do |user_modifier_states|
-
 									user_numbers.each do |user_number|
 
 										user_ref = ""
@@ -747,22 +931,13 @@ def loop_comments( reload: false, reset: true,
 										user_ref += "user_" + user_number
 
 										if except.values.any?
-											next if user_ref == except[:user]
+											next if except[:user] == user_ref
 										end
 										if only.values.any?
-											next if only[:user] && ( user_ref != only[:user] )
+											next if only[:user] && ( only[:user] != user_ref )
 										end
 
-										comment_modifier_states_sets = [true, false].repeated_permutation(comment_modifiers.count).to_a
-
-										comment_modifier_states_sets.map! { |comment_modifier_states|
-											comment_modifiers.keys.zip(comment_modifier_states).to_h.merge(comment_modifiers) do |comment_modifier, state, set_state|
-												set_state.nil? ? state : set_state
-											end
-										}.uniq!
-
 										comment_modifier_states_sets.reverse.each do |comment_modifier_states|
-
 											comment_numbers.each do |comment_number|
 
 												comment_ref = ""
@@ -772,12 +947,12 @@ def loop_comments( reload: false, reset: true,
 												comment_ref += "comment_" + comment_number
 
 												if except.values.any?
-													next if comment_ref == except[:comment]
-													next if (user_ref + '_' + comment_ref) == except[:user_comment]
+													next if except[:comment] == comment_ref
+													next if except[:user_comment] == (user_ref + '_' + comment_ref)
 												end
 												if only.values.any?
-													next if only[:comment] && ( comment_ref != only[:comment] )
-													next if only[:user_comment] && ( (user_ref + '_' + comment_ref) != only[:user_comment] )
+													next if only[:comment] && ( only[:comment] != comment_ref )
+													next if only[:user_comment] && ( only[:user_comment] != (user_ref + '_' + comment_ref) )
 												end
 
 												yield @comments[archiving_ref][suggester_ref][suggestion_ref][user_ref][comment_ref], comment_ref, user_ref, suggestion_ref, suggester_ref, archiving_ref
@@ -788,16 +963,7 @@ def loop_comments( reload: false, reset: true,
 
 								if guest_users
 
-									comment_modifier_states_sets = [true, false].repeated_permutation(comment_modifiers.count).to_a
-
-									comment_modifier_states_sets.map! { |comment_modifier_states|
-										comment_modifiers.keys.zip(comment_modifier_states).to_h.merge(comment_modifiers) do |comment_modifier, state, set_state|
-											set_state.nil? ? state : set_state
-										end
-									}.uniq!
-
 									comment_modifier_states_sets.reverse.each do |comment_modifier_states|
-
 										comment_numbers.each do |comment_number|
 
 											comment_ref = ""
@@ -807,10 +973,10 @@ def loop_comments( reload: false, reset: true,
 											comment_ref += "comment_" + comment_number
 
 											if except.values.any?
-												next if comment_ref == except[:comment]
+												next if except[:comment] == comment_ref
 											end
 											if only.values.any?
-												next if only[:comment] && ( comment_ref != only[:comment] )
+												next if only[:comment] && ( only[:comment] != comment_ref )
 											end
 
 											yield @comments[archiving_ref][suggester_ref][suggestion_ref][guest_ref][comment_ref], comment_ref, guest_ref, suggestion_ref, suggester_ref, archiving_ref
@@ -823,14 +989,6 @@ def loop_comments( reload: false, reset: true,
 				end # Suggesters
 			end # include_archivings
 
-			document_modifier_states_sets = [true, false].repeated_permutation(document_modifiers.count).to_a
-
-			document_modifier_states_sets.map! { |document_modifier_states|
-				document_modifiers.keys.zip(document_modifier_states).to_h.merge(document_modifiers) do |document_modifier, state, set_state|
-					set_state.nil? ? state : set_state
-				end
-			}.uniq!
-
 			document_modifier_states_sets.reverse.each do |document_modifier_states|
 				document_numbers.each do |document_number|
 
@@ -841,24 +999,15 @@ def loop_comments( reload: false, reset: true,
 					document_ref += "document_" + document_number
 
 					if except.values.any?
-						next if document_ref == except[:document]
-						next if (archiving_ref + '_' + document_ref) == except[:archiving_document]
+						next if except[:document] == document_ref
+						next if except[:archiving_document] == (archiving_ref + '_' + document_ref)
 					end
 					if only.values.any?
-						next if only[:document] && ( document_ref != only[:document] )
-						next if only[:archiving_document] && ( (archiving_ref + '_' + document_ref) != only[:archiving_document] )
+						next if only[:document] && ( only[:document] != document_ref )
+						next if only[:archiving_document] && ( only[:archiving_document] != (archiving_ref + '_' + document_ref) )
 					end
 
-					suggester_modifier_states_sets = [true, false].repeated_permutation(suggester_modifiers.count).to_a
-
-					suggester_modifier_states_sets.map! { |suggester_modifier_states|
-						suggester_modifiers.keys.zip(suggester_modifier_states).to_h.merge(suggester_modifiers) do |suggester_modifier, state, set_state|
-							set_state.nil? ? state : set_state
-						end
-					}.uniq!
-
 					suggester_modifier_states_sets.reverse.each do |suggester_modifier_states|
-
 						suggester_numbers.each do |suggester_number|
 
 							suggester_ref = ""
@@ -868,22 +1017,13 @@ def loop_comments( reload: false, reset: true,
 							suggester_ref += "user_" + suggester_number
 
 							if except.values.any?
-								next if suggester_ref == except[:suggester]
+								next if except[:suggester] == suggester_ref
 							end
 							if only.values.any?
-								next if only[:suggester] && ( suggester_ref != only[:suggester] )
+								next if only[:suggester] && ( only[:suggester] != suggester_ref )
 							end
 
-							suggestion_modifier_states_sets = [true, false].repeated_permutation(suggestion_modifiers.count).to_a
-
-							suggestion_modifier_states_sets.map! { |suggestion_modifier_states|
-								suggestion_modifiers.keys.zip(suggestion_modifier_states).to_h.merge(suggestion_modifiers) do |suggestion_modifier, state, set_state|
-									set_state.nil? ? state : set_state
-								end
-							}.uniq!
-
 							suggestion_modifier_states_sets.reverse.each do |suggestion_modifier_states|
-
 								suggestion_numbers.each do |suggestion_number|
 
 									suggestion_ref = ""
@@ -893,24 +1033,15 @@ def loop_comments( reload: false, reset: true,
 									suggestion_ref += "suggestion_" + suggestion_number
 
 									if except.values.any?
-										next if suggestion_ref == except[:suggestion]
-										next if (suggester_ref + '_' + suggestion_ref) == except[:suggester_suggestion]
+										next if except[:suggestion] == suggestion_ref
+										next if except[:suggester_suggestion] == (suggester_ref + '_' + suggestion_ref)
 									end
 									if only.values.any?
-										next if only[:suggestion] && ( suggestion_ref != only[:suggestion] )
-										next if only[:suggester_suggestion] && ( (suggester_ref + '_' + suggestion_ref) != only[:suggester_suggestion] )
+										next if only[:suggestion] && ( only[:suggestion] != suggestion_ref )
+										next if only[:suggester_suggestion] && ( only[:suggester_suggestion] != (suggester_ref + '_' + suggestion_ref) )
 									end
 
-									user_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a
-
-									user_modifier_states_sets.map! { |user_modifier_states|
-										user_modifiers.keys.zip(user_modifier_states).to_h.merge(user_modifiers) do |user_modifier, state, set_state|
-											set_state.nil? ? state : set_state
-										end
-									}.uniq!
-
 									user_modifier_states_sets.reverse.each do |user_modifier_states|
-
 										user_numbers.each do |user_number|
 
 											user_ref = ""
@@ -920,22 +1051,13 @@ def loop_comments( reload: false, reset: true,
 											user_ref += "user_" + user_number
 
 											if except.values.any?
-												next if user_ref == except[:user]
+												next if except[:user] == user_ref
 											end
 											if only.values.any?
-												next if only[:user] && ( user_ref != only[:user] )
+												next if only[:user] && ( only[:user] != user_ref )
 											end
 
-											comment_modifier_states_sets = [true, false].repeated_permutation(comment_modifiers.count).to_a
-
-											comment_modifier_states_sets.map! { |comment_modifier_states|
-												comment_modifiers.keys.zip(comment_modifier_states).to_h.merge(comment_modifiers) do |comment_modifier, state, set_state|
-													set_state.nil? ? state : set_state
-												end
-											}.uniq!
-
 											comment_modifier_states_sets.reverse.each do |comment_modifier_states|
-
 												comment_numbers.each do |comment_number|
 
 													comment_ref = ""
@@ -945,12 +1067,12 @@ def loop_comments( reload: false, reset: true,
 													comment_ref += "comment_" + comment_number
 
 													if except.values.any?
-														next if comment_ref == except[:comment]
-														next if (user_ref + '_' + comment_ref) == except[:user_comment]
+														next if except[:comment] == comment_ref
+														next if except[:user_comment] == (user_ref + '_' + comment_ref)
 													end
 													if only.values.any?
-														next if only[:comment] && ( comment_ref != only[:comment] )
-														next if only[:user_comment] && ( (user_ref + '_' + comment_ref) != only[:user_comment] )
+														next if only[:comment] && ( only[:comment] != comment_ref )
+														next if only[:user_comment] && ( only[:user_comment] != (user_ref + '_' + comment_ref) )
 													end
 
 													yield @comments[archiving_ref][document_ref][suggester_ref][suggestion_ref][user_ref][comment_ref], comment_ref, user_ref, suggestion_ref, suggester_ref, document_ref, archiving_ref
@@ -961,16 +1083,7 @@ def loop_comments( reload: false, reset: true,
 
 									if guest_users
 
-										comment_modifier_states_sets = [true, false].repeated_permutation(comment_modifiers.count).to_a
-
-										comment_modifier_states_sets.map! { |comment_modifier_states|
-											comment_modifiers.keys.zip(comment_modifier_states).to_h.merge(comment_modifiers) do |comment_modifier, state, set_state|
-												set_state.nil? ? state : set_state
-											end
-										}.uniq!
-
 										comment_modifier_states_sets.reverse.each do |comment_modifier_states|
-
 											comment_numbers.each do |comment_number|
 
 												comment_ref = ""
@@ -980,10 +1093,10 @@ def loop_comments( reload: false, reset: true,
 												comment_ref += "comment_" + comment_number
 
 												if except.values.any?
-													next if comment_ref == except[:comment]
+													next if except[:comment] == comment_ref
 												end
 												if only.values.any?
-													next if only[:comment] && ( comment_ref != only[:comment] )
+													next if only[:comment] && ( only[:comment] != comment_ref )
 												end
 
 												yield @comments[archiving_ref][document_ref][suggester_ref][suggestion_ref][guest_ref][comment_ref], comment_ref, guest_ref, suggestion_ref, suggester_ref, document_ref, archiving_ref
@@ -999,16 +1112,7 @@ def loop_comments( reload: false, reset: true,
 		end
 	end # Archivings
 
-	blog_modifier_states_sets = [true, false].repeated_permutation(blog_modifiers.count).to_a
-
-	blog_modifier_states_sets.map! { |blog_modifier_states|
-		blog_modifiers.keys.zip(blog_modifier_states).to_h.merge(blog_modifiers) do |blog_modifier, state, set_state|
-			set_state.nil? ? state : set_state
-		end
-	}.uniq!
-
 	blog_modifier_states_sets.reverse.each do |blog_modifier_states|
-
 		blog_numbers.each do |blog_number|
 
 			blog_ref = ""
@@ -1024,16 +1128,7 @@ def loop_comments( reload: false, reset: true,
 				next if only[:blog_post] && ( blog_ref != only[:blog_post] )
 			end
 
-			user_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a
-
-			user_modifier_states_sets.map! { |user_modifier_states|
-				user_modifiers.keys.zip(user_modifier_states).to_h.merge(user_modifiers) do |user_modifier, state, set_state|
-					set_state.nil? ? state : set_state
-				end
-			}.uniq!
-
 			user_modifier_states_sets.reverse.each do |user_modifier_states|
-
 				user_numbers.each do |user_number|
 
 					user_ref = ""
@@ -1049,16 +1144,7 @@ def loop_comments( reload: false, reset: true,
 						next if only[:user] && ( user_ref != only[:user] )
 					end
 
-					comment_modifier_states_sets = [true, false].repeated_permutation(comment_modifiers.count).to_a
-
-					comment_modifier_states_sets.map! { |comment_modifier_states|
-						comment_modifiers.keys.zip(comment_modifier_states).to_h.merge(comment_modifiers) do |comment_modifier, state, set_state|
-							set_state.nil? ? state : set_state
-						end
-					}.uniq!
-
 					comment_modifier_states_sets.reverse.each do |comment_modifier_states|
-
 						comment_numbers.each do |comment_number|
 
 							comment_ref = ""
@@ -1078,9 +1164,9 @@ def loop_comments( reload: false, reset: true,
 
 							yield @comments[blog_ref][user_ref][comment_ref], comment_ref, user_ref, blog_ref
 						end
-					end
+					end # Comments
 				end
-			end
+			end # Users
 
 			next if only[:user]
 
@@ -1118,16 +1204,7 @@ def loop_comments( reload: false, reset: true,
 		end
 	end # Blog Posts
 
-	poster_modifier_states_sets = [true, false].repeated_permutation(poster_modifiers.count).to_a
-
-	poster_modifier_states_sets.map! { |poster_modifier_states|
-		poster_modifiers.keys.zip(poster_modifier_states).to_h.merge(poster_modifiers) do |poster_modifier, state, set_state|
-			set_state.nil? ? state : set_state
-		end
-	}.uniq!
-
 	poster_modifier_states_sets.reverse.each do |poster_modifier_states|
-
 		poster_numbers.each do |poster_number|
 
 			poster_ref = ""
@@ -1143,16 +1220,7 @@ def loop_comments( reload: false, reset: true,
 				next if only[:poster] && ( poster_ref != only[:poster] )
 			end
 
-			forum_modifier_states_sets = [true, false].repeated_permutation(forum_modifiers.count).to_a
-
-			forum_modifier_states_sets.map! { |forum_modifier_states|
-				forum_modifiers.keys.zip(forum_modifier_states).to_h.merge(forum_modifiers) do |forum_modifier, state, set_state|
-					set_state.nil? ? state : set_state
-				end
-			}.uniq!
-
 			forum_modifier_states_sets.reverse.each do |forum_modifier_states|
-
 				forum_numbers.each do |forum_number|
 
 					forum_ref = ""
@@ -1170,16 +1238,7 @@ def loop_comments( reload: false, reset: true,
 						next if only[:poster_forum_post] && ( (poster_ref + '_' + forum_ref) != only[:poster_forum_post] )
 					end
 
-					user_modifier_states_sets = [true, false].repeated_permutation(user_modifiers.count).to_a
-
-					user_modifier_states_sets.map! { |user_modifier_states|
-						user_modifiers.keys.zip(user_modifier_states).to_h.merge(user_modifiers) do |user_modifier, state, set_state|
-							set_state.nil? ? state : set_state
-						end
-					}.uniq!
-
 					user_modifier_states_sets.reverse.each do |user_modifier_states|
-
 						user_numbers.each do |user_number|
 
 							user_ref = ""
@@ -1195,16 +1254,7 @@ def loop_comments( reload: false, reset: true,
 								next if only[:user] && ( user_ref != only[:user] )
 							end
 
-							comment_modifier_states_sets = [true, false].repeated_permutation(comment_modifiers.count).to_a
-
-							comment_modifier_states_sets.map! { |comment_modifier_states|
-								comment_modifiers.keys.zip(comment_modifier_states).to_h.merge(comment_modifiers) do |comment_modifier, state, set_state|
-									set_state.nil? ? state : set_state
-								end
-							}.uniq!
-
 							comment_modifier_states_sets.reverse.each do |comment_modifier_states|
-
 								comment_numbers.each do |comment_number|
 
 									comment_ref = ""
@@ -1226,22 +1276,11 @@ def loop_comments( reload: false, reset: true,
 								end
 							end # Comment
 						end
-					end # user
-
-					next if only[:user]
+					end # User
 
 					if guest_users
 
-						comment_modifier_states_sets = [true, false].repeated_permutation(comment_modifiers.count).to_a
-
-						comment_modifier_states_sets.map! { |comment_modifier_states|
-							comment_modifiers.keys.zip(comment_modifier_states).to_h.merge(comment_modifiers) do |comment_modifier, state, set_state|
-								set_state.nil? ? state : set_state
-							end
-						}.uniq!
-
 						comment_modifier_states_sets.reverse.each do |comment_modifier_states|
-
 							comment_numbers.each do |comment_number|
 
 								comment_ref = ""

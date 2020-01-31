@@ -5,51 +5,23 @@ blog_post_one:
   motd: false
   trashed: false
 
-blog_post_two:
-  id: 2
-  title: 'Blog Post Two'
-  content: 'Lorem ipsum'
-  motd: false
-  trashed: false
-
 motd_blog_post_one:
-  id: 3
+  id: 2
   title: 'Motd Blog Post One'
   content: 'Lorem ipsum'
   motd: true
   trashed: false
 
-motd_blog_post_two:
-  id: 4
-  title: 'Motd Blog Post Two'
-  content: 'Lorem ipsum'
-  motd: true
-  trashed: false
-
 trashed_blog_post_one:
-  id: 5
+  id: 3
   title: 'Trashed Blog Post One'
   content: 'Lorem ipsum'
   motd: false
   trashed: true
 
-trashed_blog_post_two:
-  id: 6
-  title: 'Trashed Blog Post Two'
-  content: 'Lorem ipsum'
-  motd: false
-  trashed: true
-
 trashed_motd_blog_post_one:
-  id: 7
+  id: 4
   title: 'Trashed Motd Blog Post One'
-  content: 'Lorem ipsum'
-  motd: true
-  trashed: true
-
-trashed_motd_blog_post_two:
-  id: 8
-  title: 'Trashed Motd Blog Post Two'
   content: 'Lorem ipsum'
   motd: true
   trashed: true

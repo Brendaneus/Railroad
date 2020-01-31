@@ -67,5 +67,11 @@ FactoryBot.define do
 	factory :suggestion do
 		user
 		name { "Test Suggestion" }
+		factory :archiving_suggestion do
+			association :citation, factory: :archiving
+		end
+		factory :document_suggestion do
+			association :citation, factory: :archiving_document
+		end
 	end
 end

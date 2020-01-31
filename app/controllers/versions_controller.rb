@@ -6,6 +6,8 @@ class VersionsController < ApplicationController
 	before_action :require_admin_for_hidden, only: [:show]
 	before_action :require_admin, only: [:hide, :unhide, :destroy]
 	before_action :require_untrashed_user, only: [:hide, :unhide, :destroy]
+	before_action :require_admin_for_trashed_archiving_or_document#, except: [:trash, :untrash]
+
 	after_action :mark_activity, only: [:hide, :unhide, :destroy]
 
 	def index
@@ -13,6 +15,9 @@ class VersionsController < ApplicationController
 		@versions = @versions.where(hidden: false) unless admin_user?
 	end
 
+	# Kind of janky, maps object_changes to the version's 'old' object data
+	# under an instance variable appropriate for source's controller
+	# and renders to the source's show template
 	def show
 		@version = PaperTrail::Version.find(params[:id])
 		changeset = @version.changeset.to_h.transform_values{ |values| values.last }#.transform_keys(&:to_sym)
@@ -20,7 +25,7 @@ class VersionsController < ApplicationController
 		version.assign_attributes( changeset ) unless @version.event == "destroy"
 		instance_variable_set("@#{@source.class.name.underscore}", version )
 		if @source.class == Archiving
-			# @documents = @archiving.documents
+			# @documents = @archiving.documents # Deep Copy PaperTrail ?
 			render template: 'archivings/show'
 		end
 		if @source.class == Document
@@ -79,6 +84,13 @@ class VersionsController < ApplicationController
 		def require_admin_for_hidden
 			if PaperTrail::Version.find(params[:id]).hidden? && !admin_user?
 				flash[:warning] = "This version has been hidden."
+				redirect_back fallback_location: source_versions_path(@source)
+			end
+		end
+
+		def require_admin_for_trashed_archiving_or_document
+			if (@source.trashed? || (@source.class == Document) && @source.article.trashed?) && !admin_user?
+				flash[:warning] = "This version history's source has been trashed and cannot be viewed."
 				redirect_back fallback_location: source_versions_path(@source)
 			end
 		end

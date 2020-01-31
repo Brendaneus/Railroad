@@ -6,56 +6,59 @@ class SuggestionTest < ActiveSupport::TestCase
 		load_suggestions
 	end
 
-	test "should associate with Archivings" do
+	test "should associate with citations (Archivings, Documents) (required)" do
 		load_archivings
+		load_documents
 
 		loop_suggestions( document_numbers: [] ) do |suggestion, suggestion_key, user_key, archiving_key|
 			assert suggestion.citation == @archivings[archiving_key]
-		end
-	end
 
-	test "should associate with Archiving Documents" do
-		load_documents
+			suggestion.citation = nil
+			assert_not suggestion.valid?
+		end
 
 		loop_suggestions( include_archivings: false ) do |suggestion, suggestion_key, user_key, document_key, archiving_key|
 			assert suggestion.citation == @documents[archiving_key][document_key]
+
+			suggestion.citation = nil
+			assert_not suggestion.valid?
 		end
 	end
 
-	test "should associate with user (optional)" do
+	test "should associate with Users (required)" do
 		load_users
 
 		loop_suggestions do |suggestion, suggestion_key, user_key|
-			assert suggestion.user == @users[user_key] unless user_key == 'guest_user'
+			assert (suggestion.user == @users[user_key])
 
 			suggestion.user = nil
-			assert suggestion.valid?
+			assert_not suggestion.valid?
 		end
 	end
 
-	test "should associate with comments" do
+	test "should associate with Comments" do
 		loop_suggestions( document_numbers: [] ) do |suggestion, suggestion_key, user_key, archiving_key|
 			assert suggestion.comments ==
 				load_comments( flat_array: true, document_numbers: [], blog_numbers: [], forum_numbers: [],
-					only: {archiving: archiving_key, suggester_suggestion: (user_key + '_' + suggestion_key)} )
+					only: { archiving: archiving_key, suggester_suggestion: (user_key + '_' + suggestion_key) } )
 		end
 
 		loop_suggestions( include_archivings: false ) do |suggestion, suggestion_key, user_key, document_key, archiving_key|
 			assert suggestion.comments ==
 				load_comments( flat_array: true, include_archivings: false, blog_numbers: [], forum_numbers: [],
-					only: {archiving_document: (archiving_key + '_' + document_key), suggester_suggestion: (user_key + '_' + suggestion_key)} )
+					only: { archiving_document: (archiving_key + '_' + document_key), suggester_suggestion: (user_key + '_' + suggestion_key) } )
 		end
 	end
 
-	test "should dependent destroy comments" do
-		load_comments( blog_numbers: [], forum_numbers: [] )
+	test "should dependent destroy Comments" do
+		load_comments( blog_numbers: [], poster_numbers: [] )
 
 		loop_suggestions( document_numbers: [] ) do |suggestion, suggestion_key, user_key, archiving_key|
 			suggestion.destroy
 
 			assert_raise(ActiveRecord::RecordNotFound) { suggestion.reload }
 
-			loop_comments( blog_numbers: [], forum_numbers: [], document_numbers: [],
+			loop_comments( blog_numbers: [], poster_numbers: [], document_numbers: [],
 					only: {archiving: archiving_key, suggester_suggestion: (user_key + '_' + suggestion_key)} ) do |comment|
 				assert_raise(ActiveRecord::RecordNotFound) { comment.reload }
 			end
@@ -66,7 +69,7 @@ class SuggestionTest < ActiveSupport::TestCase
 
 			assert_raise(ActiveRecord::RecordNotFound) { suggestion.reload }
 
-			loop_comments( blog_numbers: [], forum_numbers: [], include_archivings: false,
+			loop_comments( blog_numbers: [], poster_numbers: [], include_archivings: false,
 					only: {archiving_document: (archiving_key + '_' + document_key), suggester_suggestion: (user_key + '_' + suggestion_key)} ) do |comment|
 				assert_raise(ActiveRecord::RecordNotFound) { comment.reload }
 			end
@@ -83,6 +86,38 @@ class SuggestionTest < ActiveSupport::TestCase
 		end
 	end
 
+	test "should validate local uniqueness of name [when present]" do
+		load_documents
+
+		loop_archivings(reload: true) do |archiving, archiving_key|
+			loop_suggestions( document_numbers: [],
+					only: { archiving: archiving_key } ) do |suggestion, suggestion_key, user_key|
+				loop_suggestions( document_numbers: [],
+						only: { archiving: archiving_key },
+						except: { user_suggestion: (user_key + '_' + suggestion_key) } ) do |other_suggestion|
+					suggestion.name = other_suggestion.name
+					assert_not suggestion.valid?
+
+					suggestion.reload
+				end
+			end
+
+			loop_documents( blog_numbers: [], only: { archiving: archiving_key } ) do |document, document_key|
+				loop_suggestions( include_archivings: false,
+						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion, suggestion_key, user_key|
+					loop_suggestions( include_archivings: false,
+							only: { archiving_document: (archiving_key + '_' + document_key) },
+							except: { user_suggestion: (user_key + '_' + suggestion_key) } ) do |other_suggestion|
+						suggestion.name = other_suggestion.name
+						assert_not suggestion.valid?
+
+						suggestion.reload
+					end
+				end
+			end
+		end
+	end
+
 	test "should validate length of name (maximum: 128)" do
 		loop_suggestions do |suggestion|
 			suggestion.name = "X"
@@ -96,7 +131,7 @@ class SuggestionTest < ActiveSupport::TestCase
 		end
 	end
 
-	test "should validate presence of title or content" do
+	test "should validate presence of either title or content" do
 		loop_suggestions do |suggestion|
 			last_title = suggestion.title
 
@@ -126,53 +161,12 @@ class SuggestionTest < ActiveSupport::TestCase
 		end
 	end
 
-	test "should validate local uniqueness of name if present" do
-		load_documents
-
-		loop_archivings(reload: true) do |archiving, archiving_key|
-			loop_suggestions( only: {archiving: archiving_key}, document_numbers: [] ) do |suggestion|
-				loop_suggestions( only: {archiving: archiving_key}, document_numbers: [] ) do |other_suggestion|
-					unless suggestion.id == other_suggestion.id
-						suggestion.title = other_suggestion.title
-						assert_not suggestion.valid?
-
-						suggestion.reload
-					end
-				end
-			end
-
-			loop_documents( only: {archiving: archiving_key}, blog_numbers: [] ) do |document, document_key|
-				loop_suggestions( only: {archiving_document: (archiving_key + '_' + document_key)}, include_archivings: false ) do |suggestion|
-					loop_suggestions( only: {archiving_document: (archiving_key + '_' + document_key)}, include_archivings: false ) do |other_suggestion|
-						unless suggestion.id == other_suggestion.id
-							suggestion.title = other_suggestion.title
-							assert_not suggestion.valid?
-
-							suggestion.reload
-						end
-					end
-				end
-			end
-		end
-	end
-
-	test "should validate uniqueness of title if citing Archiving including citation's other suggestions" do
+	test "should validate uniqueness of title when citing Archiving [when present]" do
 		load_archivings
 
 		loop_suggestions( document_numbers: [] ) do |suggestion, suggestion_key, user_key, archiving_key|
-			loop_suggestions( document_numbers: [] ) do |other_suggestion|
-				unless suggestion.id == other_suggestion.id
-					suggestion.title = other_suggestion.title
-					if suggestion.citation == other_suggestion.citation
-						assert_not suggestion.valid?
-					else
-						assert suggestion.valid?
-					end
-					suggestion.reload
-				end
-			end
-
-			loop_archivings( except: {archiving: archiving_key} ) do |archiving|
+			
+			loop_archivings( except: { archiving: archiving_key } ) do |archiving|
 				suggestion.title = archiving.title
 				assert_not suggestion.valid?
 
@@ -187,21 +181,9 @@ class SuggestionTest < ActiveSupport::TestCase
 		load_documents
 
 		loop_suggestions(include_archivings: false) do |suggestion, suggestion_key, user_key, document_key, archiving_key|
-			loop_suggestions( include_archivings: false, only: {archiving_document: (archiving_key + '_' + document_key)} ) do |other_suggestion|
-				unless suggestion.id == other_suggestion.id
-					suggestion.title = other_suggestion.title
-
-					if suggestion.citation == other_suggestion.citation
-						assert_not suggestion.valid?
-					else
-						assert suggestion.valid?
-					end
-
-					suggestion.reload
-				end
-			end
-
-			loop_documents( blog_numbers: [], only: {archiving: archiving_key}, except: {archiving_document: (archiving_key + '_' + document_key)} ) do |document|
+			loop_documents( blog_numbers: [],
+					only: {archiving: archiving_key},
+					except: {archiving_document: (archiving_key + '_' + document_key)} ) do |document|
 				suggestion.title = document.title
 				assert_not suggestion.valid?
 
@@ -220,6 +202,7 @@ class SuggestionTest < ActiveSupport::TestCase
 		end
 	end
 
+	# Reducable - replace with factory_bot
 	test "should validate length of content (maximum: 4096)" do
 		loop_suggestions do |suggestion|
 			suggestion.content = "X"
@@ -233,11 +216,12 @@ class SuggestionTest < ActiveSupport::TestCase
 		end
 	end
 
-	# CLEAN ME
 	test "should default trashed as false" do
-		load_archivings
-		@suggestions['archiving_one']['new_suggestion'] = @archivings['archiving_one'].suggestions.create!(name: "New Suggestion", content: "Sample Text")
-		assert_not @suggestions['archiving_one']['new_suggestion'].trashed?
+		new_archiving_document = create(:archiving_document, trashed: nil)
+		assert_not new_archiving_document.trashed?
+
+		new_blog_post_document = create(:blog_post_document, trashed: nil)
+		assert_not new_blog_post_document.trashed?
 	end
 
 	test "should scope trashed" do
@@ -248,23 +232,26 @@ class SuggestionTest < ActiveSupport::TestCase
 		assert Suggestion.non_trashed == Suggestion.where(trashed: false)
 	end
 
+	# Reducable
 	test "should check for edits" do
 		loop_suggestions do |suggestion|
-			suggestion.updated_at = Time.now
+			suggestion.updated_at += 5
 			assert suggestion.edited?
 		end
 	end
 
-	test "should check if user is owner" do
+	test "should check if owned [by user]" do
 		load_users
 
 		loop_suggestions do |suggestion, suggestion_key, user_key|
-			loop_users( only: {user: user_key} ) do |user|
-				assert suggestion.owned_by? user
+			assert suggestion.owned?
+
+			loop_users( only: { user: user_key } ) do |user|
+				assert suggestion.owned? by: user
 			end
 
-			loop_users( except: {user: user_key} ) do |user|
-				assert_not suggestion.owned_by? user
+			loop_users( except: { user: user_key } ) do |user|
+				assert_not suggestion.owned? by: user
 			end
 		end
 	end
@@ -286,6 +273,94 @@ class SuggestionTest < ActiveSupport::TestCase
 
 		loop_suggestions( user_modifiers: {'trashed' => false, 'admin' => nil} ) do |suggestion|
 			assert_not suggestion.owner_trashed?
+		end
+	end
+
+	test "should check if citation or citation article trashed" do
+		load_archivings
+		load_documents
+
+		loop_archivings( archiving_modifiers: { 'trashed' => false } ) do |archiving, archiving_key|
+			loop_suggestions( document_numbers: [],
+					only: { archiving: archiving_key } ) do |suggestion|
+				assert_not suggestion.citation_or_article_trashed?
+			end
+
+			loop_documents( only: { archiving: archiving_key },
+					document_modifiers: { 'trashed' => false } ) do |document, document_key|
+				loop_suggestions( include_archivings: false,
+						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
+					assert_not suggestion.citation_or_article_trashed?
+				end
+			end
+
+			loop_documents( only: { archiving: archiving_key },
+					document_modifiers: { 'trashed' => true } ) do |document, document_key|
+				loop_suggestions( include_archivings: false,
+						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
+					assert suggestion.citation_or_article_trashed?
+				end
+			end
+		end
+
+		loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving, archiving_key|
+			loop_suggestions( document_numbers: [],
+					only: { archiving: archiving_key } ) do |suggestion|
+				assert suggestion.citation_or_article_trashed?
+			end
+
+			loop_documents( only: { archiving: archiving_key } ) do |document, document_key|
+				loop_suggestions( include_archivings: false,
+						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
+					assert suggestion.citation_or_article_trashed?
+				end
+			end
+		end
+	end
+
+	test "should check if citing record" do
+		## Archivings
+		loop_archivings( reload: true ) do |archiving, archiving_key|
+			# Archiving Suggestions, Associated
+			loop_suggestions( document_numbers: [],
+				only: { archiving: archiving_key } ) do |suggestion|
+				
+				assert suggestion.citing? archiving
+			end
+
+			# Archiving Suggestions, Unassociated
+			loop_suggestions( document_numbers: [],
+				except: { archiving: archiving_key } ) do |suggestion|
+				
+				assert_not suggestion.citing? archiving
+			end
+
+			# Document Suggestions
+			loop_suggestions( include_archivings: false ) do |suggestion|
+				assert_not suggestion.citing? archiving
+			end
+		end
+
+		## Documents
+		loop_documents( reload: true, blog_numbers: [] ) do |document, document_key, archiving_key|
+			# Document Suggestions, Associated
+			loop_suggestions( include_archivings: false,
+				only: { archiving_document: (archiving_key + "_" + document_key) } ) do |suggestion|
+
+				assert suggestion.citing? document
+			end
+
+			# Document Suggestions, Unassociated
+			loop_suggestions( include_archivings: false,
+				except: { archiving_document: (archiving_key + "_" + document_key) } ) do |suggestion|
+
+				assert_not suggestion.citing? document
+			end
+
+			# Archiving Suggestions
+			loop_suggestions( document_numbers: [] ) do |suggestion|
+				assert_not suggestion.citing? document
+			end
 		end
 	end
 

@@ -2,22 +2,24 @@ module FactoryHelper
 
 	@@numbers = {}
 	@@modifiers = {}
-	@@numbers[:archiving] = [:one, :two]
+	@@numbers[:archiving] = [:one]
 	@@modifiers[:archiving] = [:trashed]
-	@@numbers[:blog_post] = [:one, :two]
+	@@numbers[:blog_post] = [:one]
 	@@modifiers[:blog_post] = [:trashed, :motd]
-	@@numbers[:comment] = [:one, :two]
+	@@numbers[:comment] = [:one]
 	@@modifiers[:comment] = [:trashed]
-	@@numbers[:document] = [:one, :two, :three]
+	@@numbers[:document] = [:one]
 	@@modifiers[:document] = [:trashed]
-	@@numbers[:forum_post] = [:one, :two]
+	@@numbers[:forum_post] = [:one]
 	@@modifiers[:forum_post] = [:trashed, :sticky, :motd]
-	@@numbers[:session] = [:one, :two, :three, :four]
+	@@numbers[:session] = [:one, :two, :three]
 	@@modifiers[:session] = []
-	@@numbers[:suggestion] = [:one, :two]
+	@@numbers[:suggestion] = [:one]
 	@@modifiers[:suggestion] = [:trashed]
-	@@numbers[:user] = [:one, :two]
+	@@numbers[:user] = [:one]
 	@@modifiers[:user] = [:trashed, :admin]
+	@@numbers[:version] = [:one]
+	@@modifiers[:version] = [:hidden]
 
 	def loop_model( name: nil, modifiers: {}, numbers: {} )
 

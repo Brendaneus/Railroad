@@ -2,9 +2,9 @@
 
 	<div class="admin control">
 		<%#= link_to "Restore", restore_archiving_version_path(@archiving, @version), method: :patch %>
-		<%= link_to "Delete", archiving_document_version_path(@article, @document, @version), method: :delete if untrashed_user? %>
 		<%= link_to "Hide", hide_archiving_document_version_path(@article, @document, @version), method: :patch unless @version.hidden? %>
 		<%= link_to "Unhide", unhide_archiving_document_version_path(@article, @document, @version), method: :patch if @version.hidden? %>
+		<%= link_to "Delete", archiving_document_version_path(@article, @document, @version), method: :delete if @version.hidden? && untrashed_user? %>
 	</div>
 
 <% end %>

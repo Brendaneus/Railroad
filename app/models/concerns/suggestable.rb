@@ -6,12 +6,10 @@ module Suggestable
 
 	included do
 		attr_writer :version_name
-		attr_accessor :hidden
 
 		has_paper_trail on: [:create, :update, :destroy], meta: {
 			name: :version_name,
-			hidden: :hidden
-		}, if: Proc.new { |obj| (obj.class != Document) || obj.suggestable? }
+		}, if: Proc.new { |obj| (obj.class == Archiving) || ( (obj.class == Document) && obj.suggestable? ) }
 
 		validates :title, length: { maximum: 64 }
 		validates :content, length: { maximum: 4096 }
@@ -20,11 +18,15 @@ module Suggestable
 	end
 
 	def merge(suggestion)
-		raise :unmergable if (self.class == Suggestion) || (suggestion.class != Suggestion)
+		raise 'unmergable' if (self.class == Suggestion) || (suggestion.class != Suggestion)
+		raise 'citation_mismatch' unless suggestion.citing?(self)
+
 		self.title = suggestion.title unless suggestion.title.nil?
 		self.content = suggestion.content unless suggestion.content.nil?
 		self.version_name = suggestion.name
-		PaperTrail.request(whodunnit: suggestion.user.name) do
+		self.trashed ||= suggestion.trashed?
+
+		PaperTrail.request(whodunnit: (suggestion.owned? ? suggestion.user.name : "Guest")) do
 			if self.save && suggestion.destroy
 				true
 			else

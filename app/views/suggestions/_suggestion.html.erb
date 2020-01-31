@@ -4,6 +4,6 @@
 
 	<%= render 'shared/details', object: suggestion %>
 
-	<%= render 'shared/timestamps', object: suggestion, owner: suggestion.user.name %>
+	<%= render 'shared/timestamps', object: suggestion, owner: (suggestion.owned? ? suggestion.user.name : nil) %>
 
 <% end %>

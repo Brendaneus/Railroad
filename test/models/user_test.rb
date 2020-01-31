@@ -1,23 +1,23 @@
 require 'test_helper'
 
 class UserTest < ActiveSupport::TestCase
-
 	def setup
 		load_users
 	end
 
-	test "should associate with sessions" do
+	test "should associate with Sessions" do
 		loop_users do |user, user_key|
-			assert user.sessions == load_sessions( flat_array: true, only: {user: user_key} )
+			assert user.sessions ==
+				load_sessions( flat_array: true, only: {user: user_key} )
 		end
 	end
 
-	test "should dependent destroy sessions" do
+	test "should dependent destroy Sessions" do
 		load_sessions
 
 		loop_users do |user, user_key|
 			user.destroy
-			
+
 			assert_raise(ActiveRecord::RecordNotFound) { user.reload }
 
 			loop_sessions( only: {user: user_key} ) do |session|
@@ -27,7 +27,7 @@ class UserTest < ActiveSupport::TestCase
 	end
 
 	test "should associate with forum posts" do
-		loop_users(reload: true) do |user, user_key|
+		loop_users do |user, user_key|
 			assert user.forum_posts == load_forum_posts( flat_array: true, only: {user: user_key} )
 		end
 	end
@@ -35,7 +35,7 @@ class UserTest < ActiveSupport::TestCase
 	test "should dependent destroy forum posts" do
 		load_forum_posts
 
-		loop_users(reload: true) do |user, user_key|
+		loop_users do |user, user_key|
 			user.destroy
 			
 			assert_raise(ActiveRecord::RecordNotFound) { user.reload }
@@ -47,55 +47,60 @@ class UserTest < ActiveSupport::TestCase
 	end
 
 	test "should associate with comments" do
-		loop_users(reload: true) do |user, user_key|
-			user.comments == load_comments( flat_array: true, only: {user: user_key} )
+		loop_users do |user, user_key|
+			assert user.comments ==
+				load_comments( flat_array: true, guest_users: false, only: {user: user_key} )
 		end
 	end
 
+	# Weak test, no logical abstraction
 	test "should associate with commented blog posts" do
-		loop_users(reload: true) do |user, user_key|
+		loop_users do |user, user_key|
 			assert user.commented_blog_posts == load_blog_posts(flat_array: true)
 		end
 	end
 
+	# Weak test, no logical abstraction
 	test "should associate with commented forum posts" do
-		loop_users(reload: true) do |user, user_key|
+		loop_users do |user, user_key|
 			assert user.commented_forum_posts == load_forum_posts(flat_array: true)
 		end
 	end
 
 	test "should dependent destroy comments" do
-		load_comments(guest_users: false)
+		load_comments
 
-		loop_users(reload: true) do |user, user_key|
+		loop_users do |user, user_key|
 			user.destroy
 
 			assert_raise(ActiveRecord::RecordNotFound) { user.reload }
 
-			loop_comments( guest_users: false,
-				only: {user: user_key} ) do |comment|
+			loop_comments( guest_users: false, only: {user: user_key} ) do |comment|
 				assert_raise(ActiveRecord::RecordNotFound) { comment.reload }
 			end
 		end
 	end
 
 	test "should validate presence of name" do
-		@users['user_one'].name = ""
-		assert_not @users['user_one'].valid?
-
-		@users['user_one'].name = "    "
-		assert_not @users['user_one'].valid?
+		loop_users do |user|
+			user.name = ""
+			assert_not user.valid?
+			user.name = "   "
+			assert_not user.valid?
+		end
 	end
 
-	test "should validate length of name (maximum: 32)" do
-		@users['user_one'].name = "X"
-		assert @users['user_one'].valid?
+	test "should validate length of name (maximum: 64)" do
+		loop_users do |user|
+			user.name = "X"
+			assert user.valid?
 
-		@users['user_one'].name = "X" * 64
-		assert @users['user_one'].valid?
+			user.name = "X" * 64
+			assert user.valid?
 
-		@users['user_one'].name = "X" * 65
-		assert_not @users['user_one'].valid?
+			user.name = "X" * 65
+			assert_not user.valid?
+		end
 	end
 
 	test "should validate uniqueness of name (case-insensitive)" do
@@ -115,22 +120,26 @@ class UserTest < ActiveSupport::TestCase
 	end
 
 	test "should validate presence of email" do
-		@users['user_one'].email = ""
-		assert_not @users['user_one'].valid?
+		loop_users do |user|
+			user.email = ""
+			assert_not user.valid?
 
-		@users['user_one'].email = "    "
-		assert_not @users['user_one'].valid?
+			user.email = "   "
+			assert_not user.valid?
+		end
 	end
 
-	# Needs a better validator or test suite?
+	# Needs a better validator or test suite (?)
 	test "should validate format of email (with regex)" do
-		["foobar", "foobar@invalid", "foobar.org", "foo bar@invalid.org", "foobar@invalid@domain.org", "foobar@invalid.org/file" ].each do |email|
-			@users['user_one'].email = email
-			assert_not @users['user_one'].valid?
-		end
-		["foobar@invalid.org", "foo-bar@invalid.org", "foo_bar@invalid.org", "foobar@invalid-domain.org", "foobar@invalid.domain.org"].each do |email|
-			@users['user_one'].email = email
-			assert @users['user_one'].valid?
+		loop_users do |user|
+			["foobar", "foobar@invalid", "foobar.org", "foo bar@invalid.org", "foobar@invalid@domain.org", "foobar@invalid.org/file" ].each do |email|
+				user.email = email
+				assert_not user.valid?
+			end
+			["foobar@invalid.org", "foo-bar@invalid.org", "foo_bar@invalid.org", "foobar@invalid-domain.org", "foobar@invalid.domain.org"].each do |email|
+				user.email = email
+				assert user.valid?
+			end
 		end
 	end
 
@@ -152,38 +161,62 @@ class UserTest < ActiveSupport::TestCase
 
 	# Needs a better test suite?
 	test "should validate has_secure_password (confirmation)" do
-		assert_no_changes -> { @users['user_one'].password_digest } do
-			@users['user_one'].update(password: "foobar")
-			@users['user_one'].reload
-		end
-		@users['user_one'].password = ""
-		
-		assert_no_changes -> { @users['user_one'].password_digest } do
-			@users['user_one'].update(password_confirmation: "foobar")
-			@users['user_one'].reload
-		end
-		@users['user_one'].password_confirmation = ""
+		loop_users do |user|
+			assert_no_changes -> { user.password_digest } do
+				user.update(password: "foobar")
+				user.reload
+			end
+			user.password = ""
+			
+			assert_no_changes -> { user.password_digest } do
+				user.update(password_confirmation: "foobar")
+				user.reload
+			end
+			user.password_confirmation = ""
 
-		assert_changes -> { @users['user_one'].password_digest } do
-			@users['user_one'].update(password: "foobar", password_confirmation: "foobar")
-			@users['user_one'].reload
+			assert_changes -> { user.password_digest } do
+				user.update(password: "foobar", password_confirmation: "foobar")
+				user.reload
+			end
 		end
 	end
 
 	test "should validate bio length [if present] (maximum: 2048)" do
-		@users['user_one'].bio = "X"
-		assert @users['user_one'].valid?
+		loop_users do |user|
+			user.bio = ""
+			assert user.valid?
 
-		@users['user_one'].bio = "X" * 2048
-		assert @users['user_one'].valid?
+			user.bio = "X"
+			assert user.valid?
 
-		@users['user_one'].bio = "X" * 2049
-		assert_not @users['user_one'].valid?
+			user.bio = "X" * 2048
+			assert user.valid?
+
+			user.bio = "X" * 2049
+			assert_not user.valid?
+		end
 	end
 
 	test "should default trashed as false" do
-		@users['new_user'] = User.create!(name: "New User", email: "new_user@example.org", password: "secret", password_confirmation: "secret")
-		assert_not @users['new_user'].trashed?
+		new_user = User.create!(name: "New User", email: "new_user@example.org", password: "secret", password_confirmation: "secret")
+		assert_not new_user.trashed?
+	end
+
+	# Dangerous, uses direct reference to fixtures
+	test "should create tokens, digest, and authenticate" do
+		token = User.new_token
+		digest = User.digest(token)
+		users(:user_one).update(password: token, password_confirmation: token)
+		assert users(:user_one).authenticates?(:password, token)
+	end
+
+	test "should check if edited" do
+		loop_users do |user|
+			assert_not user.edited?
+
+			user.update(updated_at: Time.now + 5.seconds)
+			assert user.edited?
+		end
 	end
 
 	test "should scope trashed posts" do

@@ -4,8 +4,12 @@ module Ownable
 
 	extend ActiveSupport::Concern
 
-	def owned_by? some_user
-		!self.user.nil? && ( self.user == some_user )
+	def owned? **args
+		unless args.keys.include? :by
+			!self.user.nil?
+		else
+			!self.user.nil? && ( self.user == args[:by] )
+		end
 	end
 
 	def admin?
@@ -13,7 +17,7 @@ module Ownable
 	end
 
 	def owner_trashed?
-		self.user.trashed?
+		!self.user.nil? && self.user.trashed?
 	end
 
 end

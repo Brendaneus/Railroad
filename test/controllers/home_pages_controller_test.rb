@@ -15,6 +15,7 @@ class HomePagesControllerTest < ActionDispatch::IntegrationTest
 		assert cookies[:landed]
 	end
 
+	# Add test for recent Blog and Forum Posts
 	test "should get dashboard (root) after landing" do
 		set_landing
 		get root_url

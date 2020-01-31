@@ -1,8 +1,8 @@
 module SessionsHelper
 
-	def log_in user
+	def log_in_as user
 		session[:user_id] = user.id
-		@current_user = user
+		current_user = user
 	end
 
 	def log_out
@@ -13,7 +13,7 @@ module SessionsHelper
 	def remember session
 		cookies.permanent.signed[:session_id] = session.id
 		cookies.permanent.signed[:remember_token] = session.remember_token
-		@current_session = session
+		current_session = session
 	end
 
 	def forget
@@ -31,7 +31,7 @@ module SessionsHelper
 		end
 	end
 
-	# Change to work with new users_remember_tokens table
+	# Change to work with new users_remember_tokens table (???)
 	def current_user (check_session: true)
 		if ( user_id = session[:user_id] )
 			begin
@@ -60,7 +60,7 @@ module SessionsHelper
 					if session.authenticates?( :remember, remember_token )
 						@current_session ||= session
 						unless logged_in?(check_session: false)
-							log_in session.user
+							log_in_as session.user
 							mark_activity
 						end
 						return @current_session

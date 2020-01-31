@@ -18,3 +18,6 @@ class ErrorsControllerTest < ActionDispatch::IntegrationTest
 	end
 
 end
+
+# These test may not reflect actual usage in the full app.
+# Testing for proper routing on relevant errors is required.

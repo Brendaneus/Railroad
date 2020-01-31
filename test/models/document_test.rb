@@ -3,57 +3,61 @@ require 'test_helper'
 class DocumentTest < ActiveSupport::TestCase
 
 	def setup
-		load_documents( archiving_modifiers: {}, archiving_numbers: ['one'],
-			blog_modifiers: {}, blog_numbers: ['one'],
-			document_modifiers: {}, document_numbers: ['one'] )
+		load_documents
 	end
 
-	test "should associate with blog posts" do
-		loop_documents( reload: true,
-			archiving_modifiers: {}, archiving_numbers: [] ) do |document, document_key, blog_post_key|
-			assert document.article ==
-				load_blog_posts( flat_array: true,
-					only: {blog_post: blog_post_key} ).first
+	test "should associate with articles (archivings, blog posts) (required)" do
+		load_archivings
+		load_blog_posts
+
+		loop_documents( blog_modifiers: {}, blog_numbers: [] ) do |document, document_key, archiving_key|
+			assert document.article == @archivings[archiving_key]
+
+			document.article = nil
+			assert_not document.valid?
 		end
-	end
 
-	test "should associate with archivings" do
-		loop_documents( reload: true,
-			blog_modifiers: {}, blog_numbers: [] ) do |document, document_key, archiving_key|
-			assert document.article ==
-				load_archivings( flat_array: true,
-					only: {archiving: archiving_key} ).first
+		loop_documents( archiving_modifiers: {}, archiving_numbers: [] ) do |document, document_key, blog_post_key|
+			assert document.article == @blog_posts[blog_post_key]
+
+			document.article = nil
+			assert_not document.valid?
 		end
 	end
 
 	test "should associate with suggestions" do
-		loop_documents( reload: true,
-			blog_modifiers: {}, blog_numbers: [] ) do |document, document_key, archiving_key|
+		loop_documents( blog_modifiers: {}, blog_numbers: [] ) do |document, document_key, archiving_key|
 			assert document.suggestions ==
-				load_suggestions( only: {archiving_document: (archiving_key + '_' + document_key)},
-					include_archivings: false, flat_array: true )
+				load_suggestions( include_archivings: false,
+					only: { archiving_document: (archiving_key + '_' + document_key) }, flat_array: true )
+		end
+	end
+
+	test "should associate with versions" do
+		loop_documents do |document, document_key, archiving_key|	
+			assert document.versions ==
+				load_versions( flat_array: true,
+					include_archivings: false,
+					only: { archiving_document: (archiving_key + '_' + document_key) } )
 		end
 	end
 
 	test "should dependent destroy suggestions" do
 		load_suggestions(include_archivings: false)
 
-		loop_documents( reload: true,
-			blog_modifiers: {}, blog_numbers: [] ) do |document, document_key, archiving_key|
+		loop_documents( blog_modifiers: {}, blog_numbers: [] ) do |document, document_key, archiving_key|
 			document.destroy
 
 			assert_raise(ActiveRecord::RecordNotFound) { document.reload }
 
-			loop_suggestions( only: {archiving_document: (archiving_key + '_' + document_key)},
-					include_archivings: false ) do |suggestion|
+			loop_suggestions( include_archivings: false,
+					only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
 				assert_raise(ActiveRecord::RecordNotFound) { suggestion.reload }
 			end
 		end
 	end
 
-	test "should save versions on create, update, destroy if suggestable (belongs to Archiving)" do
-		load_documents
-
+	test "should save versions on create, update, destroy if suggestable (Archiving only)" do
 		with_versioning do
 			# Archive Docs
 			new_archive_doc = create(:archiving_document)
@@ -100,109 +104,206 @@ class DocumentTest < ActiveSupport::TestCase
 		end
 	end
 
-	test "should validate presence of local_id" do
-		@documents['archiving_one']['document_one'].local_id = nil;
-		assert_not @documents['archiving_one']['document_one'].valid?
-	end
+	test "should merge suggestions and save version with name" do
+		load_suggestions
 
-	test "should validate local uniqueness of local_id" do
-		loop_documents(reload: true) do |document|
-			document.article.documents.each do |other_document|
-				unless document.id == other_document.id
-					document.local_id = other_document.local_id
-					assert_not document.valid?
-					document.reload
+		with_versioning do
+			loop_documents do |document, document_key, archiving_key|
+				# Document Suggestions, Unassociated
+				loop_suggestions( include_archivings: false,
+					except: { archiving_document: (archiving_key + '_' + document_key) },
+					user_numbers: [] ) do |suggestion|
+
+					assert_no_difference 'document.versions.count' do
+						assert_raise { document.merge(suggestion) }
+					end
+				end
+
+				# Archiving Suggestions
+				loop_suggestions( document_numbers: [] ) do |suggestion|
+					assert_no_difference 'document.versions.count' do
+						assert_raise { document.merge(suggestion) }
+					end
+				end
+			end
+
+			# Documents, Un-Trashed
+			loop_documents( document_modifiers: { 'trashed' => false } ) do |document, document_key, archiving_key|
+
+				# Document Suggestions, Associated, Un-Trashed
+				loop_suggestions( include_archivings: false,
+					only: { archiving_document: (archiving_key + '_' + document_key) },
+					suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
+
+					assert_difference 'document.versions.count', 1 do
+						assert_no_changes -> { document.trashed? }, from: false do
+							document.merge(suggestion)
+							document.reload
+						end
+					end
+				end
+
+				# Document Suggestions, Associated, Trashed
+				loop_suggestions( include_archivings: false,
+					only: { archiving_document: (archiving_key + '_' + document_key) },
+					suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
+
+					assert_difference 'document.versions.count', 1 do
+						assert_changes -> { document.trashed? }, from: false, to: true do
+							document.merge(suggestion)
+							document.reload
+						end
+					end
+					document.update_columns(trashed: false)
+				end
+			end
+
+			# Documents, Trashed
+			loop_documents( document_modifiers: { 'trashed' => true } ) do |document, document_key, archiving_key|
+
+				# Document Suggestions, Associated
+				loop_suggestions( include_archivings: false,
+					only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
+
+					assert_difference 'document.versions.count', 1 do
+						assert_no_changes -> { document.trashed? }, from: true do
+							document.merge(suggestion)
+							document.reload
+						end
+					end
 				end
 			end
 		end
 	end
 
-	# This seems wrong
-	test "should auto increment local_id on create" do
-		load_documents
-
-		loop_archivings(reload: true) do |archiving, key|
-			@documents[key]['new_document_one'] = archiving.documents.create!(title: "New Document One", content: "Sample Content")
-			assert @documents[key]['new_document_one'].local_id == ( archiving.documents.reverse.second.local_id + 1 )
-
-			@documents[key]['new_document_two'] = archiving.documents.create!(title: "New Document Two", content: "Sample Content")
-			assert @documents[key]['new_document_two'].local_id == (@documents[key]['new_document_one'].local_id + 1)
-		end
-
-		loop_blog_posts(reload: true) do |blog_post, key|
-			@documents[key]['new_document_one'] = blog_post.documents.create!(title: "New Document One", content: "Sample Content")
-			assert @documents[key]['new_document_one'].local_id == ( blog_post.documents.reverse.second.local_id + 1 )
-
-			@documents[key]['new_document_two'] = blog_post.documents.create!(title: "New Document Two", content: "Sample Content")
-			assert @documents[key]['new_document_two'].local_id == (@documents[key]['new_document_one'].local_id + 1)
+	test "should validate presence of local_id" do
+		loop_documents do |document|
+			document.local_id = nil;
+			assert_not document.valid?
 		end
 	end
 
-	# # Requires Fixtures, Currently unsupported in ActiveStorage
+	test "should validate local uniqueness of local_id" do
+		loop_documents( blog_numbers: [], blog_modifiers: {} ) do |document, document_key, archiving_key|
+			loop_documents( blog_numbers: [], blog_modifiers: {},
+					only: { archiving: archiving_key },
+					except: { document: document_key } ) do |other_document, other_document_key|
+				document.local_id = other_document.local_id
+				assert_not document.valid?
+				document.reload
+			end
+		end
+
+		loop_documents( archiving_numbers: [], archiving_modifiers: {} ) do |document, document_key, blog_post_key|
+			loop_documents( archiving_numbers: [], archiving_modifiers: {},
+					only: { blog_post: blog_post_key },
+					except: { document: document_key } ) do |other_document, other_document_key|
+				document.local_id = other_document.local_id
+				assert_not document.valid?
+				document.reload
+			end
+		end
+	end
+
+	# This seems wrong, rewrite based on above version tests?
+	test "should auto increment local_id on create" do
+		loop_archivings(reload: true) do |archiving, key|
+			new_document_one = archiving.documents.create!(title: "New Document One")
+			assert new_document_one.local_id == ( archiving.documents.reverse.second.local_id + 1 )
+
+			new_document_two = archiving.documents.create!(title: "New Document Two")
+			assert new_document_two.local_id == ( new_document_one.local_id + 1 )
+		end
+
+		loop_blog_posts(reload: true) do |blog_post, key|
+			new_document_one = blog_post.documents.create!(title: "New Document One")
+			assert new_document_one.local_id == ( blog_post.documents.reverse.second.local_id + 1 )
+
+			new_document_two = blog_post.documents.create!(title: "New Document Two")
+			assert new_document_two.local_id == ( new_document_one.local_id + 1 )
+		end
+	end
+
+	# # Requires Fixtures, Currently unsupported/finicky in ActiveStorage
 	# test "should validate attachment of upload" do
 	# 	@documents['archiving_one']['document_one'].upload.purge
 	# 	assert_not @documents['archiving_one']['document_one'].valid?
 	# end
 
 	test "should validate presence of title" do
-		@documents['archiving_one']['document_one'].title = "";
-		assert_not @documents['archiving_one']['document_one'].valid?
+		loop_documents do |document|
+			document.title = "";
+			assert_not document.valid?
 
-		@documents['archiving_one']['document_one'].title = "    ";
-		assert_not @documents['archiving_one']['document_one'].valid?
+			document.title = "   ";
+			assert_not document.valid?
+		end
 	end
 
 	test "should validate local uniqueness of title" do
-		loop_documents(reload: true) do |document|
-			document.article.documents.each do |other_document|
-				unless document.id == other_document.id
-					document.title = other_document.title
-					assert_not document.valid?
-					document.reload
-				end
+		loop_documents( blog_numbers: [], blog_modifiers: {} ) do |document, document_key, archiving_key|
+			loop_documents( blog_numbers: [], blog_modifiers: {},
+					only: { archiving: archiving_key },
+					except: { document: document_key } ) do |other_document|
+				document.title = other_document.title
+				assert_not document.valid?
+				document.reload
+			end
+		end
+
+		loop_documents( archiving_numbers: [], archiving_modifiers: {} ) do |document, document_key, blog_post_key|
+			loop_documents( archiving_numbers: [], archiving_modifiers: {},
+					only: { blog_post: blog_post_key },
+					except: { document: document_key } ) do |other_document|
+				document.title = other_document.title
+				assert_not document.valid?
+				document.reload
 			end
 		end
 	end
 
 	test "should validate length of title (max: 64)" do
-		@documents['archiving_one']['document_one'].title = "X"
-		assert @documents['archiving_one']['document_one'].valid?
+		loop_documents do |document|
+			document.title = "X"
+			assert document.valid?
 
-		@documents['archiving_one']['document_one'].title = "X" * 64
-		assert @documents['archiving_one']['document_one'].valid?
+			document.title = "X" * 64
+			assert document.valid?
 
-		@documents['archiving_one']['document_one'].title = "X" * 65
-		assert_not @documents['archiving_one']['document_one'].valid?
+			document.title = "X" * 65
+			assert_not document.valid?
+		end
 	end
 
 	test "should not validate presence of content" do
-		@documents['archiving_one']['document_one'].content = "";
-		assert @documents['archiving_one']['document_one'].valid?
+		loop_documents do |document|
+			document.content = "";
+			assert document.valid?
 
-		@documents['archiving_one']['document_one'].content = "    ";
-		assert @documents['archiving_one']['document_one'].valid?
+			document.content = "    ";
+			assert document.valid?
+		end
 	end
 
 	test "should validate length of content (max: 4096)" do
-		@documents['archiving_one']['document_one'].content = "X"
-		assert @documents['archiving_one']['document_one'].valid?
+		loop_documents do |document|
+			document.content = "X"
+			assert document.valid?
 
-		@documents['archiving_one']['document_one'].content = "X" * 4096
-		assert @documents['archiving_one']['document_one'].valid?
+			document.content = "X" * 4096
+			assert document.valid?
 
-		@documents['archiving_one']['document_one'].content = "X" * 4097
-		assert_not @documents['archiving_one']['document_one'].valid?
+			document.content = "X" * 4097
+			assert_not document.valid?
+		end
 	end
 
 	test "should default trashed as false" do
-		load_archivings( archiving_modifiers: {}, archiving_numbers: ['one'] )
-		load_blog_posts( blog_modifiers: {}, blog_numbers: ['one'] )
+		new_archiving_doc = create(:archiving_document, trashed: nil)
+		assert_not new_archiving_doc.trashed?
 
-		@documents['archiving_one']['new_document'] = @archivings['archiving_one'].documents.create!(title: "New Document", content: "Lorem Ipsum")
-		assert_not @documents['archiving_one']['new_document'].trashed?
-
-		@documents['blog_post_one']['new_document'] = @blog_posts['blog_post_one'].documents.create!(title: "New Document", content: "Lorem Ipsum")
-		assert_not @documents['blog_post_one']['new_document'].trashed?
+		new_blog_post_doc = create(:blog_post_document, trashed: nil)
+		assert_not new_blog_post_doc.trashed?
 	end
 
 	test "should scope trashed posts" do
@@ -214,31 +315,19 @@ class DocumentTest < ActiveSupport::TestCase
 	end
 
 	test "should check for edits" do
-		assert_not @documents['archiving_one']['document_one'].edited?
+		loop_documents do |document|
+			assert_not document.edited?
 
-		@documents['archiving_one']['document_one'].updated_at = Time.now + 1
-		assert @documents['archiving_one']['document_one'].edited?
-	end
-
-	test "should check if article trashed" do
-		loop_documents( reload: true,
-			archiving_modifiers: {'trashed' => true},
-			blog_modifiers: {'trashed' => true, 'motd' => nil} ) do |document, doc_key|
-			assert document.article_trashed?
-		end
-
-		loop_documents( reload: true,
-			archiving_modifiers: {'trashed' => false},
-			blog_modifiers: {'trashed' => false, 'motd' => nil} ) do |document, doc_key|
-			assert_not document.article_trashed?
+			document.updated_at = Time.now + 1
+			assert document.edited?
 		end
 	end
 
 	test "should check if suggestable" do
-		loop_documents( reload: true, blog_numbers: [] ) do |document|
+		loop_documents( blog_numbers: [] ) do |document|
 			assert document.suggestable?
 		end
-		loop_documents( reload: true, archiving_numbers: [] ) do |document|
+		loop_documents( archiving_numbers: [] ) do |document|
 			assert_not document.suggestable?
 		end
 	end

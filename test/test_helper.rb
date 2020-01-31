@@ -2,50 +2,91 @@ ENV['RAILS_ENV'] ||= 'test'
 require_relative '../config/environment'
 require 'rails/test_help'
 
-# load 'fixture_writers'
+require 'fixture_writers'
 require 'fixture_iterators'
 require 'fixture_loaders'
+
+# write_fixtures all: true
 
 class Minitest::Unit::TestCase
 end
 
 class ActiveSupport::TestCase
+	set_fixture_class versions: PaperTrail::Version
+	fixtures :all
 	
 	include FactoryBot::Syntax::Methods
 	require "minitest/reporters"
 	Minitest::Reporters.use! Minitest::Reporters::SpecReporter.new
 	# Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
-	fixtures :all
-
 
 	# HELPER METHODS
+
+	def require_session_and_cookies
+		session.nil? || cookies.nil? rescue raise "Session and cookies not yet built"
+	end
+
+	def require_landing
+		raise "Landing not yet set" unless decode_cookie(:landing)
+	end
+
+	def require_logged_in as: user
+		if as.nil?
+			raise "Not yet logged in" unless sessioned?
+		else
+			raise "Not yet logged in as #{as.name}" unless sessioned? as: as
+		end
+	end
+
+	def require_logged_out
+		raise "Not yet logged out" if sessioned?
+		raise "Not yet forgotten" if remembered?
+	end
 
 	def set_landing
 		cookies[:landed] = true
 	end
 
-	def login_as user, password: 'password', remember: '0'
+	def build_session_and_cookies
+		log_in_as users(:admin_user_one), remember: '1'
+		log_out
+		require_session_and_cookies
+	end
+
+	def log_in_as user, password: 'password', remember: '0'
 		post login_url, params: { email: user.email, password: password, remember: remember, session: { name: '' } }
+		require_logged_in as: user
 	end
 
-	def logout
+	def log_out
 		get logout_url
+		require_logged_out
 	end
 
-	def logged_in?
-		sessioned? || remembered?
+	def sessioned? as: nil
+		require_session_and_cookies
+		if as.nil?
+			!!( session[:user_id] && User.find(session[:user_id]) )
+		else
+			!!( session[:user_id] && (User.find(session[:user_id]) == as) )
+		end
 	end
 
-	def sessioned?
-		session[:user_id] && User.find( session[:user_id] )
-	end
-
-	def remembered?
+	def remembered? as: nil
+		require_session_and_cookies
 		if session_id = decode_cookie(:session_id)
 			session = Session.find(session_id)
 			if ( remember_token = decode_cookie(:remember_token) )
-				session.authenticates? :remember, remember_token
+				if as.nil?
+					!!(session.authenticates? :remember, remember_token)
+				else
+					!!( (session.user == as) && (session.authenticates? :remember, remember_token) )
+				end
+			else
+				false
 			end
+		else
+			false
 		end
 	end
 
@@ -207,6 +248,118 @@ class ActiveSupport::TestCase
 			p article
 			p document
 			raise "Error constructing Untrash Document Path: Article type unknown"
+		end
+	end
+
+	def item_versions_url(item)
+		if item.class == Archiving
+			archiving_versions_url(item)
+		elsif item.class == Document
+			if item.article.class == Archiving
+				archiving_document_versions_url(item.article, item)
+			else
+				raise "Error constructing Item Versions Url: Item Article not Suggestable"
+			end
+		else
+			raise "Error constructing Item Versions Url: Item type unknown"
+		end
+	end
+
+	def item_version_url(item, version)
+		if item.class == Archiving
+			archiving_version_url(item, version)
+		elsif item.class == Document
+			if item.article.class == Archiving
+				archiving_document_version_url(item.article, item, version)
+			else
+				raise "Error constructing Item Version Url: Item Article not Suggestable"
+			end
+		else
+			raise "Error constructing Item Version Url: Item type unknown"
+		end
+	end
+
+	def hide_item_version_url(item, version)
+		if item.class == Archiving
+			hide_archiving_version_url(item, version)
+		elsif item.class == Document
+			if item.article.class == Archiving
+				hide_archiving_document_version_url(item.article, item, version)
+			else
+				raise "Error constructing Hide Item Version Url: Item Article not Suggestable"
+			end
+		else
+			raise "Error constructing Hide Item Version Url: Item type unknown"
+		end
+	end
+
+	def unhide_item_version_url(item, version)
+		if item.class == Archiving
+			unhide_archiving_version_url(item, version)
+		elsif item.class == Document
+			if item.article.class == Archiving
+				unhide_archiving_document_version_url(item.article, item, version)
+			else
+				raise "Error constructing Unhide Item Version Url: Item Article not Suggestable"
+			end
+		else
+			raise "Error constructing Unhide Item Version Url: Item type unknown"
+		end
+	end
+
+	def item_versions_path(item)
+		if item.class == Archiving
+			archiving_versions_path(item)
+		elsif item.class == Document
+			if item.article.class == Archiving
+				archiving_document_versions_path(item.article, item)
+			else
+				raise "Error constructing Item Versions Path: Item Article not Suggestable"
+			end
+		else
+			raise "Error constructing Item Versions Path: Item type unknown"
+		end
+	end
+
+	def item_version_path(item, version)
+		if item.class == Archiving
+			archiving_version_path(item, version)
+		elsif item.class == Document
+			if item.article.class == Archiving
+				archiving_document_version_path(item.article, item, version)
+			else
+				raise "Error constructing Item Version Path: Item Article not Suggestable"
+			end
+		else
+			raise "Error constructing Item Version Path: Item type unknown"
+		end
+	end
+
+	def hide_item_version_path(item, version)
+		if item.class == Archiving
+			hide_archiving_version_path(item, version)
+		elsif item.class == Document
+			if item.article.class == Archiving
+				hide_archiving_document_version_path(item.article, item, version)
+			else
+				raise "Error constructing Hide Item Version Path: Item Article not Suggestable"
+			end
+		else
+			raise "Error constructing Hide Item Version Path: Item type unknown"
+		end
+	end
+
+	def unhide_item_version_path(item, version)
+		if item.class == Archiving
+			unhide_archiving_version_path(item, version)
+		elsif item.class == Document
+			if item.article.class == Archiving
+				unhide_archiving_document_version_path(item.article, item, version)
+			else
+				raise "Error constructing Unhide Item Version Path: Item Article not Suggestable"
+			end
+		else
+			raise "Error constructing Unhide Item Version Path: Item type unknown"
 		end
 	end
 

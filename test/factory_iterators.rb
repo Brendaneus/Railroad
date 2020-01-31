@@ -2,7 +2,7 @@ require 'factory_loaders.rb'
 
 def loop_users( reload: false, reset: true,
 	user_modifiers: {'trashed' => nil, 'admin' => nil},
-	user_numbers: ['one', 'two'],
+	user_numbers: ['one'],
 	except: {user: nil},
 	only: {user: nil} )
 
@@ -28,8 +28,8 @@ end
 
 def loop_sessions( reload: false, reset: true,
 	user_modifiers: {'trashed' => nil, 'admin' => nil},
-	user_numbers: ['one', 'two'],
-	session_numbers: ['one', 'two', 'three', 'four'],
+	user_numbers: ['one'],
+	session_numbers: ['one'],
 	except: {user: nil, session: nil},
 	only: {user: nil, session: nil, user_session: nil} )
 
@@ -70,7 +70,7 @@ end
 
 def loop_archivings( reload: false, reset: true,
 	archiving_modifiers: {'trashed' => nil},
-	archiving_numbers: ['one', 'two'],
+	archiving_numbers: ['one'],
 	except: {archiving: nil},
 	only: {archiving: nil} )
 
@@ -97,7 +97,7 @@ end
 
 def loop_blog_posts( reload: false, reset: true,
 	blog_post_modifiers: {'trashed' => nil, 'motd' => nil},
-	blog_post_numbers: ['one', 'two'],
+	blog_post_numbers: ['one'],
 	except: {blog_post: nil},
 	only: {blog_post: nil} )
 
@@ -125,9 +125,9 @@ end
 
 def loop_forum_posts( reload: false, reset: true,
 	user_modifiers: {'trashed' => nil, 'admin' => nil},
-	user_numbers: ['one', 'two'],
+	user_numbers: ['one'],
 	forum_post_modifiers: {'trashed' => nil, 'sticky' => nil, 'motd' => nil},
-	forum_post_numbers: ['one', 'two'],
+	forum_post_numbers: ['one'],
 	except: {user: nil, forum_post: nil},
 	only: {user: nil, forum_post: nil, user_forum_post: nil} )
 

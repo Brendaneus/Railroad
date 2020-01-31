@@ -2,71 +2,35 @@ user_one:
   id: 1
   name: 'User One'
   email: 'user_one@example.com'
-  password_digest: '$2a$04$zvcRQ672Y1C3biTTTBLLS./otDr8BvMtOnJoFCQPXBq6hmgyrpXWS'
+  password_digest: '$2a$04$Sx3j.be9q2/FssDrsE3JUuM6OAwJE0oX3cqqToHs13EhOELkdDFtW'
   bio: 'Hi, my name is User One'
   admin: false
   trashed: false
 
-user_two:
-  id: 2
-  name: 'User Two'
-  email: 'user_two@example.com'
-  password_digest: '$2a$04$kz9kzYZEEpVuotKpwRvvt.XoVjlQCS09ibeWx0ze6PbCRMslo.sfS'
-  bio: 'Hi, my name is User Two'
-  admin: false
-  trashed: false
-
 admin_user_one:
-  id: 3
+  id: 2
   name: 'Admin User One'
   email: 'admin_user_one@example.com'
-  password_digest: '$2a$04$20m1go4WtJOnXZs.hCl/Me/l7Xk0Dzp8IAlx3HOY08IaYQEr9wf/G'
+  password_digest: '$2a$04$xfjMVtgwMX9lxOxStRrH1uGxKcu1phAVh9y6CWTDXHkEzvB9tXjce'
   bio: 'Hi, my name is Admin User One'
   admin: true
   trashed: false
 
-admin_user_two:
-  id: 4
-  name: 'Admin User Two'
-  email: 'admin_user_two@example.com'
-  password_digest: '$2a$04$RdQ5RLoH93dp3gZ.MSve.OXylrLyfZn2nW85o.ijCk2ifoeHrvO4C'
-  bio: 'Hi, my name is Admin User Two'
-  admin: true
-  trashed: false
-
 trashed_user_one:
-  id: 5
+  id: 3
   name: 'Trashed User One'
   email: 'trashed_user_one@example.com'
-  password_digest: '$2a$04$r2CBr/rk5E4px3hys.P7..c98pBpc6BY3/m4gst1jG/2m3kCGSvpC'
+  password_digest: '$2a$04$s7jJyzxoVpcAwMt/e66NLOCL7EL6m/A2V2VdCz9LNZ6ED9IPYsCOS'
   bio: 'Hi, my name is Trashed User One'
   admin: false
   trashed: true
 
-trashed_user_two:
-  id: 6
-  name: 'Trashed User Two'
-  email: 'trashed_user_two@example.com'
-  password_digest: '$2a$04$daQl.nPqIv8hU29FRDlf2uyP6SQc9bRicfqXVPNn0ZFXqSfsjmkaG'
-  bio: 'Hi, my name is Trashed User Two'
-  admin: false
-  trashed: true
-
 trashed_admin_user_one:
-  id: 7
+  id: 4
   name: 'Trashed Admin User One'
   email: 'trashed_admin_user_one@example.com'
-  password_digest: '$2a$04$1QTyHoq1RtDWFgF5zqwhEOkR6zvjoj3.zqvbaEfmX8baKbEoijcmK'
+  password_digest: '$2a$04$1d2CChysNds6bU7UNW2/3O7vjRdZ08POHQnLRz8hVzEJYwBUEbYbO'
   bio: 'Hi, my name is Trashed Admin User One'
-  admin: true
-  trashed: true
-
-trashed_admin_user_two:
-  id: 8
-  name: 'Trashed Admin User Two'
-  email: 'trashed_admin_user_two@example.com'
-  password_digest: '$2a$04$npImM/hFrKeHzttd9cyIju4oXNidphKCI5HRwYovxl7nSZruzj4x2'
-  bio: 'Hi, my name is Trashed Admin User Two'
   admin: true
   trashed: true
 

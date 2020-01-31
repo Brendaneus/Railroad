@@ -4,21 +4,9 @@ archiving_one:
   content: 'Lorem ipsum'
   trashed: false
 
-archiving_two:
-  id: 2
-  title: 'Archiving Two'
-  content: 'Lorem ipsum'
-  trashed: false
-
 trashed_archiving_one:
-  id: 3
+  id: 2
   title: 'Trashed Archiving One'
-  content: 'Lorem ipsum'
-  trashed: true
-
-trashed_archiving_two:
-  id: 4
-  title: 'Trashed Archiving Two'
   content: 'Lorem ipsum'
   trashed: true
 

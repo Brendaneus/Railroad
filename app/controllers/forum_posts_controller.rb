@@ -1,10 +1,11 @@
 class ForumPostsController < ApplicationController
 
 	before_action :require_login, except: [:index, :show]
-	before_action :require_authorize, only: [:edit, :update, :trash, :untrash]
-	before_action :require_admin, only: [:trashed, :destroy]
 	before_action :require_untrashed_user, except: [:index, :trashed, :show]
-	before_action :require_authorize_or_admin_for_trashed, only: :show
+	before_action :require_authorize_or_admin_for_trashed, only: [:show]
+	before_action :require_authorize, only: [:edit, :update, :trash, :untrash]
+	before_action :require_admin, only: [:destroy]
+
 	before_action :set_avatar_bucket, unless: -> { Rails.env.test? }
 	after_action :mark_activity, only: [:create, :update, :trash, :untrash, :destroy], if: :logged_in?
 

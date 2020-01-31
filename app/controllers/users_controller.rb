@@ -5,7 +5,8 @@ class UsersController < ApplicationController
 	before_action :require_authorize, only: [:edit, :update, :trash, :untrash]
 	before_action :require_admin, only: [:trashed, :destroy]
 	before_action :require_untrashed_user, only: [:destroy]
-	before_action :require_admin_for_trashed, only: :show
+	before_action :require_admin_for_trashed, only: [:show]
+
 	before_action :set_avatar_bucket, unless: -> { Rails.env.test? }
 	after_action :mark_activity, only: [:create, :update, :trash, :untrash, :destroy], if: :logged_in?
 
@@ -30,8 +31,7 @@ class UsersController < ApplicationController
 	def create
 		@user = User.new( user_params )
 		if @user.save
-			log_in @user
-			current_user = @user
+			log_in_as @user
 			if params[:remember] == "1"
 				session = @user.sessions.build(session_params)
 				session.ip = request.remote_ip if params[:save_ip]
@@ -90,7 +90,7 @@ class UsersController < ApplicationController
 
 	def destroy
 		@user = User.find( params[:id] )
-		log_out if current_user == @user
+		log_out if (current_user == @user)
 		if @user.destroy
 			flash[:success] = "User account deleted."
 			if admin_user?

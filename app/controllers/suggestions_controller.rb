@@ -2,12 +2,14 @@ class SuggestionsController < ApplicationController
 
 	include SuggestionsHelper
 
-	before_action :require_login, only: [:trashed, :new, :create, :edit, :update, :trash, :untrash, :delete]
-	before_action :require_untrashed_user, only: [:new, :create, :edit, :update, :merge, :destroy]
+	before_action :require_login, except: [:index, :show]
+	before_action :require_untrashed_user, except: [:index, :trashed, :show]
 	before_action :require_admin, only: [:merge, :destroy]
 	before_action :set_citation
 	before_action :require_authorize, only: [:edit, :update, :trash, :untrash]
 	before_action :require_authorize_or_admin_for_trashed, only: [:show]
+	before_action :require_admin_for_trashed_archiving_or_document#, except: [:trash, :untrash]
+
 	after_action :mark_activity, only: [:create, :update, :trash, :untrash, :merge, :destroy], if: :logged_in?
 
 	def index
@@ -91,10 +93,14 @@ class SuggestionsController < ApplicationController
 
 	def merge
 		@suggestion = Suggestion.find( params[:id] )
+		suggestion_trashed_state = @suggestion.trashed?
+		@suggestion.update_columns(trashed: false)
+
 		if @citation.merge(@suggestion)
 			flash[:success] = "The suggestion was successfully merged."
 			redirect_to citation_path(@citation)
 		else
+			@suggestion.update_columns(trashed: suggestion_trashed_state)
 			flash[:failure] = "There was a problem merging the suggestion."
 			redirect_back fallback_location: citation_suggestions_path(@citation)
 		end
@@ -139,6 +145,13 @@ class SuggestionsController < ApplicationController
 		def require_authorize_or_admin_for_trashed
 			unless ( authorized_for? ( suggestion = Suggestion.find(params[:id]) ).user ) || !suggestion.trashed? || admin_user?
 				flash[:warning] = "This suggestion has been trashed and cannot be viewed."
+				redirect_back fallback_location: citation_suggestions_path(@citation)
+			end
+		end
+
+		def require_admin_for_trashed_archiving_or_document
+			if (@citation.trashed? || ((@citation.class == Document) && @citation.article.trashed?)) && !admin_user?
+				flash[:warning] = "This suggestion's sources have been trashed and cannot be viewed."
 				redirect_back fallback_location: citation_suggestions_path(@citation)
 			end
 		end

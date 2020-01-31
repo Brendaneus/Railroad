@@ -3,9 +3,9 @@
 
 		<%= link_to "Edit Archiving", edit_archiving_path( @archiving ) if untrashed_user? %>
 		
-		<%= link_to "Trash Archiving", trash_archiving_path( @archiving ) unless @archiving.trashed? %>
+		<%= link_to "Trash Archiving", trash_archiving_path( @archiving ) unless @archiving.trashed? || trashed_user? %>
 		
-		<%= link_to "Restore Archiving", untrash_archiving_path( @archiving ) if @archiving.trashed? %>
+		<%= link_to "Restore Archiving", untrash_archiving_path( @archiving ) if @archiving.trashed? && untrashed_user? %>
 
 		<%= link_to "Delete Archiving", @archiving, method: :delete, data: { confirm: 'Really delete this post?'} if @archiving.trashed? && untrashed_user? %>
 
