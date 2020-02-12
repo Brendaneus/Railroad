@@ -52,6 +52,24 @@ module DocumentsHelper
 		end
 	end
 
+	def trashed_article_documents_path(article, link: false)
+		if article.class == BlogPost
+			if link
+				link_to "Trashed Documents", trashed_blog_post_documents_path(article)
+			else
+				trashed_blog_post_documents_path(article)
+			end
+		elsif article.class == Archiving
+			if link
+				link_to "Trashed Documents", trashed_archiving_documents_path(article)
+			else
+				trashed_archiving_documents_path(article)
+			end
+		else
+			raise "Error constructing Trashed Documents Path: Article type unknown"
+		end
+	end
+
 	def article_path(article, link: false)
 		if article.class == BlogPost
 			if link
@@ -121,6 +139,42 @@ module DocumentsHelper
 			end
 		else
 			raise "Error constructing Edit Document Path: Article type unknown"
+		end
+	end
+
+	def hide_article_document_path(article, document, link: false)
+		if article.class == BlogPost
+			if link
+				link_to "Hide", hide_blog_post_document_path(article, document)
+			else
+				hide_blog_post_document_path(article, document)
+			end
+		elsif article.class == Archiving
+			if link
+				link_to "Hide", hide_archiving_document_path(article, document)
+			else
+				hide_archiving_document_path(article, document)
+			end
+		else
+			raise "Error constructing Hide Document Path: Article type unknown"
+		end
+	end
+
+	def unhide_article_document_path(article, document, link: false)
+		if article.class == BlogPost
+			if link
+				link_to "Show", unhide_blog_post_document_path(article, document)
+			else
+				unhide_blog_post_document_path(article, document)
+			end
+		elsif article.class == Archiving
+			if link
+				link_to "Show", unhide_archiving_document_path(article, document)
+			else
+				unhide_archiving_document_path(article, document)
+			end
+		else
+			raise "Error constructing Unhide Document Path: Article type unknown"
 		end
 	end
 

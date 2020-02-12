@@ -3,10 +3,13 @@ class Suggestion < ApplicationRecord
 	include Commentable
 	include Editable
 	include Ownable
+	include Hidable
 	include Trashable
 
 	belongs_to :citation, polymorphic: true
 	belongs_to :user
+
+	scope :non_hidden_or_owned_by, -> (user) { where(hidden: false).or( where(user: user) ) }
 
 	before_validation :set_matching_to_nil, if: -> { citation.present? }
 

@@ -1,5 +1,18 @@
 {
   "name": "railroad",
   "private": true,
-  "dependencies": {}
+  "dependencies": {
+    "@rails/actioncable": "^6.0.2-1",
+    "@rails/activestorage": "^6.0.2-1",
+    "@rails/ujs": "^6.0.2-1",
+    "@rails/webpacker": "^4.2.2",
+    "turbolinks": "^5.2.0",
+    "vue": "^2.6.11",
+    "vue-loader": "^15.8.3",
+    "vue-template-compiler": "^2.6.11",
+    "vue-turbolinks": "^2.0.4"
+  },
+  "devDependencies": {
+    "webpack-dev-server": "^3.10.1"
+  }
 }

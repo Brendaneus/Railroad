@@ -1,0 +1,12 @@
+<% content_for :header_extension do %>
+	/ <%= articles_path(@article, link: true) %>
+	<% if @article.trashed? %>
+		/ <%= trashed_articles_path(@article, link: true) %>
+	<% end %>
+	/ <%= article_path(@article, link: true) %>
+	/ <%= trashed_article_documents_path(@article, link: true) %>
+<% end %>
+
+<main>
+	<%= (render @documents) || (tag.h2 "There isn't anything here...") %>
+</main>

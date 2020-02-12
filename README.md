@@ -12,15 +12,18 @@
 	- [ ] Master key has to be set every time the environment is reset.
 		Should this get a more permanent fix?
 
+
 - [ ] **Clean up tests** - **TOTAL TIME:** 00:04:15
 
 	- [ ] https://github.com/paper-trail-gem/paper_trail#7-testing
 	- [ ] **Reduce all redundant testing to relevent security implementations**
 		- Would like to think more on this one, and how much overhead will be available
 	- [ ] **Reduce all loading and iterating to one recursive method using nested hashes**
-	- [ ] **POWER WASH THE DAMN COMMENTS CONTROLLER TESTS**
 	- [ ] **Add helper tests (auto-logs, etc?)**
+	- [ ] **Add integration testing using Capybara**
+		- And migrate all unnecessary assert_selectors from controller tests
 	- [ ] Small gripe: the trashed modifier switches after other modifiers can this be patched up for verbose test reads?
+	- [ ] Change all blog_modifiers and forum_numbers, etc to use '_post_' (blog_post_modifiers)
 	- [ ] Also, could the guests be included in loops and loads before all other users?
 	- [ ] Even easier, change titles, contents, and names to use spacers in between all the keys
 	- [ ] Guardfile
@@ -38,6 +41,8 @@
 			- [ ] Move guest_users to be included in guest-compatable user hashes
 		- [ ] **Break every similar loop into a helper call with contextual parameters (name: '...', modifiers: {...}, numbers: [...], etc)**
 			- This will make bug tracking and code maintanence _a lot_ simpler.
+			- [ ] Change modifier and number mapping to check for invalid keys
+				- This could be a function for code reuse
 	- [ ] Test Definition
 		- [ ] Add complete definition for important content in views (ie headers, form inputs)
 			- Do this after Vue update
@@ -59,32 +64,10 @@
 
 	- [ ] **Speed up all tests**
 		- [x] _Quick fix?_ Reduce instances to one of each possible unique combination for speed boost
+		- [x] Split up fixture loading to relevant test files?
+		- [x] Parallelize tests
 		- [ ] *Cut down on controller association testing, like comments, documents*
 			- Most of these could not possibly show up from a one-off error, and would show up in other tests anyway 
-		- [ ] Split up fixture loading to relevant test files?
-
-
-
-- [x] **Trash Can [Show/Hide] Update**
-	- [ ] **IMPORTANT** Show trashed users dependent records?
-	- [ ] **Future update:**
-		- [ ] **Add Show/Hide**
-			- trash for more permenancy, show/hide for hidden changes, etc.
-
-		- [ ] Trash/Hide All Action for Users (or admins?)
-		- [ ] Page(s) showing all records and their dependency's trashed state
-		- [ ] Trashed and Hidden 'placeholder' screens? 
-			- Trashed: image of a trash can
-			- Hidden: incognito-esque icon
-
-		- [ ] Change all create [and new] actions to filter *everyone* when dependencies are trashed/hidden
-		- [ ] Allow trashed users to trash/untrash and show/hide owned records, but not edit
-		- [ ] Allow hidden users to trash/untrash and show/hide owned records, and also edit
-
-		- [ ] Change all trashing and untrashing actions into put/patch
-		- [ ] Change all 'untrashing' into restoring/recycling
-
-		- [ ] Code Reuse?
 
 
 - [x] **Users (& Sessions) Update**
@@ -95,74 +78,110 @@
 		- [ ] Add custom crop editing (javascript?)
 
 
-- [x] **Suggests Update**
-	- [x] Archives
-		- [x] Model
-		- [x] Controller
-			- [x] Show
-	- [x] Documents
-		- [x] Model
-		- [x] Controller
-			- [x] Show
-	- [x] Suggestions
-		- [x] Model
-			- [x] Change users to be required
-			- [x] Remove suggestable concern?
-		- [x] Controller
-			- [x] Index
-			- [x] Trashed
-			- [x] Show
-			- [x] New
-			- [x] Create
-			- [x] Edit
-			- [x] Update
-			- [x] Merge
-			- [x] Trash
-			- [x] Untrash
-			- [x] Destroy
-		- [x] Views
-			- [x] Index
-			- [x] Trashed
-			- [x] Show
-			- [x] New
-			- [x] Edit
-	- [x] Versions
-		- [x] Controller
-			- [x] Index
-			- [x] Show
-			- [x] Hide
-			- [x] Unhide
-			- [x] Delete
-	- [ ] **Future update:**
-		- **COME BACK TO THIS UPDATE AFTER FINISHING SHOW/HIDE**
-		- [ ] **What should be done about old (no longer relevant) suggestions after one is merged?**
-		- [ ] Should merging favor trashed state after all?
-			- Require restoring from trashcan to merge?
-		- [ ] Get Documents into views (if possible)
-			- This may be more of a hassle, and potential db overload than it's worth
-		- [ ] Versions
-			- [ ] Show
-				- [ ] Togglable diff
-			- [ ] Index
-				- [ ] Highlight current version (necessary?)
-			- [ ] Restore
-				- Also, keep other versions if possible (restore creates new version?)
-				- This is where the above simple highlight change will be important,
-					depending on how versions get ordered
-			- [ ] Diff
-				- Shows changes between any two versions
+- [x] **Show/Hide Update**
+	- *Update redesigning trashed state to function as soft delete (out of the way)
+		and introducing show/hide feature for making discrete edits, etc*
 
+	- **Trash Can**
+		- Trashed Records are effectively in stasis awaiting destruction
+		- Trashed Users can't make any changes and are effectively inactive accounts.
+		- Users become 'deleted' on record
+
+	- **Hidden Mode (when current user is hidden)**
+		- Like incognito mode?
+			- Allows making changes discretely, but not posting
+			- Users become 'hidden user' on records
+
+	- [x] Models
+		- [x] Archivings
+		- [x] Blog Posts
+		- [x] Forum Posts
+		- [x] Documents
+		- [x] Suggestions
+		- [x] Comments
+		- [x] Users
+	- [x] Controllers
+		- [x] Archivings
+		- [x] Blog Posts
+		- [x] Forum Posts
+		- [x] Documents
+		- [x] Suggestions
+		- [x] Versions
+		- [x] Comments
+		- [x] Users
+		- [x] Sessions
+
+	- [ ] Features -- Add these in the next two updates
+		- [ ] Trash/Hide All Action for Users (or admins)
+			- Think relative to all comments, or all forum posts
+		- [ ] Page(s) showing all records and their dependency's trashed state
+			- For editing (trashed/hidden) with trashed parent records
+			- IE: Blog Post and Comments, Archiving and Suggestion
+		- [ ] Trashed and Hidden 'placeholder' screens(?)
+			- Trashed: image of a trash can
+			- Hidden: incognito-esque icon
+
+	- [ ] System
+		- RECOMMEND ADDING A HIDDEN-STATE EQUIVALENT OF #TRASH_CANNED CONCERN METHOD
+		- The new 'hidden' modifier kills the tests: now over 25000 fixtures on comments
+
+	- [ ] Code Reuse(???)
+
+- [ ] **Gut the tests, extract to a reusable gem, and test by filters / aspect**
 
 - [ ] **Mobile/React Update**
+	- [ ] **Is this a good idea now?**
+		- Possibly way overcomplicated for a Rails app
+
+	- [ ] Webpacker
+		- [ ] install react
+		- [ ] react-rails
+	- [ ] copy all routes under subdomain
 	- [ ] Add json responses (templates?) for all controllers
 	- [ ] Create mobile-friendly standalone single page app under special subdomain
 
+- **Flash messages are inconsistent**
+- **And filters could use a tidying up too.**
+
+- **Some where between these two, add integration tests (supporting javascript) and move all non-filter (accessibility) controller test code into them**
 
 - [ ] **Vue Update**
-	- [ ] Add dropdowns to all sections
-	- [ ] Add User Trashed tab support
-	- [ ] Add Comment and Document Indexes and Trashed Tabs
-		- [ ] Use integration tests to drive javascript code
+	- *Adds Webpacker and a json interface for each action in the entire app.*
+		- This could make or break the possibility of a SPA being included alongside the core app, or at least add the option for external interfaces to use this as an API.
+
+	- [ ] Add full Suite of CRUD+ actions for each controller (give or take)
+		- with support for hot-loading fragments using vue (drop downs)
+		- This should be a feature to reduce load on database, not 'modularize'
+
+	- [x] Webpacker
+		- [x] Vue Configuration
+	- [ ] **modularize header extensions** ( or maybe refactor them altogether for html snippets? )
+	- [ ] Navigation Bar
+		- [ ] Add dropdowns to all sections (?)
+	- [ ] Trash Can
+		- Subrecords like Documents and Comments can have something like a trashcan tab with number of trashed records inside
+	- [ ] Add User Trashed tab support (?)
+	- [ ] Things like sessions should be auto-created unless a hover (or first click) dropdown for advanced editing is clicked
+
+
+- [ ] **Suggests Update V2**
+	- **COME BACK TO THIS UPDATE AFTER FINISHING SHOW/HIDE**
+	- [ ] **What should be done about old (no longer relevant) suggestions after one is merged?**
+	- [ ] Should merging favor trashed state after all? -- NO
+		- Require restoring from trashcan to merge? -- YES
+	- [ ] Get Documents into views (if possible)
+		- This may be more of a hassle, and potential db overload than it's worth -- LIKELY
+	- [ ] Versions
+		- [ ] Show
+			- [ ] Togglable diff
+		- [ ] Index
+			- [ ] Highlight current version (necessary?)
+		- [ ] Restore
+			- Also, keep other versions if possible (restore creates new version?)
+			- This is where the above simple highlight change will be important,
+				depending on how versions get ordered
+		- [ ] Diff
+			- Shows changes between any two versions
 
 
 - [ ] **Forums Update**
@@ -180,72 +199,76 @@
 	- Remove ApplicationController method
 
 
-- [ ] **ON VISUAL REDESIGN,** add some kind of eye catching animation (subtle, still) to
-	encourage discovery and use of routing link chain
+- Extra Things:
 
-- [ ] **Add a concern for documentable models**
+	- [ ] **ON VISUAL REDESIGN,** add some kind of eye catching animation (subtle, still) to
+		encourage discovery and use of routing link chain
 
-- [ ] Add catches (or conditionals) to each controller action for missing records (potential error 500)
+	- [ ] **Add a concern for documentable models**
 
-- [ ] Marking activity is triggered even when not authorized (and activity has not happened)
+	- [ ] Should MOTDs expire within a day?
 
-- [ ] Change trashed user redirects on actions such as new & edit to allow, and display a warning flash message instead
+	- [ ] Add catches (or conditionals) to each controller action for missing records (potential error 500)
 
-- [ ] Refactor timestamps partial to better reflect use of passed arguments
+	- [ ] Marking activity is triggered even when not authorized (and activity has not happened)
 
-- [ ] Add User last_active checks to all controller tests
+	- [ ] Change trashed user redirects on actions such as new & edit to allow, and display a warning flash message instead
 
-- [ ] Set up partial inheritance with versions
+	- [ ] Refactor timestamps partial to better reflect use of passed arguments
 
-- [ ] Move new comments into partial calls
+	- [ ] Add User last_active checks to all controller tests
 
-- [ ] Scope document thumbnails to non-trashed
+	- [ ] Set up partial inheritance with versions
 
-- [ ] Put redundant model code into concerns
-	- Posts' titles and content
+	- [ ] Move new comments into partial calls
 
-- [ ] Add sample files to fixtures
+	- [ ] Scope document thumbnails to non-trashed
 
-- Reduce session and cookie clutter
-	- [ ] Change user_id session to session_token
-	- [ ] Change user_id and remember_token cookies to remember_token (?)
+	- [ ] Put redundant model code into concerns
+		- Posts' titles and content
 
-- [ ] Mirror upload database (GCP?)
+	- [ ] Add sample files to fixtures
 
-- [ ] Add pagination
+	- Reduce session and cookie clutter
+		- [ ] Change user_id session to session_token
+		- [ ] Change user_id and remember_token cookies to remember_token (?)
 
-- [ ] Add Guest-Mode option to layout
+	- [ ] Mirror upload database (GCP?)
 
-- [ ] Change redirects in before_filters
+	- [ ] Add pagination
 
-- [ ] Fix Session Testing (remembered check)
+	- [ ] Add Guest-Mode option to layout
 
-- [ ] Add document seeds
+	- [ ] Change redirects in before_filters
 
-- [ ] **Set seeded admin to require password change on first visit**
+	- [ ] Fix Session Testing (remembered check)
 
-- [ ] Clean up routes with _routing concerns_
+	- [ ] Add document seeds
 
-- [ ] Implement **FriendlyId**
+	- [ ] **Set seeded admin to require password change on first visit**
 
-- [ ] **Bundle clean --force**
+	- [ ] Clean up routes with _routing concerns_
 
-- [ ] Add in-view error handling (missing attachments, etc)
-	- [ ] Extend missing attachements icon to failed s3 requests
+	- [ ] Implement **FriendlyId**
 
-- [ ] Minimize server load by combining/joining database queries
+	- [ ] **Bundle clean --force**
 
-- [ ] Blog tags/sections?
+	- [ ] Add in-view error handling (missing attachments, etc)
+		- [ ] Extend missing attachements icon to failed s3 requests
 
-- [ ] Go through and translate all tabs to spaces
+	- [ ] Minimize server load by combining/joining database queries
 
-- **NOTES:**
-	- Test Env has _cookies_with_metadata_ disabled
+	- [ ] Blog tags/sections?
+
+	- [ ] Go through and translate all tabs to spaces
+
+	- **NOTES:**
+		- Test Env has _cookies_with_metadata_ disabled
 
 
 ## Nav Bar
 - [x] **TESTS**
-	- [x] Integration - 00:00:02
+	- [ ] Integration - 00:00:02
 
 - [x] **Home Pages**
 - [x] **Blog**
@@ -258,7 +281,7 @@
 
 ## Home Pages
 - [x] **TESTS**
-	- [x] Controller - 00:00:01
+	- [ ] Controller - 00:00:01
 
 - [x] **Landing page**
 	- [x] Redirect
@@ -281,9 +304,9 @@
 - **has_many Comments**
 
 - [ ] **TESTS**
-	- [x] Model - 00:00:11
+	- [x] Model - 00:01:07
 		- [ ] Improve email regex tests
-	- [x] Controller - 00:00:14
+	- [x] Controller - 00:00:03
 
 - [x] Confirm on destructive actions
 - [ ] Add _Email Confirmations_
@@ -305,9 +328,9 @@
 - **belongs_to Users**
 
 - [ ] **TESTS**
-	- [x] Model - 00:00:01
+	- [x] Model - 00:00:03
 		- [ ] Add Token & Digest support
-	- [x] Controller - 00:00:08
+	- [ ] Controller - 00:00:08
 		- [ ] Add helper tests (auto-logs, etc?)
 
 - [x] **index**
@@ -327,8 +350,8 @@
 - **has_many Comments**
 
 - [x] **TESTS**
-	- [x] Model - 00:00:01
-	- [x] Controller - 00:00:04
+	- [x] Model - 00:00:24
+	- [x] Controller - 00:00:39
 
 - [x] Confirm on destructive actions
 
@@ -349,8 +372,8 @@
 - **has_many Suggestions**
 
 - [x] **TESTS**
-	- [x] Model - 00:00:04
-	- [x] Controller - 00:00:03
+	- [x] Model - 00:00:06
+	- [x] Controller - 00:00:02
 
 - [x] Confirm on destructive actions
 - [ ] Filter non-admins to suggestions on _**database**_ actions
@@ -367,15 +390,15 @@
 	- [ ] VERY EXPLICIT CONFIRM
 
 
-## Document
+## Documents
 - **belongs_to Article (Archiving or Blog Post)**
 - **has_many Suggestions**
 
 - [ ] **TESTS**
-	- [x] Model - 00:00:03
+	- [x] Model - 00:00:39
 		- [ ] Test for attachment presence (Unsupported, see below)
 		- [ ] Test for attachment dependent purge (and replacement)
-	- [x] Controller - 00:00:05
+	- [x] Controller - 00:00:14
 
 - [ ] Confirm on destructive actions
 - [ ] Filter non-admins to suggestions on _**database**_ actions
@@ -401,8 +424,8 @@
 - **belongs_to Citation (Archiving or Document)**
 
 - [x] **TESTS**
-	- [x] Model - 00:00:14
-	- [x] Controller - 00:00:27
+	- [x] Model - 00:02:17
+	- [z] Controller - 00:04:11
 
 - [ ] Confirm on destructive actions
 - [ ] Add create capabilities on Article create
@@ -423,7 +446,7 @@
 
 ## Versions (PaperTrail)
 - [x] **TESTS**	
-	- [x] Controller - 00:00:05
+	- [ ] Controller - 00:00:05
 
 
 ## Forum_Posts
@@ -431,8 +454,8 @@
 - **has_many Comments**
 
 - [x] **TESTS**
-	- [x] Model - 00:00:04
-	- [x] Controller - 00:00:20
+	- [x] Model - 00:00:30
+	- [x] Controller - 00:01:35
 
 - [x] Confirm on destructive actions
 
@@ -452,8 +475,8 @@
 - **belongs_to User (optional)**
 
 - [x] **TESTS**
-	- [x] Model - 00:00:12
-	- [x] Controller - 00:02:25
+	- [x] Model - 00:03:34
+	- [ ] Controller - 00:02:25
 
 - [x] Confirm on destructive actions
 - [ ] Add layouts for comment renders in user show
@@ -465,4 +488,4 @@
 
 ### Errors
 - [x] **TESTS**
-	- [x] Controller - 00:00:01
+	- [ ] Controller - 00:00:01

@@ -1,6 +1,7 @@
 require 'test_helper'
 
 class ArchivingTest < ActiveSupport::TestCase
+	fixtures :archivings, :documents, :suggestions, :versions
 
 	def setup
 		load_archivings
@@ -8,10 +9,12 @@ class ArchivingTest < ActiveSupport::TestCase
 
 	test "should associate with documents" do
 		loop_archivings do |archiving, archiving_key|
+
 			assert archiving.documents ==
 				load_documents( flat_array: true,
-					blog_modifiers: {}, blog_numbers: [],
-					only: {archiving: archiving_key} )
+					include_blogs: false,
+					only: { archiving: archiving_key } )
+
 		end
 	end
 
@@ -19,7 +22,7 @@ class ArchivingTest < ActiveSupport::TestCase
 		loop_archivings do |archiving, archiving_key|
 			assert archiving.suggestions ==
 				load_suggestions( flat_array: true,
-					document_numbers: [],
+					include_documents: false,
 					only: { archiving: archiving_key } )
 		end
 	end
@@ -28,21 +31,21 @@ class ArchivingTest < ActiveSupport::TestCase
 		loop_archivings do |archiving, archiving_key|	
 			assert archiving.versions ==
 				load_versions( flat_array: true,
-					document_numbers: [],
+					include_documents: false,
 					only: { archiving: archiving_key } )
 		end
 	end
 
 	test "should dependant destroy documents" do
-		load_documents( blog_modifiers: {}, blog_numbers: [] )
+		load_documents
 
 		loop_archivings do |archiving, archiving_key|
 			archiving.destroy
 			
 			assert_raise(ActiveRecord::RecordNotFound) { archiving.reload }
 
-			loop_documents( blog_modifiers: {}, blog_numbers: [],
-				only: {archiving: archiving_key} ) do |document|
+			loop_documents( include_blogs: false,
+				only: { archiving: archiving_key } ) do |document|
 				assert_raise(ActiveRecord::RecordNotFound) { document.reload }
 			end
 		end
@@ -56,8 +59,8 @@ class ArchivingTest < ActiveSupport::TestCase
 			
 			assert_raise(ActiveRecord::RecordNotFound) { archiving.reload }
 
-			loop_suggestions( document_numbers: [],
-				only: {archiving: archiving_key} ) do |suggestion|
+			loop_suggestions( include_documents: false,
+				only: { archiving: archiving_key } ) do |suggestion|
 				assert_raise(ActiveRecord::RecordNotFound) { suggestion.reload }
 			end
 		end
@@ -93,13 +96,13 @@ class ArchivingTest < ActiveSupport::TestCase
 
 	# Could use a more thorough collection of users
 	# to allow more parallel testing mergability of unassociated suggestions
-	test "should merge suggestions and save version with name (prefer trashed state)" do
+	test "should merge suggestions and save version with name (prefer hidden state)" do
 		load_suggestions
 
 		with_versioning do
 			loop_archivings do |archiving, archiving_key|
 				# Archiving Suggestions, Unassociated
-				loop_suggestions( document_numbers: [],
+				loop_suggestions( include_documents: false,
 					except: { archiving: archiving_key },
 					user_numbers: [] ) do |suggestion|
 
@@ -116,46 +119,46 @@ class ArchivingTest < ActiveSupport::TestCase
 				end
 			end
 
-			# Archivings, Un-Trashed
-			loop_archivings( archiving_modifiers: { 'trashed' => false } ) do |archiving, archiving_key|
-
-				# Archiving Suggestions, Associated, Un-Trashed
-				loop_suggestions( document_numbers: [],
+			# Archivings, Un-Hidden
+			loop_archivings( archiving_modifiers: { 'hidden' => false } ) do |archiving, archiving_key|
+				
+				# Archiving Suggestions, Associated, Un-Hidden
+				loop_suggestions( include_documents: false,
 					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
+					suggestion_modifiers: { 'hidden' => false } ) do |suggestion|
 
 					assert_difference 'archiving.versions.count', 1 do
-						assert_no_changes -> { archiving.trashed? }, from: false do
+						assert_no_changes -> { archiving.hidden? }, from: false do
 							archiving.merge(suggestion)
 							archiving.reload
 						end
 					end
 				end
 
-				# Archiving Suggestions, Associated, Trashed
-				loop_suggestions( document_numbers: [],
+				# Archiving Suggestions, Associated, Hidden
+				loop_suggestions( include_documents: false,
 					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
+					suggestion_modifiers: { 'hidden' => true } ) do |suggestion|
 
 					assert_difference 'archiving.versions.count', 1 do
-						assert_changes -> { archiving.trashed? }, from: false, to: true do
+						assert_changes -> { archiving.hidden? }, from: false, to: true do
 							archiving.merge(suggestion)
 							archiving.reload
 						end
 					end
-					archiving.update_columns(trashed: false)
+					archiving.update_columns(hidden: false)
 				end
 			end
 
-			# Archivings, Trashed
-			loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving, archiving_key|
+			# Archivings, Hidden
+			loop_archivings( archiving_modifiers: { 'hidden' => true } ) do |archiving, archiving_key|
 
 				# Archiving Suggestions, Associated
-				loop_suggestions( document_numbers: [],
+				loop_suggestions( include_documents: false,
 					only: { archiving: archiving_key } ) do |suggestion|
 
 					assert_difference 'archiving.versions.count', 1 do
-						assert_no_changes -> { archiving.trashed? }, from: true do
+						assert_no_changes -> { archiving.hidden? }, from: true do
 							archiving.merge(suggestion)
 							archiving.reload
 						end
@@ -227,9 +230,22 @@ class ArchivingTest < ActiveSupport::TestCase
 		end
 	end
 
+	test "should default hidden as false" do
+		new_archiving = create(:archiving, hidden: nil)
+		assert_not new_archiving.hidden?
+	end
+
 	test "should default trashed as false" do
-		@archivings['new_archiving'] = Archiving.create!(title: "New Archiving", content: "Lorem Ipsum")
-		assert_not @archivings['new_archiving'].trashed?
+		new_archiving = create(:archiving, trashed: nil)
+		assert_not new_archiving.trashed?
+	end
+
+	test "should scope hidden posts" do
+		assert Archiving.hidden == Archiving.where(hidden: true)
+	end
+
+	test "should scope non-hidden posts" do
+		assert Archiving.non_hidden == Archiving.where(hidden: false)
 	end
 
 	test "should scope trashed posts" do
@@ -246,6 +262,16 @@ class ArchivingTest < ActiveSupport::TestCase
 		
 			archiving.updated_at = Time.now + 1
 			assert archiving.edited?
+		end
+	end
+
+	test "should check if trash-canned" do
+		loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving|
+			assert archiving.trash_canned?
+		end
+
+		loop_archivings( archiving_modifiers: { 'trashed' => false } ) do |archiving|
+			assert_not archiving.trash_canned?
 		end
 	end
 

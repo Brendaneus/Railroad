@@ -6,19 +6,27 @@ require 'fixture_writers'
 require 'fixture_iterators'
 require 'fixture_loaders'
 
-# write_fixtures all: true
+#LOG BLOAT FIX
+print "CLEARING LOG FILE..."
+begin
+	File.open('log/test.log', 'w') {|f| f.truncate(0)}
+	puts "DONE"
+rescue
+	puts "NO LOG FILE, CREATING NEW"
+end
 
 class Minitest::Unit::TestCase
 end
 
 class ActiveSupport::TestCase
+	# parallelize(workers: :number_of_processors)
 	set_fixture_class versions: PaperTrail::Version
-	fixtures :all
-	
+
 	include FactoryBot::Syntax::Methods
 	require "minitest/reporters"
-	Minitest::Reporters.use! Minitest::Reporters::SpecReporter.new
+	Minitest::Reporters.use! Minitest::Reporters::ProgressReporter.new
 	# Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
+	# - Why?
 
 	# HELPER METHODS
 
@@ -157,6 +165,30 @@ class ActiveSupport::TestCase
 		end
 	end
 
+	def hide_article_document_url(article, document)
+		if article.class == BlogPost
+			hide_blog_post_document_url(article, document)
+		elsif article.class == Archiving
+			hide_archiving_document_url(article, document)
+		else
+			p article
+			p document
+			raise "Error constructing Hide Document Url: Article type unknown"
+		end
+	end
+
+	def unhide_article_document_url(article, document)
+		if article.class == BlogPost
+			unhide_blog_post_document_url(article, document)
+		elsif article.class == Archiving
+			unhide_archiving_document_url(article, document)
+		else
+			p article
+			p document
+			raise "Error constructing Unhide Document Url: Article type unknown"
+		end
+	end
+
 	def trash_article_document_url(article, document)
 		if article.class == BlogPost
 			trash_blog_post_document_url(article, document)
@@ -224,6 +256,30 @@ class ActiveSupport::TestCase
 			p article
 			p document
 			raise "Error constructing Edit Document Path: Article type unknown"
+		end
+	end
+
+	def hide_article_document_path(article, document)
+		if article.class == BlogPost
+			hide_blog_post_document_path(article, document)
+		elsif article.class == Archiving
+			hide_archiving_document_path(article, document)
+		else
+			p article
+			p document
+			raise "Error constructing Hide Document Path: Article type unknown"
+		end
+	end
+
+	def unhide_article_document_path(article, document)
+		if article.class == BlogPost
+			unhide_blog_post_document_path(article, document)
+		elsif article.class == Archiving
+			unhide_archiving_document_path(article, document)
+		else
+			p article
+			p document
+			raise "Error constructing Unhide Document Path: Article type unknown"
 		end
 	end
 
@@ -399,6 +455,46 @@ class ActiveSupport::TestCase
 			p post
 			p comment
 			raise "Error constructing Post Comment Path: Post type unknown"
+		end
+	end
+
+	def hide_post_comment_path(post, comment)
+		if post.class == BlogPost
+			hide_blog_post_comment_path(post, comment)
+		elsif post.class == ForumPost
+			hide_forum_post_comment_path(post, comment)
+		elsif post.class == Suggestion
+			if post.citation.class == Archiving
+				hide_archiving_suggestion_comment_url(post.citation, post, comment)
+			elsif post.citation.class == Document
+				hide_archiving_document_suggestion_comment_url(post.citation.article, post.citation, post, comment)
+			else
+				raise "Error constructing Hide Post Comment Path: Post Citation type unknown"
+			end
+		else
+			p post
+			p comment
+			raise "Error constructing Hide Post Comment Path: Post type unknown"
+		end
+	end
+
+	def unhide_post_comment_path(post, comment)
+		if post.class == BlogPost
+			unhide_blog_post_comment_path(post, comment)
+		elsif post.class == ForumPost
+			unhide_forum_post_comment_path(post, comment)
+		elsif post.class == Suggestion
+			if post.citation.class == Archiving
+				unhide_archiving_suggestion_comment_url(post.citation, post, comment)
+			elsif post.citation.class == Document
+				unhide_archiving_document_suggestion_comment_url(post.citation.article, post.citation, post, comment)
+			else
+				raise "Error constructing Unhide Post Comment Path: Post Citation type unknown"
+			end
+		else
+			p post
+			p comment
+			raise "Error constructing Unhide Post Comment Path: Post type unknown"
 		end
 	end
 

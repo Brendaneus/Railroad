@@ -2,6 +2,7 @@ class Document < ApplicationRecord
 
 	include Editable
 	include Suggestable
+	include Hidable
 	include Trashable
 
 	belongs_to :article, polymorphic: true

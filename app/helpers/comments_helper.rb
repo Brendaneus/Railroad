@@ -38,14 +38,32 @@ module CommentsHelper
 
 	def post_comments_path(post)
 		if post.class == BlogPost
-			blog_post_comments_path(post, comment)
+			blog_post_comments_path(post)
 		elsif post.class == ForumPost
-			forum_post_comments_path(post, comment)
+			forum_post_comments_path(post)
 		elsif post.class == Suggestion
 			if post.citation.class == Archiving
 				archiving_suggestion_comments_path(post.citation, post)
 			elsif post.citation.class == Document
 				archiving_document_suggestion_comments_path(post.citation.article, post.citation, post)
+			else
+				raise "Error constructing Post Comments Path: Post Citation type unknown"
+			end
+		else
+			raise "Error constructing Post Comments Path: Post type unknown"
+		end
+	end
+
+	def trashed_post_comments_path(post)
+		if post.class == BlogPost
+			trashed_blog_post_comments_path(post)
+		elsif post.class == ForumPost
+			trashed_forum_post_comments_path(post)
+		elsif post.class == Suggestion
+			if post.citation.class == Archiving
+				trashed_archiving_suggestion_comments_path(post.citation, post)
+			elsif post.citation.class == Document
+				trashed_archiving_document_suggestion_comments_path(post.citation.article, post.citation, post)
 			else
 				raise "Error constructing Post Comments Path: Post Citation type unknown"
 			end
@@ -69,6 +87,42 @@ module CommentsHelper
 			end
 		else
 			raise "Error constructing Post Comment Path: Post type unknown"
+		end
+	end
+
+	def hide_post_comment_path(post, comment)
+		if post.class == BlogPost
+			hide_blog_post_comment_path(post, comment)
+		elsif post.class == ForumPost
+			hide_forum_post_comment_path(post, comment)
+		elsif post.class == Suggestion
+			if post.citation.class == Archiving
+				hide_archiving_suggestion_comment_path(post.citation, post, comment)
+			elsif post.citation.class == Document
+				hide_archiving_document_suggestion_comment_path(post.citation.article, post.citation, post, comment)
+			else
+				raise "Error constructing Hide Post Comment Path: Post Citation type unknown"
+			end
+		else
+			raise "Error constructing Hide Post Comment Path: Post type unknown"
+		end
+	end
+
+	def unhide_post_comment_path(post, comment)
+		if post.class == BlogPost
+			unhide_blog_post_comment_path(post, comment)
+		elsif post.class == ForumPost
+			unhide_forum_post_comment_path(post, comment)
+		elsif post.class == Suggestion
+			if post.citation.class == Archiving
+				unhide_archiving_suggestion_comment_path(post.citation, post, comment)
+			elsif post.citation.class == Document
+				unhide_archiving_document_suggestion_comment_path(post.citation.article, post.citation, post, comment)
+			else
+				raise "Error constructing Unhide Post Comment Path: Post Citation type unknown"
+			end
+		else
+			raise "Error constructing Unhide Post Comment Path: Post type unknown"
 		end
 	end
 

@@ -1,0 +1,47 @@
+<% content_for :header_extension do %>
+	<% if @post.class == Suggestion %>
+		<% if @post.citation.class == Archiving %>
+			/ <%= link_to "Archives", archivings_path %>
+			<% if @post.citation.trashed? %>
+				/ <%= link_to "Trash", trashed_archivings_path %>
+			<% end %>
+			/ <%= link_to @post.citation.title, archiving_path(@post.citation) %>
+		<% else %>
+			/ <%= link_to "Archives", archivings_path %>
+			<% if @post.citation.article.trashed? %>
+				/ <%= link_to "Trash", trashed_archivings_path %>
+			<% end %>
+			/ <%= link_to @post.citation.article.title, archiving_path(@post.citation.article) %>
+			<% if @post.citation.trashed? %>
+				/ <%= link_to "Trashed Documents", trashed_archiving_documents_path(@post.citation.article) %>
+			<% end %>
+			/ <%= link_to @post.citation.title, citation_path(@post.citation) %>
+		<% end %>
+		/ <%= link_to "Suggestions", citation_suggestions_path(@post.citation) %>
+		<% if @post.trashed? %>
+			/ <%= link_to "Trash", trashed_citation_suggestions_path(@post.citation) %>
+		<% end %>
+		/ <%= link_to @post.name, post_path(@post) %>
+	<% elsif @post.class == BlogPost %>
+		<% content_for :header_extension do %>
+			/ <%= link_to "Blogs", blog_posts_path %>
+			<% if @post.trashed? %>
+				/ <%= link_to "Trash", trashed_blog_posts_path %>
+			<% end %>
+			/ <%= link_to @post.title, blog_post_path(@post) %>
+		<% end %>
+	<% elsif @post.class == ForumPost %>
+		<% content_for :header_extension do %>
+			/ <%= link_to "Forums", forum_posts_path %>
+			<% if @post.trashed? %>
+				/ <%= link_to "Trash", trashed_forum_posts_path %>
+			<% end %>
+			/ <%= link_to @post.title, forum_post_path(@post) %>
+		<% end %>
+	<% end %>
+	/ <%= link_to "Trashed Comments", trashed_post_comments_path(@post) %>
+<% end %>
+
+<main>
+	<%= (render @comments) || (tag.h2 "There are currently no trashed Comments for this Post.") %>
+</main>

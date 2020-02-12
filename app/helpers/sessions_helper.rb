@@ -95,6 +95,14 @@ module SessionsHelper
 		current_session == session
 	end
 
+	def hidden_user? ( user = current_user )
+		user && user.hidden?
+	end
+
+	def unhidden_user? ( user = current_user )
+		user && !user.hidden?
+	end
+
 	def trashed_user? ( user = current_user )
 		user && user.trashed?
 	end
@@ -109,6 +117,10 @@ module SessionsHelper
 
 	def admin_user? ( user = current_user )
 		!user.nil? && user.admin?
+	end
+
+	def untrashed_admin_user? ( user = current_user )
+		admin_user?(user) && untrashed_user?(user)
 	end
 
 end

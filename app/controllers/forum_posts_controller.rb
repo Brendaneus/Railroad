@@ -1,38 +1,56 @@
 class ForumPostsController < ApplicationController
 
-	before_action :require_login, except: [:index, :show]
+	before_action :require_login, except: [:index, :trashed, :show]
 	before_action :require_untrashed_user, except: [:index, :trashed, :show]
-	before_action :require_authorize_or_admin_for_trashed, only: [:show]
-	before_action :require_authorize, only: [:edit, :update, :trash, :untrash]
+	before_action :require_unhidden_user, only: [:new, :create]
+	before_action :set_forum_post, except: [:index, :trashed, :new, :create]
+	before_action :require_authorize_or_admin_for_hidden_forum_post, only: [:show]
+	before_action :require_authorize, only: [:edit, :update, :hide, :unhide, :trash, :untrash]
+	before_action :require_untrashed_forum_post, only: [:edit, :update]
 	before_action :require_admin, only: [:destroy]
+	before_action :require_trashed_forum_post, only: [:destroy]
 
 	before_action :set_avatar_bucket, unless: -> { Rails.env.test? }
 	after_action :mark_activity, only: [:create, :update, :trash, :untrash, :destroy], if: :logged_in?
 
 	def index
-		@forum_posts = ForumPost.non_trashed.includes(:user, :comments).non_stickies.order(created_at: :desc)
-		@sticky_posts = ForumPost.non_trashed.includes(:user, :comments).stickies.order(created_at: :desc)
+		@forum_posts = ForumPost.non_trashed.non_stickies.includes(:user, :comments).order(updated_at: :desc)
+		@sticky_posts = ForumPost.non_trashed.stickies.includes(:user, :comments).order(updated_at: :desc)
+
+		unless admin_user?
+			if logged_in?
+				@forum_posts = @forum_posts.non_hidden_or_owned_by(current_user)
+				@sticky_posts = @sticky_posts.non_hidden_or_owned_by(current_user)
+			else
+				@forum_posts = @forum_posts.non_hidden
+				@sticky_posts = @sticky_posts.non_hidden
+			end
+		end
 	end
 
 	def trashed
-		if admin_user?
-			@forum_posts = ForumPost.trashed.includes(:user, :comments).order(updated_at: :desc)
-		elsif logged_in?
-			@forum_posts = current_user.forum_posts.trashed.includes(:user, :comments).order(updated_at: :desc)
-		else
-			redirect_to root_url
+		@forum_posts = ForumPost.trashed.includes(:user, :comments).order(updated_at: :desc)
+
+		unless admin_user?
+			if logged_in?
+				@forum_posts = @forum_posts.non_hidden_or_owned_by(current_user)
+			else
+				@forum_posts = @forum_posts.non_hidden
+			end
 		end
 	end
 
 	def show
-		@forum_post = ForumPost.find( params[:id] )
-		if admin_user?
-			@comments = @forum_post.comments.includes(:user).order(created_at: :desc)
-		elsif logged_in?
-			@comments = @forum_post.comments.non_trashed_or_owned_by(current_user).includes(:user).order(created_at: :desc)
-		else
-			@comments = @forum_post.comments.non_trashed.includes(:user).order(created_at: :desc)
+		@comments = @forum_post.comments.includes(:user).order(created_at: :desc)
+
+		unless admin_user?
+			if logged_in?
+				@comments = @comments.non_hidden_or_owned_by(current_user)
+			else
+				@comments = @comments.non_hidden
+			end
 		end
+
 		@new_comment = @forum_post.comments.build(user: current_user)
 	end
 
@@ -55,11 +73,9 @@ class ForumPostsController < ApplicationController
 	end
 
 	def edit
-		@forum_post = ForumPost.find( params[:id] )
 	end
 
 	def update
-		@forum_post = ForumPost.find( params[:id] )
 		if !admin_user? && ( params[:forum_post].has_key?(:motd) || params[:forum_post].has_key?(:sticky) )
 			flash.now[:warning] = "Only admins may make motds and stickies."
 			render :new
@@ -72,8 +88,27 @@ class ForumPostsController < ApplicationController
 		end
 	end
 
+	def hide
+		if @forum_post.update_columns(hidden: true)
+			flash[:success] = "The forum post has been successfully hidden."
+			redirect_to @forum_post
+		else
+			flash[:failure] = "There was a problem hiding the forum post."
+			redirect_back fallback_url: @forum_post
+		end
+	end
+
+	def unhide
+		if @forum_post.update_columns(hidden: false)
+			flash[:success] = "The forum post has been successfully unhidden."
+			redirect_to @forum_post
+		else
+			flash[:failure] = "There was a problem unhiding the forum post."
+			redirect_back fallback_url: @forum_post
+		end
+	end
+
 	def trash
-		@forum_post = ForumPost.find( params[:id] )
 		if @forum_post.update_columns(trashed: true)
 			flash[:success] = "The forum post has been successfully trashed."
 			redirect_to @forum_post
@@ -84,7 +119,6 @@ class ForumPostsController < ApplicationController
 	end
 
 	def untrash
-		@forum_post = ForumPost.find( params[:id] )
 		if @forum_post.update_columns(trashed: false)
 			flash[:success] = "The forum post has been successfully restored."
 			redirect_to @forum_post
@@ -95,7 +129,6 @@ class ForumPostsController < ApplicationController
 	end
 
 	def destroy
-		@forum_post = ForumPost.find( params[:id] )
 		if @forum_post.destroy
 			flash[:success] = "The forum post has been successfully deleted."
 			redirect_to forum_posts_path
@@ -114,6 +147,10 @@ class ForumPostsController < ApplicationController
 			params.require(:forum_post).permit(params_hash)
 		end
 
+		def set_forum_post
+			@forum_post = ForumPost.find( params[:id] )
+		end
+
 		def require_authorize
 			unless authorized_for? ForumPost.find( params[:id] ).user
 				flash[:warning] = "You aren't allowed to do that"
@@ -121,9 +158,23 @@ class ForumPostsController < ApplicationController
 			end
 		end
 
-		def require_authorize_or_admin_for_trashed
-			unless ( authorized_for? ( forum_post = ForumPost.find(params[:id]) ).user ) || !forum_post.trashed? || admin_user?
-				flash[:warning] = "This forum post has been trashed and cannot be viewed."
+		def require_untrashed_forum_post
+			if @forum_post.trashed?
+				flash[:warning] = "This forum post has been trashed and cannot accept changes."
+				redirect_back fallback_location: forum_posts_path
+			end
+		end
+
+		def require_trashed_forum_post
+			unless @forum_post.trashed?
+				flash[:warning] = "This forum post must be sent to trash before continuing."
+				redirect_back fallback_location: forum_posts_path
+			end
+		end
+
+		def require_authorize_or_admin_for_hidden_forum_post
+			unless !@forum_post.hidden? || authorized_for?( @forum_post.user ) || admin_user?
+				flash[:warning] = "This forum post has been hidden and cannot be viewed."
 				redirect_back fallback_location: forum_posts_path
 			end
 		end

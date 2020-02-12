@@ -2,17 +2,16 @@
 	/ <%= link_to "Forums", forum_posts_path %>
 <% end %>
 
-<% if logged_in? %>
+<div class="<%= ( admin_user? ) ? "admin " : "" %> control">
 
-	<div class="<%= ( admin_user? ) ? "admin " : "" %>control">
-		<%= link_to "Trashed Posts", trashed_forum_posts_path if admin_user? %>
+	<%= link_to "Trashed Posts", trashed_forum_posts_path %>
 
-		<%= link_to "New Post", new_forum_post_path if untrashed_user? %>
-	</div>
+	<%= link_to "New Post", new_forum_post_path if untrashed_user? %>
 
-<% end %>
+</div>
 
 <main>
+
 	<% if @sticky_posts.any? || @forum_posts.any? %>
 
 		<%= render partial: 'forum_post', collection: @sticky_posts %>
@@ -24,4 +23,5 @@
 		<%= tag.h2 "There isn't anything here..." %>
 
 	<% end %>
+
 </main>

@@ -2,6 +2,8 @@ class User < ApplicationRecord
 
 	include Digestable
 	include Editable
+	include Hidable
+	include Trashable
 
 	attr_accessor :remember_token
 
@@ -21,6 +23,8 @@ class User < ApplicationRecord
 
 	scope :trashed, -> { where(trashed: true) }
 	scope :non_trashed, -> { where(trashed: false) }
+	scope :non_trashed_or_same, -> (user) { where(trashed: false).or( where(id: user.id) ) }
+	scope :non_hidden_or_same, -> (user) { where(hidden: false).or( where(id: user.id) ) }
 
 	validates :name, presence: true,
 					 uniqueness: { case_sensitive: false },

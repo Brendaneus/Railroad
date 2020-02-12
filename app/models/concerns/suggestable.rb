@@ -9,6 +9,7 @@ module Suggestable
 
 		has_paper_trail on: [:create, :update, :destroy], meta: {
 			name: :version_name,
+			hidden: :hidden
 		}, if: Proc.new { |obj| (obj.class == Archiving) || ( (obj.class == Document) && obj.suggestable? ) }
 
 		validates :title, length: { maximum: 64 }
@@ -24,7 +25,7 @@ module Suggestable
 		self.title = suggestion.title unless suggestion.title.nil?
 		self.content = suggestion.content unless suggestion.content.nil?
 		self.version_name = suggestion.name
-		self.trashed ||= suggestion.trashed?
+		self.hidden ||= suggestion.hidden?
 
 		PaperTrail.request(whodunnit: (suggestion.owned? ? suggestion.user.name : "Guest")) do
 			if self.save && suggestion.destroy
@@ -50,7 +51,7 @@ module Suggestable
 			else
 				@version_name ||= "Original"
 			end
-			@hidden = self.trashed?
+			@hidden = self.hidden? # is this necessary?
 
 			yield
 

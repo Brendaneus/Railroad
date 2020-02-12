@@ -22,7 +22,6 @@ module ApplicationHelper
 		class_attr = ""
 
 		class_attr += "hidden " if object.respond_to?(:hidden?) && object.hidden?
-		class_attr += "trashed " if object.respond_to?(:trashed?) && object.trashed?
 		class_attr += "admin " if object.respond_to?(:admin?) && object.admin?
 
 		if (object.class == ForumPost) || (object.class == BlogPost)
@@ -46,6 +45,10 @@ module ApplicationHelper
 	def safe_user_link_to(user)
 		if user.nil?
 			"Guest"
+		elsif user.trashed?
+			"Deleted User"
+		elsif user.hidden?
+			link_to ( (user == current_user) ? "You" : "Hidden User" ), user
 		else
 			link_to ( (user == current_user) ? "You" : user.name ), user
 		end

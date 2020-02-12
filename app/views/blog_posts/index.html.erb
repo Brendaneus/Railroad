@@ -2,15 +2,11 @@
 	/ <%= link_to "Blogs", blog_posts_path %>
 <% end %>
 
-<% if admin_user? %>
+<div class="<%= (admin_user?) ? "admin " : "" %> control">
+	<%= link_to "Trashed Posts", trashed_blog_posts_path %>
 
-	<div class="admin control">
-		<%= link_to "Trashed Posts", trashed_blog_posts_path %>
-
-		<%= link_to "New Post", new_blog_post_path unless trashed_user? %>
-	</div>
-
-<% end %>
+	<%= link_to "New Post", new_blog_post_path if admin_user? && untrashed_user? %>
+</div>
 
 <main>
 	<%= (render @blog_posts) || (tag.h2 "There isn't anything here...") %>

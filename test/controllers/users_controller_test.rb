@@ -2,45 +2,89 @@ require 'test_helper'
 
 class UsersControllerTest < ActionDispatch::IntegrationTest
 
+	fixtures :users, :forum_posts
+
 	def setup
 		load_users
 	end
 
 	test "should get index" do
-		# Guest
+		## Guest
 		get users_path
 		assert_response :success
 
+		# no control panel
 		assert_select 'div.admin.control', 0
 		assert_select 'a[href=?]', trashed_users_path, 0
 
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => nil } ) do |index_user|
+		# un-trashed, un-hidden user links
+		loop_users( user_modifiers: { 'trashed' => false, 'hidden' => false } ) do |index_user|
 			assert_select 'main a[href=?]', user_path(index_user), 1
 		end
-		loop_users( user_modifiers: { 'trashed' => true, 'admin' => nil } ) do |index_user|
+		loop_users( user_modifiers: { 'trashed' => true } ) do |index_user|
+			assert_select 'main a[href=?]', user_path(index_user), 0
+		end
+		loop_users( user_modifiers: { 'hidden' => true } ) do |index_user|
 			assert_select 'main a[href=?]', user_path(index_user), 0
 		end
 
-		# User
-		loop_users do |logged_user|
+
+		## User, Non-Admin
+		loop_users( user_modifiers: { 'admin' => false } ) do |logged_user, logged_user_key|
 			log_in_as logged_user
 
 			get users_path
 			assert_response :success
 
-			if logged_user.admin?
-				assert_select 'div.admin.control' do
-					assert_select 'a[href=?]', trashed_users_path, 1
-				end
-			else
-				assert_select 'div.admin.control', 0
-				assert_select 'a[href=?]', trashed_users_path, 0
-			end
+			# no control panel
+			assert_select 'div.admin.control', 0
+			assert_select 'a[href=?]', trashed_users_path, 0
 
-			loop_users( user_modifiers: { 'trashed' => false, 'admin' => nil } ) do |index_user|
+			# logged user link
+			loop_users( only: { user: logged_user_key } ) do |index_user|
 				assert_select 'main a[href=?]', user_path(index_user), 1
 			end
-			loop_users( user_modifiers: { 'trashed' => true, 'admin' => nil } ) do |index_user|
+			# un-trashed, un-hidden user links
+			loop_users( except: { user: logged_user_key },
+					user_modifiers: { 'trashed' => false, 'hidden' => false } ) do |index_user|
+				assert_select 'main a[href=?]', user_path(index_user), 1
+			end
+			loop_users( except: { user: logged_user_key },
+					user_modifiers: { 'trashed' => true } ) do |index_user|
+				assert_select 'main a[href=?]', user_path(index_user), 0
+			end
+			loop_users( except: { user: logged_user_key },
+					user_modifiers: { 'hidden' => true } ) do |index_user|
+				assert_select 'main a[href=?]', user_path(index_user), 0
+			end
+
+			log_out
+		end
+
+
+		## User, Admin
+		loop_users( user_modifiers: { 'admin' => true } ) do |logged_user, logged_user_key|
+			log_in_as logged_user
+
+			get users_path
+			assert_response :success
+
+			# admin control panel
+			assert_select 'div.admin.control' do
+				assert_select 'a[href=?]', trashed_users_path, 1
+			end
+
+			# logged user link
+			loop_users( only: { user: logged_user_key } ) do |index_user|
+				assert_select 'main a[href=?]', user_path(index_user), 1
+			end
+			# un-trashed user links
+			loop_users( except: { user: logged_user_key },
+					user_modifiers: { 'trashed' => false } ) do |index_user|
+				assert_select 'main a[href=?]', user_path(index_user), 1
+			end
+			loop_users( except: { user: logged_user_key },
+					user_modifiers: { 'trashed' => true } ) do |index_user|
 				assert_select 'main a[href=?]', user_path(index_user), 0
 			end
 
@@ -49,33 +93,33 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 	end
 
 	test "should get trashed (only admins)" do
-		# Guest
+		## Guest -- Redirect
 		get trashed_users_path
-		assert flash[:warning]
 		assert_response :redirect
 
-		# Non-Admin User
-		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => false } ) do |logged_user|
+
+		## User, Non-Admin -- Redirect
+		loop_users( user_modifiers: { 'admin' => false } ) do |logged_user|
 			log_in_as logged_user
 
 			get trashed_users_path
-			assert flash[:warning]
 			assert_response :redirect
 
 			log_out
 		end
 
-		# Admin User
-		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => true } ) do |logged_user|
+
+		## User, Admin -- Success
+		loop_users( user_modifiers: { 'admin' => true } ) do |logged_user|
 			log_in_as logged_user
 
 			get trashed_users_path
 			assert_response :success
 
-			loop_users( user_modifiers: { 'trashed' => true, 'admin' => nil } ) do |trashed_user|
+			loop_users( user_modifiers: { 'trashed' => true } ) do |trashed_user|
 				assert_select 'main a[href=?]', user_path(trashed_user), 1
 			end
-			loop_users( user_modifiers: { 'trashed' => false, 'admin' => nil } ) do |trashed_user|
+			loop_users( user_modifiers: { 'trashed' => false } ) do |trashed_user|
 				assert_select 'main a[href=?]', user_path(trashed_user), 0
 			end
 
@@ -84,156 +128,222 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 	end
 
 	# Add avatar testing
-	test "should get show (only admins for trashed)" do
+	test "should get show" do
 		load_forum_posts
 
-		# Guest
-		loop_users( user_modifiers: { 'trashed' => true, 'admin' => nil } ) do |show_user|
+		## Guest
+		# Users, Un-Trashed, Un-Hidden -- Success
+		loop_users( user_modifiers: { 'trashed' => false, 'hidden' => false } ) do |show_user, show_user_key|
+			get user_path(show_user)
+			assert_response :success
+
+			# no control panel
+			assert_select 'div.control', 0
+			assert_select 'a[href=?]', user_sessions_path(show_user), 0
+			assert_select 'a[href=?]', edit_user_path(show_user), 0
+			assert_select 'a[href=?][data-method=patch]', hide_user_path(show_user), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_user_path(show_user), 0
+			assert_select 'a[href=?][data-method=patch]', trash_user_path(show_user), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_user_path(show_user), 0
+			assert_select 'a[href=?][data-method=delete]', user_path(show_user), 0
+
+			# un-trashed, un-hidden forum post links
+			loop_forum_posts( only: { user: show_user_key },
+					forum_modifiers: { 'trashed' => false, 'hidden' => false } ) do |forum_post|
+				assert_select 'a[href=?]', forum_post_path(forum_post), 1
+			end
+			loop_forum_posts( only: { user: show_user_key },
+					forum_modifiers: { 'trashed' => true } ) do |forum_post|
+				assert_select 'a[href=?]', forum_post_path(forum_post), 0
+			end
+			loop_forum_posts( only: { user: show_user_key },
+					forum_modifiers: { 'hidden' => true } ) do |forum_post|
+				assert_select 'a[href=?]', forum_post_path(forum_post), 0
+			end
+		end
+
+		# Users, Trashed -- Redirect
+		loop_users( user_modifiers: { 'trashed' => true } ) do |show_user|
 			get user_path(show_user)
 			assert_response :redirect
 		end
 
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => nil } ) do |show_user, show_user_key|
+		# Users, Hidden -- Redirect
+		loop_users( user_modifiers: { 'hidden' => true } ) do |show_user|
 			get user_path(show_user)
-			assert_response :success
-
-			assert_select 'div.control', 0
-			assert_select 'div.admin.control', 0
-			assert_select 'a[href=?]', user_sessions_path(show_user), 0
-			assert_select 'a[href=?]', edit_user_path(show_user), 0
-			assert_select 'a[href=?]', trash_user_path(show_user), 0
-			assert_select 'a[href=?]', untrash_user_path(show_user), 0
-			assert_select 'a[href=?][data-method=delete]', user_path(show_user), 0
-
-			loop_forum_posts( only: { user: show_user_key } ) do |show_user_forum_post|
-				assert_select 'a[href=?]', forum_post_path(show_user_forum_post), 1
-			end
-			loop_forum_posts( except: { user: show_user_key } ) do |show_user_forum_post|
-				assert_select 'a[href=?]', forum_post_path(show_user_forum_post), 0
-			end
+			assert_response :redirect
 		end
 
-		# Non-Admin
-		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => false } ) do |logged_user, logged_user_key|
+
+		## User, Non-Admin
+		loop_users( user_modifiers: { 'admin' => false } ) do |logged_user, logged_user_key|
 			log_in_as logged_user
 
+			# Logged User -- Success
 			get user_url(logged_user)
 			assert_response :success
 
+			# control panel
 			assert_select 'div.admin.control', 0
 			assert_select 'div.control' do
 				assert_select 'a[href=?]', user_sessions_path(logged_user), 1
-				assert_select 'a[href=?]', edit_user_path(logged_user), 1
-				assert_select 'a[href=?]', trash_user_path(logged_user), !logged_user.trashed?
-				assert_select 'a[href=?]', untrash_user_path(logged_user), logged_user.trashed?
+				assert_select 'a[href=?]', edit_user_path(logged_user), !logged_user.trashed?
+				assert_select 'a[href=?][data-method=patch]', hide_user_path(logged_user), !logged_user.trashed? && !logged_user.hidden?
+				assert_select 'a[href=?][data-method=patch]', unhide_user_path(logged_user), !logged_user.trashed? && logged_user.hidden?
+				assert_select 'a[href=?][data-method=patch]', trash_user_path(logged_user), !logged_user.trashed?
+				assert_select 'a[href=?][data-method=patch]', untrash_user_path(logged_user), logged_user.trashed?
 				assert_select 'a[href=?][data-method=delete]', user_path(logged_user), 0
 			end
 
-			loop_forum_posts( only: { user: logged_user_key } ) do |logged_user_forum_post|
+			# un-trashed, forum post links
+			loop_forum_posts( only: { user: logged_user_key },
+					forum_modifiers: { 'trashed' => false } ) do |logged_user_forum_post|
 				assert_select 'a[href=?]', forum_post_path(logged_user_forum_post), 1
 			end
-			loop_forum_posts( except: { user: logged_user_key } ) do |logged_user_forum_post|
+			loop_forum_posts( only: { user: logged_user_key },
+					forum_modifiers: { 'trashed' => true } ) do |logged_user_forum_post|
 				assert_select 'a[href=?]', forum_post_path(logged_user_forum_post), 0
 			end
 
-			loop_users( user_modifiers: { 'trashed' => true, 'admin' => nil },
-					except: { user: logged_user_key } ) do |show_user, show_user_key|
+			# Users, Un-Trashed, Un-Hidden -- Success
+			loop_users( user_modifiers: { 'trashed' => false, 'hidden' => false },
+				except: { user: logged_user_key } ) do |show_user, show_user_key|
+
+				get user_url(show_user)
+				assert_response :success
+
+				# no control panel
+				assert_select 'div.control', 0
+				assert_select 'a[href=?]', user_sessions_path(show_user), 0
+				assert_select 'a[href=?]', edit_user_path(show_user), 0
+				assert_select 'a[href=?][data-method=patch]', hide_user_path(show_user), 0
+				assert_select 'a[href=?][data-method=patch]', unhide_user_path(show_user), 0
+				assert_select 'a[href=?][data-method=patch]', trash_user_path(show_user), 0
+				assert_select 'a[href=?][data-method=patch]', untrash_user_path(show_user), 0
+				assert_select 'a[href=?][data-method=delete]', user_path(show_user), 0
+
+				# un-trashed, un-hidden, forum post links
+				loop_forum_posts( only: { user: show_user_key },
+						forum_modifiers: { 'trashed' => false, 'hidden' => false } ) do |show_user_forum_post|
+					assert_select 'a[href=?]', forum_post_path(show_user_forum_post), 1
+				end
+				loop_forum_posts( only: { user: show_user_key },
+						forum_modifiers: { 'trashed' => true } ) do |show_user_forum_post|
+					assert_select 'a[href=?]', forum_post_path(show_user_forum_post), 0
+				end
+				loop_forum_posts( only: { user: show_user_key },
+						forum_modifiers: { 'hidden' => true } ) do |show_user_forum_post|
+					assert_select 'a[href=?]', forum_post_path(show_user_forum_post), 0
+				end
+			end
+
+			# Users, Trashed -- Redirect
+			loop_users( except: { user: logged_user_key },
+				user_modifiers: { 'trashed' => true } ) do |show_user, show_user_key|
+
 				get user_url(show_user)
 				assert_response :redirect
 			end
 
-			loop_users( user_modifiers: { 'trashed' => false, 'admin' => nil },
-					except: { user: logged_user_key } ) do |show_user, show_user_key|
+			# Users, Hidden -- Redirect
+			loop_users( except: { user: logged_user_key },
+				user_modifiers: { 'hidden' => true } ) do |show_user, show_user_key|
+
 				get user_url(show_user)
-				assert_response :success
-
-				assert_select 'div.control', 0
-				assert_select 'div.admin.control', 0
-				assert_select 'a[href=?]', user_sessions_path(show_user), 0
-				assert_select 'a[href=?]', edit_user_path(show_user), 0
-				assert_select 'a[href=?]', trash_user_path(show_user), 0
-				assert_select 'a[href=?]', untrash_user_path(show_user), 0
-				assert_select 'a[href=?][data-method=delete]', user_path(show_user), 0
-
-				loop_forum_posts( only: { user: show_user_key } ) do |show_user_forum_post|
-					assert_select 'a[href=?]', forum_post_path(show_user_forum_post), 1
-				end
-				loop_forum_posts( except: { user: show_user_key } ) do |show_user_forum_post|
-					assert_select 'a[href=?]', forum_post_path(show_user_forum_post), 0
-				end
+				assert_response :redirect
 			end
 
 			log_out
 		end
 
-		# Admin, trashed
-		loop_users( user_modifiers: { 'trashed' => true, 'admin' => true } ) do |logged_user, logged_user_key|
+
+		## User, Admin, Trashed
+		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |logged_user, logged_user_key|
 			log_in_as logged_user
 
-			# Logged User
+			# Logged User -- Success
 			get user_url(logged_user)
 			assert_response :success
 
+			# admin control panel
 			assert_select 'div.admin.control' do
 				assert_select 'a[href=?]', user_sessions_path(logged_user), 1
-				assert_select 'a[href=?]', edit_user_path(logged_user), 1
-				assert_select 'a[href=?]', trash_user_path(logged_user), 0
-				assert_select 'a[href=?]', untrash_user_path(logged_user), 1
+				assert_select 'a[href=?]', edit_user_path(logged_user), 0
+				assert_select 'a[href=?][data-method=patch]', hide_user_path(logged_user), 0
+				assert_select 'a[href=?][data-method=patch]', unhide_user_path(logged_user), 0
+				assert_select 'a[href=?][data-method=patch]', trash_user_path(logged_user), 0
+				assert_select 'a[href=?][data-method=patch]', untrash_user_path(logged_user), 1
 				assert_select 'a[href=?][data-method=delete]', user_path(logged_user), 1
 			end
 
-			loop_forum_posts( only: { user: logged_user_key } ) do |logged_user_forum_post|
-				assert_select 'a[href=?]', forum_post_path(logged_user_forum_post), 1
+			# un-trashed forum post links
+			loop_forum_posts( only: { user: logged_user_key },
+					forum_modifiers: { 'trashed' => false } ) do |forum_post|
+				assert_select 'a[href=?]', forum_post_path(forum_post), 1
 			end
-			loop_forum_posts( except: { user: logged_user_key } ) do |logged_user_forum_post|
-				assert_select 'a[href=?]', forum_post_path(logged_user_forum_post), 0
+			loop_forum_posts( only: { user: logged_user_key },
+					forum_modifiers: { 'trashed' => true } ) do |forum_post|
+				assert_select 'a[href=?]', forum_post_path(forum_post), 0
 			end
 
-			# Other Users
+			# Users -- Success
 			loop_users( except: { user: logged_user_key } ) do |show_user, show_user_key|
 				get user_url(show_user)
 				assert_response :success
 
+				# admin control panel
 				assert_select 'div.admin.control' do
 					assert_select 'a[href=?]', user_sessions_path(show_user), 1
 					assert_select 'a[href=?]', edit_user_path(show_user), 0
-					assert_select 'a[href=?]', trash_user_path(show_user), 0
-					assert_select 'a[href=?]', untrash_user_path(show_user), 0
+					assert_select 'a[href=?][data-method=patch]', hide_user_path(show_user), 0
+					assert_select 'a[href=?][data-method=patch]', unhide_user_path(show_user), 0
+					assert_select 'a[href=?][data-method=patch]', trash_user_path(show_user), 0
+					assert_select 'a[href=?][data-method=patch]', untrash_user_path(show_user), 0
 					assert_select 'a[href=?][data-method=delete]', user_path(show_user), 0
 				end
 
-				loop_forum_posts( only: { user: show_user_key } ) do |show_user_forum_post|
-					assert_select 'a[href=?]', forum_post_path(show_user_forum_post), 1
+				# un-trashed forum post links
+				loop_forum_posts( only: { user: show_user_key },
+						forum_modifiers: { 'trashed' => false } ) do |forum_post|
+					assert_select 'a[href=?]', forum_post_path(forum_post), 1
 				end
-				loop_forum_posts( except: { user: show_user_key } ) do |show_user_forum_post|
-					assert_select 'a[href=?]', forum_post_path(show_user_forum_post), 0
+				loop_forum_posts( only: { user: show_user_key },
+						forum_modifiers: { 'trashed' => true } ) do |forum_post|
+					assert_select 'a[href=?]', forum_post_path(forum_post), 0
 				end
 			end
 
 			log_out
 		end
 
-		# Admin, untrashed
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |logged_user, logged_user_key|
+
+		## User, Admin, Un-Trashed
+		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |logged_user, logged_user_key|
 			log_in_as logged_user
 
-			# Logged User
+			# Logged User -- Success
 			get user_url(logged_user)
 			assert_response :success
 
+			# admin control panel
 			assert_select 'div.admin.control' do
 				assert_select 'a[href=?]', user_sessions_path(logged_user), 1
 				assert_select 'a[href=?]', edit_user_path(logged_user), 1
-				assert_select 'a[href=?]', trash_user_path(logged_user), 1
-				assert_select 'a[href=?]', untrash_user_path(logged_user), 0
+				assert_select 'a[href=?][data-method=patch]', hide_user_path(logged_user), !logged_user.hidden?
+				assert_select 'a[href=?][data-method=patch]', unhide_user_path(logged_user), logged_user.hidden?
+				assert_select 'a[href=?][data-method=patch]', trash_user_path(logged_user), 1
+				assert_select 'a[href=?][data-method=patch]', untrash_user_path(logged_user), 0
 				assert_select 'a[href=?][data-method=delete]', user_path(logged_user), 0
 			end
 
-			loop_forum_posts( only: { user: logged_user_key } ) do |logged_user_forum_post|
-				assert_select 'main a[href=?]', forum_post_path(logged_user_forum_post), 1
+			# un-trashed forum post links
+			loop_forum_posts( only: { user: logged_user_key },
+					forum_modifiers: { 'trashed' => false } ) do |forum_post|
+				assert_select 'main a[href=?]', forum_post_path(forum_post), 1
 			end
-			loop_forum_posts( except: { user: logged_user_key } ) do |logged_user_forum_post|
-				assert_select 'main a[href=?]', forum_post_path(logged_user_forum_post), 0
+			loop_forum_posts( only: { user: logged_user_key },
+					forum_modifiers: { 'trashed' => true } ) do |forum_post|
+				assert_select 'main a[href=?]', forum_post_path(forum_post), 0
 			end
 
 			# Other Users
@@ -243,17 +353,22 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 
 				assert_select 'div.admin.control' do
 					assert_select 'a[href=?]', user_sessions_path(show_user), 1
-					assert_select 'a[href=?]', edit_user_path(show_user), 1
+					assert_select 'a[href=?]', edit_user_path(show_user), !show_user.trashed?
+					assert_select 'a[href=?]', hide_user_path(show_user), !show_user.trashed? && !show_user.hidden?
+					assert_select 'a[href=?]', unhide_user_path(show_user), !show_user.trashed? && show_user.hidden?
 					assert_select 'a[href=?]', trash_user_path(show_user), !show_user.trashed?
 					assert_select 'a[href=?]', untrash_user_path(show_user), show_user.trashed?
 					assert_select 'a[href=?][data-method=delete]', user_path(show_user), show_user.trashed?
 				end
 
-				loop_forum_posts( only: { user: show_user_key } ) do |show_user_forum_post|
-					assert_select 'main a[href=?]', forum_post_path(show_user_forum_post), 1
+				# un-trashed forum post links
+				loop_forum_posts( only: { user: show_user_key },
+						forum_modifiers: { 'trashed' => false } ) do |forum_post|
+					assert_select 'main a[href=?]', forum_post_path(forum_post), 1
 				end
-				loop_forum_posts( except: { user: show_user_key } ) do |show_user_forum_post|
-					assert_select 'main a[href=?]', forum_post_path(show_user_forum_post), 0
+				loop_forum_posts( only: { user: show_user_key },
+						forum_modifiers: { 'trashed' => true } ) do |forum_post|
+					assert_select 'main a[href=?]', forum_post_path(forum_post), 0
 				end
 			end
 
@@ -262,11 +377,12 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 	end
 
 	test "should get new" do
-		# Guest
+		## Guest
 		get signup_url
 		assert_response :success
 
-		# User
+
+		## User
 		loop_users do |logged_user|
 			log_in_as logged_user
 
@@ -335,15 +451,35 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 		end
 	end
 
-	test "should get edit (only authorized or untrashed admins)" do
-		# Guest
+	test "should get edit (only authorized users and un-trashed admins)" do
+		## Guest
+		# Users -- Redirect
 		loop_users do |edit_user|
 			get edit_user_url(edit_user)
 			assert_response :redirect
 		end
 
-		# Non-Admin
-		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => false } ) do |logged_user, logged_user_key|
+
+		## Users, Trashed
+		loop_users( user_modifiers: { 'trashed' => true } ) do |logged_user, logged_user_key|
+			log_in_as logged_user
+
+			# Logged User -- Redirect
+			get edit_user_url(logged_user)
+			assert_response :redirect
+
+			# Users -- Redirect
+			loop_users( except: { user: logged_user_key } ) do |edit_user|
+				get edit_user_url(edit_user)
+				assert_response :redirect
+			end
+
+			log_out
+		end
+
+
+		## User, Un-Trashed, Non-Admin
+		loop_users( user_modifiers: { 'trashed' => false, 'admin' => false } ) do |logged_user, logged_user_key|
 			log_in_as logged_user
 
 			get edit_user_url(logged_user)
@@ -357,25 +493,12 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 			log_out
 		end
 
-		# Admin, Trashed
-		loop_users( user_modifiers: {'trashed' => true, 'admin' => true} ) do |logged_user, logged_user_key|
+
+		## User, Un-Trashed, Admin
+		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |logged_user|
 			log_in_as logged_user
 
-			get edit_user_url(logged_user)
-			assert_response :success
-
-			loop_users( except: {user: logged_user_key} ) do |edit_user|
-				get edit_user_url(edit_user)
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-		# Admin, UnTrashed
-		loop_users( user_modifiers: {'trashed' => false, 'admin' => true} ) do |logged_user|
-			log_in_as logged_user
-
+			# Users -- Success
 			loop_users do |edit_user|
 				get edit_user_url(edit_user)
 				assert_response :success
@@ -385,147 +508,133 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 		end
 	end
 
-	test "should put/patch update (only authorized untrashed admins)" do
-		# Guest
-		loop_users do |user|
-			assert_no_changes -> { user.email } do
-				patch user_url(user), params: { user: {
-					email: ("new_" + user.email)
+	test "should put/patch update (only authorized users and un-trashed admins)" do
+		## Guest
+		# Users -- Redirect
+		loop_users do |edit_user|
+			assert_no_changes -> { edit_user.email } do
+				patch user_url(edit_user), params: { user: {
+					email: ("new_" + edit_user.email)
 				} }
-				user.reload
+				edit_user.reload
 			end
 			assert_response :redirect
 		end
 
-		# Non-Admin
-		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => false } ) do |user, user_key|
-			log_in_as user
 
-			old_email = user.email
-			assert_changes -> { user.email } do
-				patch user_url(user), params: { user: {
-					email: ("new_" + user.email)
-				} }
-				user.reload
-			end
-			assert_response :redirect
-			user.update( email: old_email )
+		## User, Trashed
+		loop_users( user_modifiers: { 'trashed' => true } ) do |logged_user, logged_user_key|
+			log_in_as logged_user
 
-			loop_users( except: { user: user_key } ) do |other_user|
-				assert_no_changes -> { other_user.email } do
-					patch user_url(other_user), params: { user: {
-						email: ("new_" + other_user.email)
+			# Users -- Redirect
+			loop_users do |edit_user|
+				assert_no_changes -> { edit_user.email } do
+					patch user_url(edit_user), params: { user: {
+						email: ("new_" + edit_user.email)
 					} }
-					other_user.reload
+					edit_user.reload
 				end
 				assert_response :redirect
 			end
 
 			log_out
 		end
-		
-		# Admin, Trash
-		loop_users( user_modifiers: { 'trashed' => true, 'admin' => true } ) do |user, user_key|
-			log_in_as user
 
-			old_email = user.email
-			assert_changes -> { user.email } do
-				patch user_url(user), params: { user: {
-					email: ("new_" + user.email)
+
+		## User, Un-Trashed, Non-Admin
+		loop_users( user_modifiers: { 'trashed' => false, 'admin' => false } ) do |logged_user, logged_user_key|
+			log_in_as logged_user
+
+			# Logged User -- Success
+			old_email = logged_user.email
+
+			assert_changes -> { logged_user.email } do
+				patch user_url(logged_user), params: { user: {
+					email: ("new_" + logged_user.email)
 				} }
-				user.reload
+				logged_user.reload
 			end
 			assert_response :redirect
-			user.update(password: "password", password_confirmation: "password")
 
-			loop_users( except: { user: user_key } ) do |other_user|
-				assert_no_changes -> { other_user.email } do
-					patch user_url(other_user), params: { user: {
-						email: ("new_" + other_user.email)
+			logged_user.update_columns(email: old_email)
+
+			# Users -- Redirect
+			loop_users( except: { user: logged_user_key } ) do |edit_user|
+				assert_no_changes -> { edit_user.email } do
+					patch user_url(edit_user), params: { user: {
+						email: ("new_" + edit_user.email)
 					} }
-					other_user.reload
+					edit_user.reload
 				end
 			end
 
 			log_out
 		end
 
-		# Admin, UnTrashed
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user, user_key|
-			log_in_as user
 
-			loop_users do |other_user|
-				old_email = other_user.email
-				assert_changes -> { other_user.email } do
-					patch user_url(other_user), params: { user: {
-						email: ("new_" + other_user.email)
+		## User, Un-Trashed, Admin
+		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |logged_user, logged_user_key|
+			log_in_as logged_user
+
+			# Users -- Success
+			loop_users do |edit_user|
+				old_email = edit_user.email
+
+				assert_changes -> { edit_user.email } do
+					patch user_url(edit_user), params: { user: {
+						email: ("new_" + edit_user.email)
 					} }
-					other_user.reload
+					edit_user.reload
 				end
 				assert_response :redirect
-				other_user.update( email: old_email )
+				edit_user.update_columns( email: old_email )
 			end
 
 			log_out
 		end
 	end
 
-	test "should get trash update (only authorized untrashed admins)" do
+	test "should patch hide (only authorized users and un-trashed admins)" do
 		load_users
 
-		# Guest
-		loop_users( user_modifiers: { 'trashed' => true, 'admin' => nil } ) do |other_user|
-			assert_no_changes -> { other_user.updated_at.to_i } do
-				assert_no_changes -> { other_user.trashed? }, from: true do
-					get trash_user_url(other_user)
-					other_user.reload
+		## Guest
+		# Users -- Redirect
+		loop_users( user_modifiers: { 'hidden' => false } ) do |edit_user|
+			assert_no_changes -> { edit_user.updated_at.to_i } do
+				assert_no_changes -> { edit_user.hidden? }, from: false do
+					patch hide_user_url(edit_user)
+					edit_user.reload
 				end
 			end
 			assert_response :redirect
 		end
 
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => nil } ) do |other_user|
-			assert_no_changes -> { other_user.updated_at.to_i } do
-				assert_no_changes -> { other_user.trashed? }, from: false do
-					get trash_user_url(other_user)
-					other_user.reload
-				end
-			end
-			assert_response :redirect
-		end
 
-		# Non-Admin
-		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => false } ) do |user, user_key|
-			log_in_as user
+		## User, Non-Admin
+		loop_users( user_modifiers: { 'admin' => false } ) do |logged_user, logged_user_key|
+			log_in_as logged_user
 
-			unless user.trashed?
-				assert_no_changes -> { user.updated_at.to_i } do
-					assert_changes -> { user.trashed? }, from: false, to: true do
-						get trash_user_url(user)
-						user.reload
+			# Logged User -- Success
+			unless logged_user.hidden?
+				assert_no_changes -> { logged_user.updated_at.to_i } do
+					assert_changes -> { logged_user.hidden? }, from: false, to: true do
+						patch hide_user_url(logged_user)
+						logged_user.reload
 					end
 				end
 				assert_response :redirect
-				user.update(trashed: false)
+
+				logged_user.update_columns(hidden: false)
 			end
 
-			loop_users( user_modifiers: { 'trashed' => true, 'admin' => nil },
-					except: { user: user_key } ) do |other_user|
-				assert_no_changes -> { other_user.updated_at.to_i } do
-					assert_no_changes -> { other_user.trashed? }, from: true do
-						get trash_user_url(other_user)
-						other_user.reload
-					end
-				end
-				assert_response :redirect
-			end
+			# Users -- Redirect
+			loop_users( except: { user: logged_user_key },
+				user_modifiers: { 'hidden' => false } ) do |edit_user|
 
-			loop_users( user_modifiers: { 'trashed' => false, 'admin' => nil },
-					except: { user: user_key } ) do |other_user|
-				assert_no_changes -> { other_user.updated_at.to_i } do
-					assert_no_changes -> { other_user.trashed? }, from: false do
-						get trash_user_url(other_user)
-						other_user.reload
+				assert_no_changes -> { edit_user.updated_at.to_i } do
+					assert_no_changes -> { edit_user.hidden? }, from: false do
+						patch hide_user_url(edit_user)
+						edit_user.reload
 					end
 				end
 				assert_response :redirect
@@ -534,27 +643,32 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 			log_out
 		end
 
-		# Admin, Trashed
-		loop_users( user_modifiers: { 'trashed' => true, 'admin' => true } ) do |user, user_key|
-			log_in_as user
 
-			loop_users( user_modifiers: { 'trashed' => true, 'admin' => nil },
-					except: { user: user_key } ) do |other_user|
-				assert_no_changes -> { other_user.updated_at.to_i } do
-					assert_no_changes -> { other_user.trashed? }, from: true do
-						get trash_user_url(other_user)
-						other_user.reload
+		## User, Admin, Trashed
+		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |logged_user, logged_user_key|
+			log_in_as logged_user
+
+			# Logged User -- Success
+			unless logged_user.hidden?
+				assert_no_changes -> { logged_user.updated_at.to_i } do
+					assert_changes -> { logged_user.hidden? }, from: false, to: true do
+						patch hide_user_url(logged_user)
+						logged_user.reload
 					end
 				end
 				assert_response :redirect
+
+				logged_user.update_columns(hidden: false)
 			end
 
-			loop_users( user_modifiers: { 'trashed' => false, 'admin' => nil },
-					except: { user: user_key } ) do |other_user|
-				assert_no_changes -> { other_user.updated_at.to_i } do
-					assert_no_changes -> { other_user.trashed? }, from: false do
-						get trash_user_url(other_user)
-						other_user.reload
+			# Users -- Redirect
+			loop_users( except: { user: logged_user_key },
+				user_modifiers: { 'hidden' => false } ) do |edit_user|
+
+				assert_no_changes -> { edit_user.updated_at.to_i } do
+					assert_no_changes -> { edit_user.hidden? }, from: false do
+						patch hide_user_url(edit_user)
+						edit_user.reload
 					end
 				end
 				assert_response :redirect
@@ -563,90 +677,68 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 			log_out
 		end
 
-		# Admin, UnTrashed
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user, user_key|
-			log_in_as user
 
-			loop_users( user_modifiers: { 'trashed' => true, 'admin' => nil } ) do |other_user|
-				assert_no_changes -> { other_user.updated_at.to_i } do
-					assert_no_changes -> { other_user.trashed? }, from: true do
-						get trash_user_url(other_user)
-						other_user.reload
+		## User, Admin, Un-Trashed
+		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |logged_user, logged_user_key|
+			log_in_as logged_user
+
+			# Users -- Success
+			loop_users( user_modifiers: { 'hidden' => false } ) do |edit_user|
+				assert_no_changes -> { edit_user.updated_at.to_i } do
+					assert_changes -> { edit_user.hidden? }, from: false, to: true do
+						patch hide_user_url(edit_user)
+						edit_user.reload
 					end
 				end
-			end
 
-			loop_users( user_modifiers: { 'trashed' => false, 'admin' => nil } ) do |other_user|
-				assert_no_changes -> { other_user.updated_at.to_i } do
-					assert_changes -> { other_user.trashed? }, from: false, to: true do
-						get trash_user_url(other_user)
-						other_user.reload
-					end
-				end
-				other_user.update_columns(trashed: false)
+				edit_user.update_columns(hidden: false)
 			end
 
 			log_out
 		end
 	end
 
-	test "should get untrash update only for authorized users and untrashed admins" do
+	test "should patch unhide (only authorized users and un-trashed admins)" do
 		load_users
 
-		# Guest
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => nil } ) do |other_user|
-			assert_no_changes -> { other_user.updated_at.to_i } do
-				assert_no_changes -> { other_user.trashed? }, from: false do
-					get untrash_user_url(other_user)
-					other_user.reload
+		## Guest
+		# Users -- Redirect
+		loop_users( user_modifiers: { 'hidden' => true } ) do |edit_user|
+			assert_no_changes -> { edit_user.updated_at.to_i } do
+				assert_no_changes -> { edit_user.hidden? }, from: true do
+					patch unhide_user_url(edit_user)
+					edit_user.reload
 				end
 			end
 			assert_response :redirect
 		end
 
-		loop_users( user_modifiers: { 'trashed' => true, 'admin' => nil } ) do |other_user|
-			assert_no_changes -> { other_user.updated_at.to_i } do
-				assert_no_changes -> { other_user.trashed? }, from: true do
-					get untrash_user_url(other_user)
-					other_user.reload
-				end
-			end
-			assert_response :redirect
-		end
 
-		# Non-Admin
-		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => false } ) do |user, user_key|
-			log_in_as user
-
-			if user.trashed?
-				assert_no_changes -> { user.updated_at.to_i } do
-					assert_changes -> { user.trashed? }, from: true, to: false do
-						get untrash_user_url(user)
-						user.reload
+		## Users, Non-Admin
+		loop_users( user_modifiers: { 'admin' => false } ) do |logged_user, logged_user_key|
+			log_in_as logged_user
+ 
+			# Logged User -- Success
+			if logged_user.hidden?
+				assert_no_changes -> { logged_user.updated_at.to_i } do
+					assert_changes -> { logged_user.hidden? }, from: true, to: false do
+						patch unhide_user_url(logged_user)
+						logged_user.reload
 					end
 				end
 				assert_response :redirect
 
-				user.update_columns(trashed: true)
+				logged_user.update_columns(hidden: true)
 			end
 
-			loop_users( user_modifiers: { 'trashed' => false, 'admin' => nil },
-					except: { user: user_key } ) do |other_user|
-				assert_no_changes -> { other_user.updated_at.to_i } do
-					assert_no_changes -> { other_user.trashed? }, from: false do
-						get untrash_user_url(other_user)
-						other_user.reload
-					end
-				end
-				assert_response :redirect
-			end
+			# Users -- Redirect
+			loop_users( except: { user: logged_user_key },
+				user_modifiers: { 'hidden' => true } ) do |edit_user|
 
-			loop_users( user_modifiers: { 'trashed' => true, 'admin' => nil },
-					except: { user: user_key } ) do |other_user|
-				assert_no_changes -> { other_user.updated_at.to_i } do
-					assert_no_changes -> { other_user.trashed? }, from: true do
-						get untrash_user_url(other_user)
-						other_user.reload
+				assert_no_changes -> { edit_user.updated_at.to_i } do
+					assert_no_changes -> { edit_user.hidden? }, from: true do
+						patch unhide_user_url(edit_user)
+						edit_user.reload
 					end
 				end
 				assert_response :redirect
@@ -655,36 +747,32 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 			log_out
 		end
 
-		# Admin, Trashed
-		loop_users( user_modifiers: { 'trashed' => true, 'admin' => true } ) do |user, user_key|
-			log_in_as user
 
-			assert_no_changes -> { user.updated_at.to_i } do
-				assert_changes -> { user.trashed? }, from: true, to: false do
-					get untrash_user_url(user)
-					user.reload
-				end
-			end
-			assert_response :redirect
-			user.update_columns(trashed: true)
+		## Users, Admin, Trashed
+		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |logged_user, logged_user_key|
+			log_in_as logged_user
 
-			loop_users( user_modifiers: { 'trashed' => false, 'admin' => nil },
-					except: { user: user_key } ) do |other_user|
-				assert_no_changes -> { other_user.updated_at.to_i } do
-					assert_no_changes -> { other_user.trashed? }, from: false do
-						get untrash_user_url(other_user)
-						other_user.reload
+			# Logged User -- Success
+			if logged_user.hidden?
+				assert_no_changes -> { logged_user.updated_at.to_i } do
+					assert_changes -> { logged_user.hidden? }, from: true, to: false do
+						patch unhide_user_url(logged_user)
+						logged_user.reload
 					end
 				end
 				assert_response :redirect
+
+				logged_user.update_columns(hidden: true)
 			end
 
-			loop_users( user_modifiers: { 'trashed' => true, 'admin' => nil },
-					except: { user: user_key } ) do |other_user|
-				assert_no_changes -> { other_user.updated_at.to_i } do
-					assert_no_changes -> { other_user.trashed? }, from: true do
-						get untrash_user_url(other_user)
-						other_user.reload
+			# Users -- Redirect
+			loop_users( except: { user: logged_user_key },
+				user_modifiers: { 'hidden' => true } ) do |edit_user|
+
+				assert_no_changes -> { edit_user.updated_at.to_i } do
+					assert_no_changes -> { edit_user.hidden? }, from: true do
+						patch unhide_user_url(edit_user)
+						edit_user.reload
 					end
 				end
 				assert_response :redirect
@@ -693,94 +781,291 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 			log_out
 		end
 
-		# Admin, Untrashed
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user|
-			log_in_as user
 
-			loop_users( user_modifiers: { 'trashed' => false, 'admin' => nil } ) do |other_user|
-				assert_no_changes -> { other_user.updated_at.to_i } do
-					assert_no_changes -> { other_user.trashed? }, from: false do
-						get untrash_user_url(other_user)
-						other_user.reload
-					end
-				end
-				assert_response :redirect
-			end
+		## Users, Admin, Un-Trashed
+		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |logged_user|
+			log_in_as logged_user
 
-			loop_users( user_modifiers: { 'trashed' => true, 'admin' => nil } ) do |other_user|
-				assert_no_changes -> { other_user.updated_at.to_i } do
-					assert_changes -> { other_user.trashed? }, from: true, to: false do
-						get untrash_user_url(other_user)
-						other_user.reload
+			# Users -- Success
+			loop_users( user_modifiers: { 'hidden' => true } ) do |edit_user|
+				assert_no_changes -> { edit_user.updated_at.to_i } do
+					assert_changes -> { edit_user.hidden? }, from: true, to: false do
+						patch unhide_user_url(edit_user)
+						edit_user.reload
 					end
 				end
 				assert_response :redirect
 
-				other_user.update_columns(trashed: true)
+				edit_user.update_columns(hidden: true)
 			end
 
 			log_out
 		end
 	end
 
-	test "should delete destroy only for untrashed admins" do
-		# Guest
-		loop_users do |user|
+	test "should patch trash (only authorized users and un-trashed admins)" do
+		load_users
+
+		## Guest
+		# Users -- Redirect'
+		loop_users do |edit_user|
+			assert_no_changes -> { edit_user.updated_at.to_i } do
+				assert_no_changes -> { edit_user.trashed? }, from: false do
+					patch trash_user_url(edit_user)
+					edit_user.reload
+				end
+			end
+			assert_response :redirect
+		end
+
+
+		## User, Non-Admin
+		loop_users( user_modifiers: { 'admin' => false } ) do |logged_user, logged_user_key|
+			log_in_as logged_user
+
+			# Logged User -- Success
+			unless logged_user.trashed?
+				assert_no_changes -> { logged_user.updated_at.to_i } do
+					assert_changes -> { logged_user.trashed? }, from: false, to: true do
+						patch trash_user_url(logged_user)
+						logged_user.reload
+					end
+				end
+				assert_response :redirect
+
+				logged_user.update_columns(trashed: false)
+			end
+
+			# Users -- Redirect
+			loop_users( except: { user: logged_user_key },
+				user_modifiers: { 'trashed' => false } ) do |edit_user|
+
+				assert_no_changes -> { edit_user.updated_at.to_i } do
+					assert_no_changes -> { edit_user.trashed? }, from: false do
+						patch trash_user_url(edit_user)
+						edit_user.reload
+					end
+				end
+				assert_response :redirect
+			end
+
+			log_out
+		end
+
+
+		## User, Admin, Trashed
+		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |logged_user, logged_user_key|
+			log_in_as logged_user
+
+			# Users -- Redirect
+			loop_users( except: { user: logged_user_key },
+				user_modifiers: { 'trashed' => false } ) do |edit_user|
+
+				assert_no_changes -> { edit_user.updated_at.to_i } do
+					assert_no_changes -> { edit_user.trashed? }, from: false do
+						patch trash_user_url(edit_user)
+						edit_user.reload
+					end
+				end
+				assert_response :redirect
+			end
+
+			log_out
+		end
+
+
+		## User, Admin, Un-Trashed
+		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |logged_user, logged_user_key|
+			log_in_as logged_user
+
+			# Users -- Success
+			loop_users( user_modifiers: { 'trashed' => false } ) do |edit_user|
+				assert_no_changes -> { edit_user.updated_at.to_i } do
+					assert_changes -> { edit_user.trashed? }, from: false, to: true do
+						patch trash_user_url(edit_user)
+						edit_user.reload
+					end
+				end
+
+				edit_user.update_columns(trashed: false)
+			end
+
+			log_out
+		end
+	end
+
+	test "should patch untrash (only authorized users and un-trashed admins)" do
+		load_users
+
+		## Guest
+		# Users -- Redirect
+		loop_users( user_modifiers: { 'trashed' => true } ) do |edit_user|
+			assert_no_changes -> { edit_user.updated_at.to_i } do
+				assert_no_changes -> { edit_user.trashed? }, from: true do
+					patch untrash_user_url(edit_user)
+					edit_user.reload
+				end
+			end
+			assert_response :redirect
+		end
+
+
+		## Users, Non-Admin
+		loop_users( user_modifiers: { 'admin' => false } ) do |logged_user, logged_user_key|
+			log_in_as logged_user
+ 
+			# Logged User -- Success
+			if logged_user.trashed?
+				assert_no_changes -> { logged_user.updated_at.to_i } do
+					assert_changes -> { logged_user.trashed? }, from: true, to: false do
+						patch untrash_user_url(logged_user)
+						logged_user.reload
+					end
+				end
+				assert_response :redirect
+
+				logged_user.update_columns(trashed: true)
+			end
+
+			# Users -- Redirect
+			loop_users( except: { user: logged_user_key },
+				user_modifiers: { 'trashed' => true } ) do |edit_user|
+
+				assert_no_changes -> { edit_user.updated_at.to_i } do
+					assert_no_changes -> { edit_user.trashed? }, from: true do
+						patch untrash_user_url(edit_user)
+						edit_user.reload
+					end
+				end
+				assert_response :redirect
+			end
+
+			log_out
+		end
+
+
+		## Users, Admin, Trashed
+		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |logged_user, logged_user_key|
+			log_in_as logged_user
+
+			# Logged User -- Success
+			assert_no_changes -> { logged_user.updated_at.to_i } do
+				assert_changes -> { logged_user.trashed? }, from: true, to: false do
+					patch untrash_user_url(logged_user)
+					logged_user.reload
+				end
+			end
+			assert_response :redirect
+			logged_user.update_columns(trashed: true)
+
+			# Users -- Redirect
+			loop_users( except: { user: logged_user_key },
+				user_modifiers: { 'trashed' => true } ) do |edit_user|
+
+				assert_no_changes -> { edit_user.updated_at.to_i } do
+					assert_no_changes -> { edit_user.trashed? }, from: true do
+						patch untrash_user_url(edit_user)
+						edit_user.reload
+					end
+				end
+				assert_response :redirect
+			end
+
+			log_out
+		end
+
+
+		## Users, Admin, Un-Trashed
+		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |logged_user|
+			log_in_as logged_user
+
+			# Users -- Success
+			loop_users( user_modifiers: { 'trashed' => true } ) do |edit_user|
+				assert_no_changes -> { edit_user.updated_at.to_i } do
+					assert_changes -> { edit_user.trashed? }, from: true, to: false do
+						patch untrash_user_url(edit_user)
+						edit_user.reload
+					end
+				end
+				assert_response :redirect
+
+				edit_user.update_columns(trashed: true)
+			end
+
+			log_out
+		end
+	end
+
+	test "should delete destroy (only for un-trashed admins)" do
+		## Guest
+		# Users -- Redirect
+		loop_users do |delete_user|
 			assert_no_difference 'User.count' do
-				delete user_url(user)
+				delete user_url(delete_user)
 			end
-			assert_nothing_raised { user.reload }
+			assert_nothing_raised { delete_user.reload }
 			assert_response :redirect
 		end
 
-		# Non-Admin
-		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => false } ) do |user|
-			log_in_as user
 
-			loop_users do |other_user|
+		## User, Non-Admin
+		loop_users( user_modifiers: { 'admin' => false } ) do |logged_user|
+			log_in_as logged_user
+
+			# Users -- Redirect
+			loop_users do |delete_user|
 				assert_no_difference 'User.count' do
-					delete user_url(other_user)
+					delete user_url(delete_user)
 				end
-				assert_nothing_raised { other_user.reload }
+				assert_nothing_raised { delete_user.reload }
 				assert_response :redirect
 			end
 
 			log_out
 		end
 
-		# Admin, Trashed
-		loop_users( user_modifiers: { 'trashed' => true, 'admin' => true } ) do |user|
-			log_in_as user
 
-			loop_users do |other_user|
+		## User, Admin, Trashed
+		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |logged_user|
+			log_in_as logged_user
+
+			loop_users do |delete_user|
 				assert_no_difference 'User.count' do
-					delete user_url(other_user)
+					delete user_url(delete_user)
 				end
-				assert_nothing_raised { other_user.reload }
+				assert_nothing_raised { delete_user.reload }
 				assert_response :redirect
 			end
 
 			log_out
 		end
 
-		# Admin, UnTrashed
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user, user_key|
-			log_in_as user
 
-			loop_users( user_numbers: [user_key.split('_').last],
-					except: { user: user_key } ) do |other_user|
+		## User, Admin, Un-Trashed
+		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |logged_user, logged_user_key|
+			log_in_as logged_user
+
+			# Users, Trashed -- Success
+			loop_users( user_modifiers: { 'hidden' => logged_user.hidden?, 'trashed' => true },
+				user_numbers: [logged_user_key.split('_').last] ) do |delete_user|
+
 				assert_difference 'User.count', -1 do
-					delete user_url(other_user)
+					delete user_url(delete_user)
 				end
-				assert_raise(ActiveRecord::RecordNotFound) { other_user.reload }
+				assert_raise(ActiveRecord::RecordNotFound) { delete_user.reload }
 				assert_response :redirect
 			end
 
-			assert_difference 'User.count', -1 do
-				delete user_url(user)
+			# Users, Un-Trashed -- Success
+			loop_users( user_modifiers: { 'hidden' => logged_user.hidden?, 'trashed' => false },
+				user_numbers: [logged_user_key.split('_').last] ) do |delete_user|
+
+				assert_no_difference 'User.count' do
+					delete user_url(delete_user)
+				end
+				assert_nothing_raised { delete_user.reload }
+				assert_response :redirect
 			end
-			assert_raise(ActiveRecord::RecordNotFound) { user.reload }
-			assert_response :redirect
 
 			log_out
 		end

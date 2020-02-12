@@ -5,104 +5,476 @@ archiving_one_document_one:
   article_id: 1
   title: Archiving One Document One
   content: 'Lorem ipsum'
+  hidden: false
   trashed: false
 
-archiving_one_trashed_document_one:
+archiving_one_hidden_document_one:
   id: 2
   local_id: 2
   article_type: 'Archiving'
   article_id: 1
+  title: Archiving One Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
+  trashed: false
+
+archiving_one_trashed_document_one:
+  id: 3
+  local_id: 3
+  article_type: 'Archiving'
+  article_id: 1
   title: Archiving One Trashed Document One
   content: 'Lorem ipsum'
+  hidden: false
   trashed: true
 
-trashed_archiving_one_document_one:
-  id: 3
+archiving_one_trashed_hidden_document_one:
+  id: 4
+  local_id: 4
+  article_type: 'Archiving'
+  article_id: 1
+  title: Archiving One Trashed Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
+  trashed: true
+
+hidden_archiving_one_document_one:
+  id: 5
   local_id: 1
   article_type: 'Archiving'
   article_id: 2
-  title: Trashed Archiving One Document One
+  title: Hidden Archiving One Document One
   content: 'Lorem ipsum'
+  hidden: false
   trashed: false
 
-trashed_archiving_one_trashed_document_one:
-  id: 4
+hidden_archiving_one_hidden_document_one:
+  id: 6
   local_id: 2
   article_type: 'Archiving'
   article_id: 2
+  title: Hidden Archiving One Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
+  trashed: false
+
+hidden_archiving_one_trashed_document_one:
+  id: 7
+  local_id: 3
+  article_type: 'Archiving'
+  article_id: 2
+  title: Hidden Archiving One Trashed Document One
+  content: 'Lorem ipsum'
+  hidden: false
+  trashed: true
+
+hidden_archiving_one_trashed_hidden_document_one:
+  id: 8
+  local_id: 4
+  article_type: 'Archiving'
+  article_id: 2
+  title: Hidden Archiving One Trashed Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
+  trashed: true
+
+trashed_archiving_one_document_one:
+  id: 9
+  local_id: 1
+  article_type: 'Archiving'
+  article_id: 3
+  title: Trashed Archiving One Document One
+  content: 'Lorem ipsum'
+  hidden: false
+  trashed: false
+
+trashed_archiving_one_hidden_document_one:
+  id: 10
+  local_id: 2
+  article_type: 'Archiving'
+  article_id: 3
+  title: Trashed Archiving One Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
+  trashed: false
+
+trashed_archiving_one_trashed_document_one:
+  id: 11
+  local_id: 3
+  article_type: 'Archiving'
+  article_id: 3
   title: Trashed Archiving One Trashed Document One
   content: 'Lorem ipsum'
+  hidden: false
+  trashed: true
+
+trashed_archiving_one_trashed_hidden_document_one:
+  id: 12
+  local_id: 4
+  article_type: 'Archiving'
+  article_id: 3
+  title: Trashed Archiving One Trashed Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
+  trashed: true
+
+trashed_hidden_archiving_one_document_one:
+  id: 13
+  local_id: 1
+  article_type: 'Archiving'
+  article_id: 4
+  title: Trashed Hidden Archiving One Document One
+  content: 'Lorem ipsum'
+  hidden: false
+  trashed: false
+
+trashed_hidden_archiving_one_hidden_document_one:
+  id: 14
+  local_id: 2
+  article_type: 'Archiving'
+  article_id: 4
+  title: Trashed Hidden Archiving One Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
+  trashed: false
+
+trashed_hidden_archiving_one_trashed_document_one:
+  id: 15
+  local_id: 3
+  article_type: 'Archiving'
+  article_id: 4
+  title: Trashed Hidden Archiving One Trashed Document One
+  content: 'Lorem ipsum'
+  hidden: false
+  trashed: true
+
+trashed_hidden_archiving_one_trashed_hidden_document_one:
+  id: 16
+  local_id: 4
+  article_type: 'Archiving'
+  article_id: 4
+  title: Trashed Hidden Archiving One Trashed Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
   trashed: true
 
 blog_post_one_document_one:
-  id: 5
+  id: 17
   local_id: 1
   article_type: 'BlogPost'
   article_id: 1
   title: Blog Post One Document One
   content: 'Lorem ipsum'
+  hidden: false
+  trashed: false
+
+blog_post_one_hidden_document_one:
+  id: 18
+  local_id: 2
+  article_type: 'BlogPost'
+  article_id: 1
+  title: Blog Post One Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
   trashed: false
 
 blog_post_one_trashed_document_one:
-  id: 6
-  local_id: 2
+  id: 19
+  local_id: 3
   article_type: 'BlogPost'
   article_id: 1
   title: Blog Post One Trashed Document One
   content: 'Lorem ipsum'
+  hidden: false
+  trashed: true
+
+blog_post_one_trashed_hidden_document_one:
+  id: 20
+  local_id: 4
+  article_type: 'BlogPost'
+  article_id: 1
+  title: Blog Post One Trashed Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
   trashed: true
 
 motd_blog_post_one_document_one:
-  id: 7
+  id: 21
   local_id: 1
   article_type: 'BlogPost'
   article_id: 2
   title: Motd Blog Post One Document One
   content: 'Lorem ipsum'
+  hidden: false
+  trashed: false
+
+motd_blog_post_one_hidden_document_one:
+  id: 22
+  local_id: 2
+  article_type: 'BlogPost'
+  article_id: 2
+  title: Motd Blog Post One Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
   trashed: false
 
 motd_blog_post_one_trashed_document_one:
-  id: 8
-  local_id: 2
+  id: 23
+  local_id: 3
   article_type: 'BlogPost'
   article_id: 2
   title: Motd Blog Post One Trashed Document One
   content: 'Lorem ipsum'
+  hidden: false
+  trashed: true
+
+motd_blog_post_one_trashed_hidden_document_one:
+  id: 24
+  local_id: 4
+  article_type: 'BlogPost'
+  article_id: 2
+  title: Motd Blog Post One Trashed Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
+  trashed: true
+
+hidden_blog_post_one_document_one:
+  id: 25
+  local_id: 1
+  article_type: 'BlogPost'
+  article_id: 3
+  title: Hidden Blog Post One Document One
+  content: 'Lorem ipsum'
+  hidden: false
+  trashed: false
+
+hidden_blog_post_one_hidden_document_one:
+  id: 26
+  local_id: 2
+  article_type: 'BlogPost'
+  article_id: 3
+  title: Hidden Blog Post One Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
+  trashed: false
+
+hidden_blog_post_one_trashed_document_one:
+  id: 27
+  local_id: 3
+  article_type: 'BlogPost'
+  article_id: 3
+  title: Hidden Blog Post One Trashed Document One
+  content: 'Lorem ipsum'
+  hidden: false
+  trashed: true
+
+hidden_blog_post_one_trashed_hidden_document_one:
+  id: 28
+  local_id: 4
+  article_type: 'BlogPost'
+  article_id: 3
+  title: Hidden Blog Post One Trashed Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
+  trashed: true
+
+hidden_motd_blog_post_one_document_one:
+  id: 29
+  local_id: 1
+  article_type: 'BlogPost'
+  article_id: 4
+  title: Hidden Motd Blog Post One Document One
+  content: 'Lorem ipsum'
+  hidden: false
+  trashed: false
+
+hidden_motd_blog_post_one_hidden_document_one:
+  id: 30
+  local_id: 2
+  article_type: 'BlogPost'
+  article_id: 4
+  title: Hidden Motd Blog Post One Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
+  trashed: false
+
+hidden_motd_blog_post_one_trashed_document_one:
+  id: 31
+  local_id: 3
+  article_type: 'BlogPost'
+  article_id: 4
+  title: Hidden Motd Blog Post One Trashed Document One
+  content: 'Lorem ipsum'
+  hidden: false
+  trashed: true
+
+hidden_motd_blog_post_one_trashed_hidden_document_one:
+  id: 32
+  local_id: 4
+  article_type: 'BlogPost'
+  article_id: 4
+  title: Hidden Motd Blog Post One Trashed Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
   trashed: true
 
 trashed_blog_post_one_document_one:
-  id: 9
+  id: 33
   local_id: 1
   article_type: 'BlogPost'
-  article_id: 3
+  article_id: 5
   title: Trashed Blog Post One Document One
   content: 'Lorem ipsum'
+  hidden: false
+  trashed: false
+
+trashed_blog_post_one_hidden_document_one:
+  id: 34
+  local_id: 2
+  article_type: 'BlogPost'
+  article_id: 5
+  title: Trashed Blog Post One Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
   trashed: false
 
 trashed_blog_post_one_trashed_document_one:
-  id: 10
-  local_id: 2
+  id: 35
+  local_id: 3
   article_type: 'BlogPost'
-  article_id: 3
+  article_id: 5
   title: Trashed Blog Post One Trashed Document One
   content: 'Lorem ipsum'
+  hidden: false
+  trashed: true
+
+trashed_blog_post_one_trashed_hidden_document_one:
+  id: 36
+  local_id: 4
+  article_type: 'BlogPost'
+  article_id: 5
+  title: Trashed Blog Post One Trashed Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
   trashed: true
 
 trashed_motd_blog_post_one_document_one:
-  id: 11
+  id: 37
   local_id: 1
   article_type: 'BlogPost'
-  article_id: 4
+  article_id: 6
   title: Trashed Motd Blog Post One Document One
   content: 'Lorem ipsum'
+  hidden: false
+  trashed: false
+
+trashed_motd_blog_post_one_hidden_document_one:
+  id: 38
+  local_id: 2
+  article_type: 'BlogPost'
+  article_id: 6
+  title: Trashed Motd Blog Post One Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
   trashed: false
 
 trashed_motd_blog_post_one_trashed_document_one:
-  id: 12
-  local_id: 2
+  id: 39
+  local_id: 3
   article_type: 'BlogPost'
-  article_id: 4
+  article_id: 6
   title: Trashed Motd Blog Post One Trashed Document One
   content: 'Lorem ipsum'
+  hidden: false
+  trashed: true
+
+trashed_motd_blog_post_one_trashed_hidden_document_one:
+  id: 40
+  local_id: 4
+  article_type: 'BlogPost'
+  article_id: 6
+  title: Trashed Motd Blog Post One Trashed Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
+  trashed: true
+
+trashed_hidden_blog_post_one_document_one:
+  id: 41
+  local_id: 1
+  article_type: 'BlogPost'
+  article_id: 7
+  title: Trashed Hidden Blog Post One Document One
+  content: 'Lorem ipsum'
+  hidden: false
+  trashed: false
+
+trashed_hidden_blog_post_one_hidden_document_one:
+  id: 42
+  local_id: 2
+  article_type: 'BlogPost'
+  article_id: 7
+  title: Trashed Hidden Blog Post One Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
+  trashed: false
+
+trashed_hidden_blog_post_one_trashed_document_one:
+  id: 43
+  local_id: 3
+  article_type: 'BlogPost'
+  article_id: 7
+  title: Trashed Hidden Blog Post One Trashed Document One
+  content: 'Lorem ipsum'
+  hidden: false
+  trashed: true
+
+trashed_hidden_blog_post_one_trashed_hidden_document_one:
+  id: 44
+  local_id: 4
+  article_type: 'BlogPost'
+  article_id: 7
+  title: Trashed Hidden Blog Post One Trashed Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
+  trashed: true
+
+trashed_hidden_motd_blog_post_one_document_one:
+  id: 45
+  local_id: 1
+  article_type: 'BlogPost'
+  article_id: 8
+  title: Trashed Hidden Motd Blog Post One Document One
+  content: 'Lorem ipsum'
+  hidden: false
+  trashed: false
+
+trashed_hidden_motd_blog_post_one_hidden_document_one:
+  id: 46
+  local_id: 2
+  article_type: 'BlogPost'
+  article_id: 8
+  title: Trashed Hidden Motd Blog Post One Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
+  trashed: false
+
+trashed_hidden_motd_blog_post_one_trashed_document_one:
+  id: 47
+  local_id: 3
+  article_type: 'BlogPost'
+  article_id: 8
+  title: Trashed Hidden Motd Blog Post One Trashed Document One
+  content: 'Lorem ipsum'
+  hidden: false
+  trashed: true
+
+trashed_hidden_motd_blog_post_one_trashed_hidden_document_one:
+  id: 48
+  local_id: 4
+  article_type: 'BlogPost'
+  article_id: 8
+  title: Trashed Hidden Motd Blog Post One Trashed Hidden Document One
+  content: 'Lorem ipsum'
+  hidden: true
   trashed: true
 

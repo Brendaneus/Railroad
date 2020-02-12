@@ -13,13 +13,21 @@
 
 		<% if authorized_for? @user %>
 
-			<%= link_to "Edit Profile", edit_user_path( @user ) %>
+			<% unless @user.trashed? %>
 
-			<%= link_to "Trash Profile", trash_user_path( @user ) unless @user.trashed? %>
+				<%= link_to "Edit Profile", edit_user_path( @user ) %>
 
-			<%= link_to "Restore Profile", untrash_user_path( @user ) if @user.trashed? %>
+				<%= link_to "Hide Profile", hide_user_path( @user ), method: :patch unless @user.hidden? %>
 
-			<%= link_to "Delete Profile", user_path( @user ), method: :delete if admin_user? && @user.trashed? %>
+				<%= link_to "Show Profile", unhide_user_path( @user ), method: :patch if @user.hidden? %>
+
+			<% end %>
+
+			<%= link_to "Trash Profile", trash_user_path( @user ), method: :patch unless @user.trashed? %>
+
+			<%= link_to "Restore Profile", untrash_user_path( @user ), method: :patch if @user.trashed? %>
+
+			<%= link_to "Delete Profile", user_path( @user ), method: :delete if @user.trashed? && admin_user? %>
 
 		<% end %>
 	</div>
@@ -35,9 +43,9 @@
 
 	<%= render 'shared/timestamps', object: @user, activity: true %>
 
-	<% if @user.forum_posts.any? %>
+	<% if @forum_posts.any? %>
 
-		<%= render @user.forum_posts %>
+		<%= render @forum_posts %>
 
 	<% end %>
 

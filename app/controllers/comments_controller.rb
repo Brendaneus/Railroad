@@ -3,14 +3,28 @@ class CommentsController < ApplicationController
 	include CommentsHelper
 
 	before_action :set_post
-	before_action :require_admin_for_trashed_dependency#, except: [:trash, :untrash]
-	before_action :require_authorize, except: [:create]
-	before_action :require_untrashed_user, except: [:create]
-	before_action :require_untrashed_commenter, only: [:create]
-	# before_action :require_untrashed_user, only: [:create, :update, :destroy], if: :logged_in?
+	before_action :set_comment, except: [:trashed, :create]
+	before_action :require_authorize_or_admin_for_hidden_post_or_dependencies, only: [:trashed]
+	before_action :require_post_not_trash_canned, only: [:create]
+	before_action :require_unhidden_post_and_dependencies, only: [:create]
+	before_action :require_authorize, except: [:trashed, :create]
+	before_action :require_untrashed_user, except: [:trashed]
+	before_action :require_unhidden_user, only: [:create]
+	before_action :require_untrashed_comment, only: [:update]
 	before_action :require_admin, only: [:destroy]
 
 	after_action :mark_activity, if: :logged_in?
+
+	def trashed
+		@comments = @post.comments.trashed
+		unless admin_user?
+			if logged_in?
+				@comments = @comments.non_hidden_or_owned_by(current_user)
+			else
+				@comments = @comments.non_hidden
+			end
+		end
+	end
 
 	def create
 		@comment = @post.comments.build(comment_params)
@@ -25,7 +39,6 @@ class CommentsController < ApplicationController
 	end
 
 	def update
-		@comment = Comment.find( params[:id] )
 		if @comment.update(comment_params)
 			flash[:success] = "The comment has been successfully updated."
 			redirect_to post_path(@post)
@@ -35,8 +48,27 @@ class CommentsController < ApplicationController
 		end
 	end
 
+	def hide
+		if @comment.update_columns(hidden: true)
+			flash[:success] = "The comment has been successfully hidden."
+			redirect_to post_path(@post)
+		else
+			flash[:failure] = "There was a problem hiding the comment."
+			redirect_back fallback_url: post_path(@post)
+		end
+	end
+
+	def unhide
+		if @comment.update_columns(hidden: false)
+			flash[:success] = "The comment has been successfully unhidden."
+			redirect_to post_path(@post)
+		else
+			flash[:failure] = "There was a problem unhiding the comment."
+			redirect_back fallback_url: post_path(@post)
+		end
+	end
+
 	def trash
-		@comment = Comment.find( params[:id] )
 		if @comment.update_columns(trashed: true)
 			flash[:success] = "The comment has been successfully trashed."
 			redirect_to post_path(@post)
@@ -47,7 +79,6 @@ class CommentsController < ApplicationController
 	end
 
 	def untrash
-		@comment = Comment.find( params[:id] )
 		if @comment.update_columns(trashed: false)
 			flash[:success] = "The comment has been successfully restored."
 			redirect_to post_path(@post)
@@ -58,7 +89,6 @@ class CommentsController < ApplicationController
 	end
 
 	def destroy
-		@comment = Comment.find( params[:id] )
 		if @comment.destroy
 			flash[:success] = "The comment has been successfully deleted."
 			redirect_to post_path(@post)
@@ -75,33 +105,6 @@ class CommentsController < ApplicationController
 			params.require(:comment).permit(:content)
 		end
 
-		def require_untrashed_commenter
-			if logged_in? && trashed_user?
-				flash[:warning] = "Your account is inactive.  You must visit your profile page to reactivate before continuing."
-				redirect_back fallback_location: current_user
-			end
-		end
-
-		def require_authorize
-			unless ( Comment.find( params[:id] ).owned?(by: current_user) ) || ( admin_user? && untrashed_user? )
-				flash[:warning] = "You aren't allowed to do that."
-				redirect_to login_path
-			end
-		end
-
-		# Change to fallback redirect to relevant post path?
-		def require_admin_for_trashed_dependency
-			if @post.trashed? && !admin_user?
-				flash[:warning] = "This post has been trashed and cannot accept changes."
-				redirect_back fallback_location: root_path
-			elsif @post.class == Suggestion
-				if (@post.citation.trashed? || ((@post.citation.class == Document) && @post.citation.article.trashed?)) && !admin_user?
-					flash[:warning] = "This post's dependencies has been trashed and cannot accept changes."
-					redirect_back fallback_location: root_path
-				end
-			end
-		end
-
 		def set_post
 			begin
 				post_class = params[:post_class].constantize
@@ -110,6 +113,67 @@ class CommentsController < ApplicationController
 			rescue
 				flash[:error] = "There was a problem finding the post for this comment."
 				redirect_back fallback_location: root_path
+			end
+		end
+
+		def set_comment
+			@comment = Comment.find( params[:id] )
+		end
+
+		def require_untrashed_comment
+			if @comment.trashed?
+				flash[:warning] = "This comment must be restored from trash before proceeding."
+				redirect_back fallback_location: root_path
+			end
+		end
+
+		def require_authorize
+			unless @comment.owned?(by: current_user) || ( admin_user? && untrashed_user? )
+				flash[:warning] = "You aren't allowed to do that."
+				redirect_to login_path
+			end
+		end
+
+		def require_post_not_trash_canned
+			if @post.trash_canned?
+				flash[:warning] = "This Post or its dependencies have been trashed and cannot accept changes."
+				redirect_back fallback_location: root_path
+			end
+		end
+
+		def require_authorize_or_admin_for_hidden_post_or_dependencies
+			if (@post.class == BlogPost) && @post.hidden? && !admin_user?
+				flash[:warning] = "This Post has been hidden and cannot accept changes."
+				redirect_back fallback_location: root_path
+			elsif (@post.class == ForumPost) && @post.hidden? && !authorized_for?(@post.user) && !admin_user?
+				flash[:warning] = "This Post has been hidden and cannot accept changes."
+				redirect_back fallback_location: root_path
+			elsif (@post.class == Suggestion)
+				if @post.hidden? && !authorized_for?(@post.user) && !admin_user?
+					flash[:warning] = "This Post has been hidden and cannot accept changes."
+					redirect_back fallback_location: root_path
+				elsif ( @post.citation.hidden? || ((@post.citation.class == Document) && @post.citation.article.hidden?) ) && !admin_user?
+					flash[:warning] = "This Post's dependencies have been hidden and cannot accept changes"
+					redirect_back fallback_location: root_path
+				end
+			end
+		end
+
+		def require_unhidden_post_and_dependencies
+			if (@post.class == BlogPost) && @post.hidden?
+				flash[:warning] = "This Post has been hidden and cannot accept changes."
+				redirect_back fallback_location: root_path
+			elsif (@post.class == ForumPost) && @post.hidden?
+				flash[:warning] = "This Post has been hidden and cannot accept changes."
+				redirect_back fallback_location: root_path
+			elsif (@post.class == Suggestion)
+				if @post.hidden?
+					flash[:warning] = "This Post has been hidden and cannot accept changes."
+					redirect_back fallback_location: root_path
+				elsif ( @post.citation.hidden? || ((@post.citation.class == Document) && @post.citation.article.hidden?) )
+					flash[:warning] = "This Post's dependencies have been hidden and cannot accept changes"
+					redirect_back fallback_location: root_path
+				end
 			end
 		end
 

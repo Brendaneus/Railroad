@@ -23,6 +23,12 @@ FactoryBot.define do
 		end
 		factory :suggestion_comment do
 			association :post, factory: :suggestion
+			factory :archiving_suggestion_comment do
+				association :post, factory: :archiving_suggestion
+			end
+			factory :document_suggestion_comment do
+				association :post, factory: :document_suggestion
+			end
 		end
 	end
 end

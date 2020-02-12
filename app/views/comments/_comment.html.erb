@@ -6,19 +6,27 @@
 		<%= safe_user_link_to(comment.user) %> wrote:
 	</h4>
 
-	<% if untrashed_user? && ( admin_user? || comment.owned?(by: current_user) ) %>
+	<% if !comment.trash_canned? && untrashed_user? && ( admin_user? || comment.owned?(by: current_user) ) %>
 
 		<%= render 'comments/form', comment: comment, form_url: post_comment_path(comment.post, comment) %>
+
+	<% else %>
+	
+		<p><%= simple_format comment.content %></p>
+
+	<% end %>
+
+	<% if untrashed_user? && ( admin_user? || comment.owned?(by: current_user) ) %>
+
+		<%= link_to "Hide", hide_post_comment_path(comment.post, comment.id) unless comment.hidden? %>
+
+		<%= link_to "Show", unhide_post_comment_path(comment.post, comment.id) if comment.hidden? %>
 
 		<%= link_to "Trash", trash_post_comment_path(comment.post, comment.id) unless comment.trashed? %>
 
 		<%= link_to "Restore", untrash_post_comment_path(comment.post, comment.id) if comment.trashed? %>
 
-		<%= link_to "Delete", post_comment_path(comment.post, comment.id), method: :delete, data: { confirm: 'Really delete this comment?'} if admin_user? && comment.trashed? %>
-
-	<% else %>
-
-		<p><%= simple_format comment.content %></p>
+		<%= link_to "Delete", post_comment_path(comment.post, comment.id), method: :delete, data: { confirm: 'Really delete this comment?'} if comment.trashed? && admin_user? %>
 
 	<% end %>
 

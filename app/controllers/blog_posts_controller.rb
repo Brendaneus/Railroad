@@ -1,31 +1,36 @@
 class BlogPostsController < ApplicationController
-	
-	before_action :require_admin, except: [:index, :show]
+
+	before_action :require_admin, except: [:index, :trashed, :show]
 	before_action :require_untrashed_user, except: [:index, :trashed, :show]
-	before_action :require_admin_for_trashed, only: [:show]
+	before_action :require_unhidden_user, only: [:new, :create]
+	before_action :set_blog_post, except: [:index, :trashed, :create, :new]
+	before_action :require_admin_for_hidden, only: [:show]
+	before_action :require_untrashed_blog_post, only: [:edit, :update]
+	before_action :require_trashed_blog_post, only: [:destroy]
 
 	before_action :set_document_bucket, unless: -> { Rails.env.test? }
 	after_action :mark_activity, only: [:create, :update, :trash, :untrash, :destroy], if: :logged_in?
 
 	def index
 		@blog_posts = BlogPost.non_trashed.includes(:documents, :comments).order( created_at: :desc )
+		@blog_posts = @blog_posts.non_hidden unless admin_user?
 	end
 
 	def trashed
 		@blog_posts = BlogPost.trashed.includes(:documents, :comments)
+		@blog_posts = @blog_posts.non_hidden unless admin_user?
 	end
 
 	def show
-		@blog_post = BlogPost.find( params[:id] )
+		@documents = @blog_post.documents.non_trashed
 		if admin_user?
-			@documents = @blog_post.documents
-			@comments = @blog_post.comments.includes(:user).order(created_at: :desc)
-		elsif logged_in?
-			@documents = @blog_post.documents.non_trashed
-			@comments = @blog_post.comments.non_trashed_or_owned_by(current_user).includes(:user).order(created_at: :desc)
-		else
-			@documents = @blog_post.documents.non_trashed
 			@comments = @blog_post.comments.non_trashed.includes(:user).order(created_at: :desc)
+		elsif logged_in?
+			@documents = @documents.non_hidden
+			@comments = @blog_post.comments.non_trashed.non_hidden_or_owned_by(current_user).includes(:user).order(created_at: :desc)
+		else
+			@documents = @documents.non_hidden
+			@comments = @blog_post.comments.non_trashed.non_hidden.includes(:user).order(created_at: :desc)
 		end
 		@new_comment = @blog_post.comments.build
 	end
@@ -46,11 +51,9 @@ class BlogPostsController < ApplicationController
 	end
 
 	def edit
-		@blog_post = BlogPost.find( params[:id] )
 	end
 
 	def update
-		@blog_post = BlogPost.find( params[:id] )
 		if @blog_post.update( blog_post_params )
 			flash[:success] = "Blog post updated!"
 			redirect_to blog_post_path(@blog_post)
@@ -60,8 +63,27 @@ class BlogPostsController < ApplicationController
 		end
 	end
 
+	def hide
+		if @blog_post.update_columns(hidden: true)
+			flash[:success] = "The blog post has been successfully hidden."
+			redirect_to @blog_post
+		else
+			flash[:failure] = "There was a problem hiding the blog post."
+			redirect_back fallback_location: @blog_post
+		end
+	end
+
+	def unhide
+		if @blog_post.update_columns(hidden: false)
+			flash[:success] = "The blog post has been successfully unhidden."
+			redirect_to @blog_post
+		else
+			flash[:failure] = "There was a problem unhiding the blog post."
+			redirect_back fallback_location: @blog_post
+		end
+	end
+
 	def trash
-		@blog_post = BlogPost.find( params[:id] )
 		if @blog_post.update_columns(trashed: true)
 			flash[:success] = "The blog post has been successfully trashed."
 			redirect_to @blog_post
@@ -72,7 +94,6 @@ class BlogPostsController < ApplicationController
 	end
 
 	def untrash
-		@blog_post = BlogPost.find( params[:id] )
 		if @blog_post.update_columns(trashed: false)
 			flash[:success] = "The blog post has been successfully restored."
 			redirect_to @blog_post
@@ -83,7 +104,6 @@ class BlogPostsController < ApplicationController
 	end
 
 	def destroy
-		@blog_post = BlogPost.find( params[:id] )
 		if @blog_post.destroy
 			flash[:success] = "Blog post deleted."
 			redirect_to blog_posts_path
@@ -93,16 +113,35 @@ class BlogPostsController < ApplicationController
 		end
 	end
 
+
 	private
 
 		def blog_post_params
 			params.require(:blog_post).permit( :title, :subtitle, :content, :motd )
 		end
 
-		def require_admin_for_trashed
-			unless admin_user? || !BlogPost.find( params[:id] ).trashed?
-				flash[:warning] = "This blog post has been trashed and cannot be viewed."
+		def set_blog_post
+			@blog_post = BlogPost.find( params[:id] )
+		end
+
+		def require_admin_for_hidden
+			unless admin_user? || !BlogPost.find( params[:id] ).hidden?
+				flash[:warning] = "This blog post has been hidden and cannot be viewed."
 				redirect_back fallback_location: blog_posts_path
+			end
+		end
+
+		def require_untrashed_blog_post
+			if @blog_post.trashed?
+				flash[:warning] = "This Blog Post must be restored from trash before proceeding."
+				redirect_to blog_posts_path
+			end
+		end
+
+		def require_trashed_blog_post
+			unless @blog_post.trashed?
+				flash[:warning] = "This Blog Post must be trashed before proceeding."
+				redirect_to blog_posts_path
 			end
 		end
 

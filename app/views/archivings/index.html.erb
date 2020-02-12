@@ -2,15 +2,11 @@
 	/ <%= link_to "Archives", archivings_path %>
 <% end %>
 
-<% if admin_user? %>
+<div class="<%= (admin_user?) ? "admin " : "" %> control">
+	<%= link_to "Trashed Archivings", trashed_archivings_path %>
 
-	<div class="admin control">
-		<%= link_to "Trashed Archivings", trashed_archivings_path %>
-
-		<%= link_to "New Archiving", new_archiving_path if untrashed_user? %>
-	</div>
-
-<% end %>
+	<%= link_to "New Archiving", new_archiving_path if admin_user? && untrashed_user? && unhidden_user? %>
+</div>
 
 <main>
 	<%= (render @archivings) || (tag.h2 "There isn't anything here...") %>

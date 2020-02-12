@@ -4,37 +4,56 @@ class SuggestionsController < ApplicationController
 
 	before_action :require_login, except: [:index, :show]
 	before_action :require_untrashed_user, except: [:index, :trashed, :show]
+	before_action :require_unhidden_user, only: [:new, :create]
 	before_action :require_admin, only: [:merge, :destroy]
 	before_action :set_citation
-	before_action :require_authorize, only: [:edit, :update, :trash, :untrash]
-	before_action :require_authorize_or_admin_for_trashed, only: [:show]
-	before_action :require_admin_for_trashed_archiving_or_document#, except: [:trash, :untrash]
+	before_action :set_suggestion, except: [:index, :trashed, :new, :create]
+	before_action :require_authorize, only: [:edit, :update, :hide, :unhide, :trash, :untrash]
+	before_action :require_admin_for_hidden_archiving_or_document, except: [:new, :create]
+	before_action :require_untrashed_archiving_or_document, only: [:new, :create]
+	before_action :require_unhidden_archiving_or_document, only: [:new, :create]
+	before_action :require_untrashed_suggestion, only: [:edit, :update, :merge]
+	before_action :require_untrashed_citation, only: [:merge]
+	before_action :require_authorize_or_admin_for_hidden_suggestion, only: [:show]
+	before_action :require_trashed_suggestion, only: [:destroy]
 
 	after_action :mark_activity, only: [:create, :update, :trash, :untrash, :merge, :destroy], if: :logged_in?
 
 	def index
 		@suggestions = @citation.suggestions.non_trashed.order(updated_at: :desc)
+
+		unless admin_user?
+			if logged_in?
+				@suggestions = @suggestions.non_hidden_or_owned_by(current_user)
+			else
+				@suggestions = @suggestions.non_hidden
+			end
+		end
 	end
 
 	def trashed
-		if admin_user?
-			@suggestions = @citation.suggestions.trashed.includes(:user, :comments).order(updated_at: :desc)
-		elsif logged_in?
-			@suggestions = @citation.suggestions.trashed.where(user: current_user).includes(:user, :comments).order(updated_at: :desc)
-		else
-			redirect_to root_url
+		@suggestions = @citation.suggestions.trashed.includes(:user, :comments).order(updated_at: :desc)
+		
+		unless admin_user?
+			if logged_in?
+				@suggestions = @suggestions.non_hidden_or_owned_by(current_user)
+			else
+				@suggestions = @suggestion
+			end
 		end
 	end
 
 	def show
-		@suggestion = @citation.suggestions.find( params[:id] )
-		if admin_user?
-			@comments = @suggestion.comments.includes(:user).order(created_at: :desc)
-		elsif logged_in?
-			@comments = @suggestion.comments.non_trashed_or_owned_by(current_user).includes(:user).order(created_at: :desc)
-		else
-			@comments = @suggestion.comments.non_trashed.includes(:user).order(created_at: :desc)
+		@comments = @suggestion.comments.non_trashed.includes(:user).order(created_at: :desc)
+
+		unless admin_user?
+			if logged_in?
+				@comments = @comments.non_hidden_or_owned_by(current_user)
+			else
+				@comments = @comments.non_hidden
+			end
 		end
+
 		@new_comment = @suggestion.comments.build
 	end
 
@@ -66,6 +85,28 @@ class SuggestionsController < ApplicationController
 		else
 			flash[:failure] = "There was a problem updating this suggestion."
 			render :edit
+		end
+	end
+
+	def hide
+		@suggestion = Suggestion.find( params[:id] )
+		if @suggestion.update_columns(hidden: true)
+			flash[:success] = "The suggestion has been successfully hidden."
+			redirect_to citation_suggestion_path(@citation, @suggestion)
+		else
+			flash[:failure] = "There was a problem hiding the suggestion."
+			redirect_back fallback_location: citation_suggestions_path(@citation)
+		end
+	end
+
+	def unhide
+		@suggestion = Suggestion.find( params[:id] )
+		if @suggestion.update_columns(hidden: false)
+			flash[:success] = "The suggestion has been successfully unhidden."
+			redirect_to citation_suggestion_path(@citation, @suggestion)
+		else
+			flash[:failure] = "There was a problem unhiding the suggestion."
+			redirect_back fallback_location: citation_suggestions_path(@citation)
 		end
 	end
 
@@ -135,23 +176,62 @@ class SuggestionsController < ApplicationController
 			end
 		end
 
+		def set_suggestion
+			@suggestion = @citation.suggestions.find( params[:id] )
+		end
+
 		def require_authorize
-			unless authorized_for? ( suggestion = Suggestion.find(params[:id]) ).user
+			unless authorized_for? @suggestion.user
 				flash[:warning] = "You aren't allowed to do that"
 				redirect_back fallback_location: citation_suggestions_path(@citation)
 			end
 		end
 
-		def require_authorize_or_admin_for_trashed
-			unless ( authorized_for? ( suggestion = Suggestion.find(params[:id]) ).user ) || !suggestion.trashed? || admin_user?
-				flash[:warning] = "This suggestion has been trashed and cannot be viewed."
+		def require_untrashed_archiving_or_document
+			if @citation.trashed? || ((@citation.class == Document) && @citation.article.trashed?)
+				flash[:warning] = "This suggestion's sources have been trashed and cannot accept changes."
 				redirect_back fallback_location: citation_suggestions_path(@citation)
 			end
 		end
 
-		def require_admin_for_trashed_archiving_or_document
-			if (@citation.trashed? || ((@citation.class == Document) && @citation.article.trashed?)) && !admin_user?
-				flash[:warning] = "This suggestion's sources have been trashed and cannot be viewed."
+		def require_unhidden_archiving_or_document
+			if @citation.hidden? || ((@citation.class == Document) && @citation.article.hidden?)
+				flash[:warning] = "This suggestion's sources have been hidden and cannot accept changes."
+				redirect_back fallback_location: citation_suggestions_path(@citation)
+			end
+		end
+
+		def require_untrashed_suggestion
+			if @suggestion.trashed?
+				flash[:warning] = "This suggestion has been trashed and cannot be accept changes."
+				redirect_back fallback_location: citation_suggestions_path(@citation)
+			end
+		end
+
+		def require_trashed_suggestion
+			unless @suggestion.trashed?
+				flash[:warning] = "This suggestion must be trashed before proceeding."
+				redirect_back fallback_location: citation_suggestions_path(@citation)
+			end
+		end
+
+		def require_untrashed_citation
+			if @citation.trashed?
+				flash[:warning] = "This citation has been trashed and cannot be accept changes."
+				redirect_back fallback_location: citation_suggestions_path(@citation)
+			end
+		end
+ 
+		def require_admin_for_hidden_archiving_or_document
+			if ( @citation.hidden? || ((@citation.class == Document) && @citation.article.hidden?) ) && !admin_user?
+				flash[:warning] = "This suggestion's sources have been hidden and cannot be viewed."
+				redirect_back fallback_location: citation_suggestions_path(@citation)
+			end
+		end
+
+		def require_authorize_or_admin_for_hidden_suggestion
+			unless !@suggestion.hidden? || authorized_for?(@suggestion.user) || admin_user?
+				flash[:warning] = "This suggestion has been hidden and cannot be viewed."
 				redirect_back fallback_location: citation_suggestions_path(@citation)
 			end
 		end

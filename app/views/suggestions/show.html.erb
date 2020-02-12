@@ -11,7 +11,10 @@
 			/ <%= link_to "Trash", trashed_archivings_path %>
 		<% end %>
 		/ <%= link_to @citation.article.title, archiving_path(@citation.article) %>
-		/ <%= link_to @citation.title, citation_path(@citation) %>
+		<% if @citation.trashed? %>
+			/ <%= link_to "Trashed Documents", trashed_archiving_documents_path(@citation.article) %>
+		<% end %>
+		/ <%= link_to @citation.title, archiving_document_path(@citation) %>
 	<% end %>
 	/ <%= link_to "Suggestions", citation_suggestions_path(@citation) %>
 	<% if @suggestion.trashed? %>
@@ -20,21 +23,33 @@
 	/ <%= link_to @suggestion.name, citation_suggestion_path(@citation, @suggestion) %>
 <% end %>
 
-<% if authorized_for?(@suggestion.user) && untrashed_user? %>
+<div class="<%= ( admin_user? ) ? "admin " : "" %>control">
 
-	<div class="<%= ( admin_user? ) ? "admin " : "" %>control">
-		<%= link_to "Edit Post", edit_citation_suggestion_path( @citation, @suggestion ) if untrashed_user? %>
+	<% if authorized_for?(@suggestion.user) && untrashed_user? %>
 
-		<%= link_to "Trash Post", trash_citation_suggestion_path( @citation, @suggestion ) unless @suggestion.trashed? || trashed_user? %>
+		<%= link_to "Edit Post", edit_citation_suggestion_path( @citation, @suggestion ) unless @suggestion.trashed? %>
 
-		<%= link_to "Restore Post", untrash_citation_suggestion_path( @citation, @suggestion ) if @suggestion.trashed? && untrashed_user? %>
+		<%= link_to "Hide Post", hide_citation_suggestion_path( @citation, @suggestion ), method: :patch unless @suggestion.hidden? %>
 
-		<%= link_to "Delete Post", citation_suggestion_path( @citation, @suggestion ), method: :delete, data: { confirm: 'Really delete this suggestion?'} if @suggestion.trashed? && admin_user? && untrashed_user? %>
+		<%= link_to "Show Post", unhide_citation_suggestion_path( @citation, @suggestion ), method: :patch if @suggestion.hidden? %>
 
-		<%= link_to "Merge Post", merge_citation_suggestion_path( @citation, @suggestion ), method: :patch, data: { confirm: 'Really merge this suggestion?' } unless @suggestion.trashed? || (!admin_user? || trashed_user?) %>
-	</div>
+		<%= link_to "Trash Post", trash_citation_suggestion_path( @citation, @suggestion ), method: :patch unless @suggestion.trashed? %>
 
-<% end %>
+		<%= link_to "Restore Post", untrash_citation_suggestion_path( @citation, @suggestion ), method: :patch if @suggestion.trashed? %>
+
+		<% if admin_user? %>
+
+			<%= link_to "Merge Post", merge_citation_suggestion_path( @citation, @suggestion ), method: :patch, data: { confirm: 'Really merge this suggestion?' } unless @suggestion.trashed? || @citation.trashed? %>
+
+			<%= link_to "Delete Post", citation_suggestion_path( @citation, @suggestion ), method: :delete, data: { confirm: 'Really delete this suggestion?'} if @suggestion.trashed? %>
+
+		<% end %>
+
+	<% end %>
+
+	<%= link_to "Trashed Comments", trashed_citation_suggestion_comments_path( @citation, @suggestion ) %>
+
+</div>
 
 <main>
 	<%#= render 'heading' %>
@@ -58,7 +73,7 @@
 
 	<%= render 'shared/details', object: @suggestion, new_comment: true %>
 
-	<%= render 'comments/form', comment: @new_comment, form_url: citation_suggestion_comments_path( @citation, @suggestion ) unless (@suggestion.trashed? || @suggestion.citation_or_article_trashed?) || trashed_user? %>
+	<%= render 'comments/form', comment: @new_comment, form_url: citation_suggestion_comments_path( @citation, @suggestion ) unless @suggestion.trashed? || @suggestion.citation_or_article_trashed? || trashed_user? || hidden_user? %>
 
 	<%= render @comments %>
 </main>

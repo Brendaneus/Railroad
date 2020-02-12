@@ -2,6 +2,7 @@ class Archiving < ApplicationRecord
 	
 	include Editable
 	include Suggestable
+	include Hidable
 	include Trashable
 	
 	has_many :documents, as: :article, dependent: :destroy

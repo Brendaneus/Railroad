@@ -14,6 +14,7 @@ def write_users verbose: false
 			f.write "  password_digest: '#{User.digest('password')}'\n"
 			f.write "  bio: '#{( 'Hi, my name is ' + user_hash[:ref].split('_').map(&:capitalize).join(' ') )}'\n"
 			f.write "  admin: #{user_hash[:modifier_states][:admin]}\n"
+			f.write "  hidden: #{user_hash[:modifier_states][:hidden]}\n"
 			f.write "  trashed: #{user_hash[:modifier_states][:trashed]}\n\n"
 		end
 	end
@@ -50,6 +51,7 @@ def write_archivings verbose: false
 			f.write "  id: #{archiving_hash[:id]}\n"
 			f.write "  title: '#{archiving_hash[:ref].split("_").map(&:capitalize).join(" ")}'\n"
 			f.write "  content: 'Lorem ipsum'\n"
+			f.write "  hidden: #{archiving_hash[:modifier_states][:hidden]}\n"
 			f.write "  trashed: #{archiving_hash[:modifier_states][:trashed]}\n\n"
 		end
 	end
@@ -67,6 +69,7 @@ def write_blog_posts verbose: false
 			f.write "  title: '#{blog_post_hash[:ref].split("_").map(&:capitalize).join(" ")}'\n"
 			f.write "  content: 'Lorem ipsum'\n"
 			f.write "  motd: #{blog_post_hash[:modifier_states][:motd]}\n"
+			f.write "  hidden: #{blog_post_hash[:modifier_states][:hidden]}\n"
 			f.write "  trashed: #{blog_post_hash[:modifier_states][:trashed]}\n\n"
 		end
 	end
@@ -87,6 +90,7 @@ def write_forum_posts verbose: false
 				f.write "  content: 'Lorem ipsum'\n"
 				f.write "  motd: #{forum_post_hash[:modifier_states][:motd]}\n"
 				f.write "  sticky: #{forum_post_hash[:modifier_states][:sticky]}\n"
+				f.write "  hidden: #{forum_post_hash[:modifier_states][:hidden]}\n"
 				f.write "  trashed: #{forum_post_hash[:modifier_states][:trashed]}\n\n"
 			end
 		end
@@ -109,6 +113,7 @@ def write_documents verbose: false
 				f.write "  article_id: #{archiving_hash[:id]}\n"
 				f.write "  title: #{(archiving_hash[:ref] + '_' + document_hash[:ref]).split('_').map(&:capitalize).join(' ')}\n"
 				f.write "  content: 'Lorem ipsum'\n"
+				f.write "  hidden: #{document_hash[:modifier_states][:hidden]}\n"
 				f.write "  trashed: #{document_hash[:modifier_states][:trashed]}\n\n"
 			end
 			id_offset += 1
@@ -124,6 +129,7 @@ def write_documents verbose: false
 				f.write "  article_id: #{blog_post_hash[:id]}\n"
 				f.write "  title: #{(blog_post_hash[:ref] + '_' + document_hash[:ref]).split('_').map(&:capitalize).join(' ')}\n"
 				f.write "  content: 'Lorem ipsum'\n"
+				f.write "  hidden: #{document_hash[:modifier_states][:hidden]}\n"
 				f.write "  trashed: #{document_hash[:modifier_states][:trashed]}\n\n"
 			end
 		end
@@ -137,6 +143,7 @@ def write_suggestions verbose: false
 
 	id = 1
 	document_id = 1
+	suggestion_number = 1
 	loop_model(name: :archiving) do |archiving_hash|
 		loop_model(name: :user) do |user_hash|
 			loop_model(name: :suggestion) do |suggestion_hash|
@@ -147,14 +154,17 @@ def write_suggestions verbose: false
 					f.write "  citation_id: #{archiving_hash[:id]}\n"
 					f.write "  user_id: #{user_hash[:id]}\n"
 					f.write "  name: '#{(archiving_hash[:ref] + '_' + user_hash[:ref] + '_' + suggestion_hash[:ref]).split('_').map(&:capitalize).join(' ')}'\n"
-					f.write "  title: '#{(archiving_hash[:ref]).split('_').map(&:capitalize).join(' ')} Suggestion #{id}'\n"
+					f.write "  title: 'Suggestion #{suggestion_number}'\n"
 					f.write "  content: 'Lorem ipsum: REDUX'\n"
+					f.write "  hidden: #{suggestion_hash[:modifier_states][:hidden]}\n"
 					f.write "  trashed: #{suggestion_hash[:modifier_states][:trashed]}\n\n"
 				end
 				id += 1
+				suggestion_number += 1
 			end
 		end
 		loop_model(name: :document) do |document_hash|
+			suggestin_number = 1
 			loop_model(name: :user) do |user_hash|
 				loop_model(name: :suggestion) do |suggestion_hash|
 					File.open("test/fixtures/suggestions.yml", "a") do |f|
@@ -164,11 +174,13 @@ def write_suggestions verbose: false
 						f.write "  citation_id: #{document_id}\n"
 						f.write "  user_id: #{user_hash[:id]}\n"
 						f.write "  name: '#{(archiving_hash[:ref] + '_' + document_hash[:ref] + '_' + user_hash[:ref] + '_' + suggestion_hash[:ref]).split('_').map(&:capitalize).join(' ')}'\n"
-						f.write "  title: '#{(archiving_hash[:ref] + '_' + document_hash[:ref]).split('_').map(&:capitalize).join(' ')} Suggestion #{id}'\n"
+						f.write "  title: 'Suggestion #{suggestion_number}'\n"
 						f.write "  content: 'Lorem ipsum: REDUX'\n"
+						f.write "  hidden: #{suggestion_hash[:modifier_states][:hidden]}\n"
 						f.write "  trashed: #{suggestion_hash[:modifier_states][:trashed]}\n\n"
 					end
 					id += 1
+					suggestion_number += 1
 				end
 			end
 			document_id += 1
@@ -200,6 +212,7 @@ def write_versions verbose: false
 				"id:\\n- \\n- #{archiving_hash[:id]}\\n" +
 				"title:\\n- \\n- #{archiving_hash[:ref].split('_').map(&:capitalize).join(' ') + ' Original Version'}\\n" +
 				"content:\\n- \\n- Lorum Ipsum\\n" +
+				"hidden:\\n- \\n- false\\n" +
 				"trashed:\\n- \\n- false\\n" +
 				"created_at:\\n- \\n- &1 #{DateTime.now.to_s(:db)} Z\\n" +
 				"updated_at:\\n- \\n- *1\"\n\n"
@@ -213,13 +226,14 @@ def write_versions verbose: false
 				f.write "  item_type: 'Archiving'\n"
 				f.write "  item_id: #{archiving_hash[:id]}\n"
 				f.write "  event: 'update'\n"
-				f.write "  name: 'Manual Update'\n"
+				f.write "  name: '#{(archiving_hash[:ref] + '_' + version_hash[:ref]).split('_').map(&:capitalize).join(' ')}'\n"
 				f.write "  whodunnit: 'Overseer'\n"
 				f.write "  hidden: #{version_hash[:modifier_states][:hidden]}\n"
 				f.write "  object:  \"---\\n" +
 					"id: #{archiving_hash[:id]}\\n" +
 					"title: #{(archiving_hash[:ref]).split('_').map(&:capitalize).join(' ') + ' Update ' + (version_number - 1).to_s}\\n" +
 					"content: Lorum Ipsum\\n" +
+					"hidden: false\\n" +
 					"trashed: false\\n" +
 					"created_at: #{DateTime.now.to_s(:db)} Z\\n" +
 					"updated_at: #{DateTime.now.to_s(:db)} Z\"\n"
@@ -247,6 +261,7 @@ def write_versions verbose: false
 				"id: #{archiving_hash[:id]}\\n" +
 				"title: #{(archiving_hash[:ref]).split('_').map(&:capitalize).join(' ') + ' Update ' + (version_number - 1).to_s}\\n" +
 				"content: Lorum Ipsum\\n" +
+				"hidden: false\\n" +
 				"trashed: false\\n" +
 				"created_at: #{DateTime.now.to_s(:db)} Z\\n" +
 				"updated_at: #{DateTime.now.to_s(:db)} Z\"\n"
@@ -278,6 +293,7 @@ def write_versions verbose: false
 					"local_id:\\n- \\n- #{document_hash[:id]}\\n" +
 					"title:\\n- \\n- #{(archiving_hash[:ref] + '_' + document_hash[:ref]).split('_').map(&:capitalize).join(' ') + ' Original Version'}\\n" +
 					"content:\\n- \\n- Lorum Ipsum\\n" +
+					"hidden:\\n- \\n- false\\n" +
 					"trashed:\\n- \\n- false\\n" +
 					"created_at:\\n- \\n- &1 #{DateTime.now.to_s(:db)} Z\\n" +
 					"updated_at:\\n- \\n- *1\"\n\n"
@@ -301,6 +317,7 @@ def write_versions verbose: false
 						"local_id: #{document_hash[:id]}\\n" +
 						"title: #{(archiving_hash[:ref] + '_' + document_hash[:ref]).split('_').map(&:capitalize).join(' ') + ' Update ' + (version_number - 1).to_s}\\n" +
 						"content: Lorum Ipsum\\n" +
+						"hidden: false\\n" +
 						"trashed: false\\n" +
 						"created_at: &1 #{DateTime.now.to_s(:db)} Z\\n" +
 						"updated_at: &1 #{DateTime.now.to_s(:db)} Z\"\n"
@@ -331,6 +348,7 @@ def write_versions verbose: false
 					"local_id: #{document_hash[:id]}\\n" +
 					"title: #{(archiving_hash[:ref] + '_' + document_hash[:ref]).split('_').map(&:capitalize).join(' ') + ' Update ' + (version_number - 1).to_s}\\n" +
 					"content: Lorum Ipsum\\n" +
+					"hidden: false\\n" +
 					"trashed: false\\n" +
 					"created_at: &1 #{DateTime.now.to_s(:db)} Z\\n" +
 					"updated_at: &1 #{DateTime.now.to_s(:db)} Z\"\n"
@@ -368,6 +386,7 @@ def write_comments verbose: false
 							f.write "  post_type: 'Suggestion'\n"
 							f.write "  post_id: #{suggestion_id}\n"
 							f.write "  content: '#{(archiving_hash[:ref] + '_' + suggester_hash[:ref] + '_' + suggestion_hash[:ref] + '_' + commenter_hash[:ref] + '_' + comment_hash[:ref]).split('_').map(&:capitalize).join(' ')}'\n"
+							f.write "  hidden: #{comment_hash[:modifier_states][:hidden]}\n"
 							f.write "  trashed: #{comment_hash[:modifier_states][:trashed]}\n\n"
 						end
 						id += 1
@@ -380,6 +399,7 @@ def write_comments verbose: false
 						f.write "  post_type: 'Suggestion'\n"
 						f.write "  post_id: #{suggestion_id}\n"
 						f.write "  content: '#{(archiving_hash[:ref] + '_' + suggester_hash[:ref] + '_' + suggestion_hash[:ref] + '_guest_user_' + comment_hash[:ref]).split('_').map(&:capitalize).join(' ')}'\n"
+						f.write "  hidden: #{comment_hash[:modifier_states][:hidden]}\n"
 						f.write "  trashed: #{comment_hash[:modifier_states][:trashed]}\n\n"
 					end
 					id += 1
@@ -399,6 +419,7 @@ def write_comments verbose: false
 								f.write "  post_type: 'Suggestion'\n"
 								f.write "  post_id: #{suggestion_id}\n"
 								f.write "  content: '#{(archiving_hash[:ref] + '_' + document_hash[:ref] + '_' + suggester_hash[:ref] + '_' + suggestion_hash[:ref] + '_' + commenter_hash[:ref] + '_' + comment_hash[:ref]).split('_').map(&:capitalize).join(' ')}'\n"
+								f.write "  hidden: #{comment_hash[:modifier_states][:hidden]}\n"
 								f.write "  trashed: #{comment_hash[:modifier_states][:trashed]}\n\n"
 							end
 							id += 1
@@ -411,6 +432,7 @@ def write_comments verbose: false
 							f.write "  post_type: 'Suggestion'\n"
 							f.write "  post_id: #{suggestion_id}\n"
 							f.write "  content: '#{(archiving_hash[:ref] + '_' + document_hash[:ref] + '_' + suggester_hash[:ref] + '_' + suggestion_hash[:ref] + '_guest_user_' + comment_hash[:ref]).split('_').map(&:capitalize).join(' ')}'\n"
+							f.write "  hidden: #{comment_hash[:modifier_states][:hidden]}\n"
 							f.write "  trashed: #{comment_hash[:modifier_states][:trashed]}\n\n"
 						end
 						id += 1
@@ -431,6 +453,7 @@ def write_comments verbose: false
 					f.write "  post_type: 'BlogPost'\n"
 					f.write "  post_id: #{blog_post_hash[:id]}\n"
 					f.write "  content: '#{(blog_post_hash[:ref] + '_' + commenter_hash[:ref] + '_' + comment_hash[:ref]).split('_').map(&:capitalize).join(' ')}'\n"
+					f.write "  hidden: #{comment_hash[:modifier_states][:hidden]}\n"
 					f.write "  trashed: #{comment_hash[:modifier_states][:trashed]}\n\n"
 				end
 				id += 1
@@ -443,6 +466,7 @@ def write_comments verbose: false
 				f.write "  post_type: 'BlogPost'\n"
 				f.write "  post_id: #{blog_post_hash[:id]}\n"
 				f.write "  content: '#{(blog_post_hash[:ref] + '_guest_user_' + comment_hash[:ref]).split('_').map(&:capitalize).join(' ')}'\n"
+				f.write "  hidden: #{comment_hash[:modifier_states][:hidden]}\n"
 				f.write "  trashed: #{comment_hash[:modifier_states][:trashed]}\n\n"
 			end
 			id += 1
@@ -460,6 +484,7 @@ def write_comments verbose: false
 						f.write "  post_type: 'ForumPost'\n"
 						f.write "  post_id: #{forum_post_id}\n"
 						f.write "  content: '#{(poster_hash[:ref] + '_' + forum_post_hash[:ref] + '_' + commenter_hash[:ref] + '_' + comment_hash[:ref]).split('_').map(&:capitalize).join(' ')}'\n"
+						f.write "  hidden: #{comment_hash[:modifier_states][:hidden]}\n"
 						f.write "  trashed: #{comment_hash[:modifier_states][:trashed]}\n\n"
 					end
 					id += 1
@@ -472,6 +497,7 @@ def write_comments verbose: false
 					f.write "  post_type: 'ForumPost'\n"
 					f.write "  post_id: #{forum_post_id}\n"
 					f.write "  content: '#{(poster_hash[:ref] + '_' + forum_post_hash[:ref] + '_guest_user_' + comment_hash[:ref]).split('_').map(&:capitalize).join(' ')}'\n"
+					f.write "  hidden: #{comment_hash[:modifier_states][:hidden]}\n"
 					f.write "  trashed: #{comment_hash[:modifier_states][:trashed]}\n\n"
 				end
 				id += 1

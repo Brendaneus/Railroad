@@ -6,30 +6,44 @@
 	/ <%= link_to @forum_post.title, forum_post_path(@forum_post) %>
 <% end %>
 
-<% if authorized_for?(@forum_post.user) && untrashed_user? %>
+<div class="<%= ( admin_user? ) ? "admin " : "" %>control">
 
-	<div class="<%= ( admin_user? ) ? "admin " : "" %>control">
-		<%= link_to "Edit Post", edit_forum_post_path( @forum_post ) %>
+	<% if authorized_for?(@forum_post.user) && untrashed_user? %>
 
-		<%= link_to "Trash Post", trash_forum_post_path( @forum_post ) unless @forum_post.trashed? %>
+		<% unless @forum_post.trashed? %>
 
-		<%= link_to "Restore Post", untrash_forum_post_path( @forum_post ) if @forum_post.trashed? %>
+			<%= link_to "Edit Post", edit_forum_post_path( @forum_post ) %>
 
-		<%= link_to "Delete Post", @forum_post, method: :delete, data: { confirm: 'Really delete this post?' } if (@forum_post.trashed? && admin_user?) %>
-	</div>
+			<%= link_to "Hide Post", hide_forum_post_path( @forum_post ), method: :patch unless @forum_post.hidden? %>
 
-<% end %>
+			<%= link_to "Show Post", unhide_forum_post_path( @forum_post ), method: :patch if @forum_post.hidden? %>
+
+		<% end %>
+
+		<%= link_to "Trash Post", trash_forum_post_path( @forum_post ), method: :patch unless @forum_post.trashed? %>
+
+		<%= link_to "Restore Post", untrash_forum_post_path( @forum_post ), method: :patch if @forum_post.trashed? %>
+
+		<%= link_to "Delete Post", @forum_post, method: :delete, data: { confirm: 'Really delete this post?' } if (@forum_post.trashed? && admin_user? && untrashed_user?) %>
+
+	<% end %>
+
+	<%= link_to "Trashed Comments", trashed_forum_post_comments_path(@forum_post) %>
+
+</div>
 
 <main>
+
 	<%= render 'heading' %>
 
 	<p><%= simple_format @forum_post.content %></p>
-	
+
 	<%= render 'shared/details', object: @forum_post, new_comment: true %>
 
-	<%= render 'shared/timestamps', object: @forum_post, owner: @forum_post.user.name %>
+	<%= render 'shared/timestamps', object: @forum_post, owner: ( @forum_post.user.trashed? ? 'trashed user' : @forum_post.user.name ) %>
 
-	<%= render 'comments/form', comment: @new_comment, form_url: forum_post_comments_path(@forum_post) unless (@forum_post.trashed? || trashed_user?) %>
+	<%= render 'comments/form', comment: @new_comment, form_url: forum_post_comments_path(@forum_post) unless (@forum_post.trashed? || trashed_user? || hidden_user?) %>
 
 	<%= render @comments %>
+
 </main>

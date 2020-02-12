@@ -1,22 +1,35 @@
-<% if (admin_user? && untrashed_user?) || @document.suggestable? %>
+<% if @document.suggestable? || ( admin_user? && untrashed_user? ) %>
 
 	<div class="<%= (admin_user?) ? "admin " : "" %>control">
 
 		<% if admin_user? && untrashed_user? %>
 
-			<%= link_to "Edit Document", edit_article_document_path( @article, @document ) %>
+			<% unless @document.trashed? %>
 
-			<%= link_to "Trash Document", trash_article_document_path( @article, @document ) unless @document.trashed? %>
+				<%= link_to "Edit Document", edit_article_document_path( @article, @document ) %>
 
-			<%= link_to "Restore Document", untrash_article_document_path( @article, @document ) if @document.trashed? %>
+				<%= link_to "Hide Document", hide_article_document_path( @article, @document ), method: :patch unless @document.hidden? %>
+
+				<%= link_to "Show Document", unhide_article_document_path( @article, @document ), method: :patch if @document.hidden? %>
+
+			<% end %>
+
+			<%= link_to "Trash Document", trash_article_document_path( @article, @document ), method: :patch unless @document.trashed? %>
+
+			<%= link_to "Restore Document", untrash_article_document_path( @article, @document ), method: :patch if @document.trashed? %>
 
 			<%= link_to "Delete Document", article_document_path( @article, @document ), method: :delete, data: { confirm: 'Really delete this document?'} if @document.trashed? %>
 
 		<% end %>
 
-		<%= link_to "History", archiving_document_versions_path( @document.article, @document ) if @document.suggestable? %>
+		<% if @document.suggestable? %>
 
-		<%= link_to "Suggestions", archiving_document_suggestions_path( @document.article, @document ) if @document.suggestable? %>
+			<%= link_to "History", archiving_document_versions_path( @document.article, @document ) if @document.suggestable? %>
+
+			<%= link_to "Suggestions", archiving_document_suggestions_path( @document.article, @document ) if @document.suggestable? %>
+
+		<% end %>
+
 	</div>
 
 <% end %>

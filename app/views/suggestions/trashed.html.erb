@@ -11,6 +11,9 @@
 			/ <%= link_to "Trash", trashed_archivings_path %>
 		<% end %>
 		/ <%= link_to @citation.article.title, archiving_path(@citation.article) %>
+		<% if @citation.trashed? %>
+			/ <%= link_to "Trashed Documents", trashed_archiving_documents_path(@citation.article) %>
+		<% end %>
 		/ <%= link_to @citation.title, citation_path(@citation) %>
 	<% end %>
 	/ <%= link_to "Suggestions", citation_suggestions_path(@citation) %>

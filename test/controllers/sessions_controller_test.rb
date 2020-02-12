@@ -2,6 +2,8 @@ require 'test_helper'
 
 class SessionsControllerTest < ActionDispatch::IntegrationTest
 
+	fixtures :users, :sessions
+
 	def setup
 		load_users
 	end
@@ -445,16 +447,19 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 		end
 	end
 
+	# Switches session numbers for last set of users based on hidden state (two/three)
 	# Add tests for session and cookies of current session
 	test "should delete destroy only for authorized" do
 		load_sessions
 		build_session_and_cookies
 
-		# Non-Admin
-		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => false } ) do |user, user_key|
+		## User, Non-Admin
+		loop_users( user_modifiers: { 'admin' => false } ) do |user, user_key|
 			log_in_as user
 
-			loop_sessions( only: { user: user_key }, session_numbers: ['one'] ) do |session|
+			loop_sessions( only: { user: user_key },
+				session_numbers: ['one'] ) do |session|
+
 				assert_difference 'Session.count', -1 do
 					delete user_session_url(user, session)
 				end
@@ -462,7 +467,9 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 				assert_raise(ActiveRecord::RecordNotFound) { session.reload }
 			end
 
-			loop_sessions( except: { user: user_key }, session_numbers: ['two'] ) do |session|
+			loop_sessions( except: { user: user_key },
+				session_numbers: ['two'] ) do |session|
+
 				assert_no_difference 'Session.count' do
 					delete user_session_url(session.user, session)
 				end
@@ -471,11 +478,14 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 			end
 		end
 
-		# Admin, Trashed
-		loop_users( user_modifiers: { 'trashed' => true, 'admin' => true } ) do |user, user_key|
+
+		## User, Admin, Trashed
+		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user, user_key|
 			log_in_as user
 
-			loop_sessions( only: { user: user_key }, session_numbers: ['one'] ) do |session|
+			loop_sessions( only: { user: user_key },
+				session_numbers: ['one'] ) do |session|
+
 				assert_difference 'Session.count', -1 do
 					delete user_session_url(user, session)
 				end
@@ -483,7 +493,9 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 				assert_raise(ActiveRecord::RecordNotFound) { session.reload }
 			end
 
-			loop_sessions( except: { user: user_key }, session_numbers: ['two'] ) do |session|
+			loop_sessions( except: { user: user_key },
+				session_numbers: ['two'] ) do |session|
+
 				assert_no_difference 'Session.count' do
 					delete user_session_url(session.user, session)
 				end
@@ -492,12 +504,14 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 			end
 		end
 
-		# Admin, UnTrashed
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user, user_key|
-			log_in_as user
-			user.reload
 
-			loop_sessions( user_numbers: [user_key.split('_').last], session_numbers: ['three'] ) do |session|
+		## User, Admin, Un-Trashed
+		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |user, user_key|
+			log_in_as user
+
+			loop_sessions( user_numbers: [user_key.split('_').last],
+				session_numbers: [(user.hidden? ? 'three' : 'two')] ) do |session|
+
 				assert_difference 'Session.count', -1 do
 					delete user_session_url(session.user, session)
 				end

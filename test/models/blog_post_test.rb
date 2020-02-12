@@ -1,6 +1,7 @@
 require 'test_helper'
 
 class BlogPostTest < ActiveSupport::TestCase
+	fixtures :blog_posts, :documents, :users, :comments
 
 	def setup
 		load_blog_posts
@@ -10,23 +11,8 @@ class BlogPostTest < ActiveSupport::TestCase
 		loop_blog_posts do |blog_post, blog_post_key|
 			assert blog_post.documents ==
 				load_documents( flat_array: true,
-					archiving_modifiers: {}, archiving_numbers: [],
-					only: {blog_post: blog_post_key} )
-		end
-	end
-
-	test "should dependent destroy documents" do
-		load_documents( archiving_modifiers: {}, archiving_numbers: [] )
-
-		loop_blog_posts do |blog_post, blog_post_key|
-			blog_post.destroy
-
-			assert_raise(ActiveRecord::RecordNotFound) { blog_post.reload }
-
-			loop_documents( archiving_modifiers: {}, archiving_numbers: [],
-				only: {blog_post: blog_post_key} ) do |document|
-				assert_raise(ActiveRecord::RecordNotFound) { document.reload }
-			end
+					include_archivings: false,
+					only: { blog_post: blog_post_key } )
 		end
 	end
 
@@ -34,29 +20,48 @@ class BlogPostTest < ActiveSupport::TestCase
 		loop_blog_posts do |blog_post, blog_post_key|
 			assert blog_post.comments ==
 				load_comments( flat_array: true,
-					archiving_numbers: [], poster_numbers: [],
-					only: {blog_post: blog_post_key} )
+					include_suggestions: false,
+					include_forums: false,
+					only: { blog_post: blog_post_key } )
 		end
 	end
 
-	test "should dependent destroy comments" do
-		load_comments( archiving_numbers: [], poster_numbers: [] )
+	test "should associate with commenters" do
+		loop_blog_posts do |blog_post|
+			assert blog_post.commenters ==
+				load_users( flat_array: true )
+		end
+	end
+
+	test "should dependent destroy documents" do
+		load_documents
 
 		loop_blog_posts do |blog_post, blog_post_key|
 			blog_post.destroy
 
 			assert_raise(ActiveRecord::RecordNotFound) { blog_post.reload }
 
-			loop_comments( archiving_numbers: [], poster_numbers: [],
-				only: {blog_post: blog_post_key} ) do |comment|
-				assert_raise(ActiveRecord::RecordNotFound) { comment.reload }
+			loop_documents( include_archivings: false,
+				only: { blog_post: blog_post_key } ) do |document|
+				assert_raise(ActiveRecord::RecordNotFound) { document.reload }
 			end
 		end
 	end
 
-	test "should associate with commenters" do
-		loop_blog_posts do |blog_post|
-			assert blog_post.commenters == load_users(flat_array: true)
+	test "should dependent destroy comments" do
+		load_comments( include_suggestions: false, include_forums: false )
+
+		loop_blog_posts do |blog_post, blog_post_key|
+			blog_post.destroy
+
+			assert_raise(ActiveRecord::RecordNotFound) { blog_post.reload }
+
+			loop_comments( include_suggestions: false,
+				include_forums: false,
+				only: { blog_post: blog_post_key } ) do |comment|
+
+				assert_raise(ActiveRecord::RecordNotFound) { comment.reload }
+			end
 		end
 	end
 
@@ -141,17 +146,30 @@ class BlogPostTest < ActiveSupport::TestCase
 	end
 
 	test "should default motd as false" do
-		new_blog_post = BlogPost.create!(title: "New Blog Post", content: "Lorem Ipsum")
+		new_blog_post = BlogPost.create!(title: "New Blog Post", content: "Lorem Ipsum", motd: nil)
 		assert_not new_blog_post.motd?
 	end
 
+	test "should default hidden as false" do
+		new_blog_post = BlogPost.create!(title: "New Blog Post", content: "Lorem Ipsum", hidden: nil)
+		assert_not new_blog_post.trashed?
+	end
+
 	test "should default trashed as false" do
-		new_blog_post = BlogPost.create!(title: "New Blog Post", content: "Lorem Ipsum")
+		new_blog_post = BlogPost.create!(title: "New Blog Post", content: "Lorem Ipsum", trashed: nil)
 		assert_not new_blog_post.trashed?
 	end
 
 	test "should scope motd posts" do
 		assert BlogPost.motds == BlogPost.where(motd: true)
+	end
+
+	test "should scope hidden posts" do
+		assert BlogPost.hidden == BlogPost.where(hidden: true)
+	end
+
+	test "should scope non-hidden posts" do
+		assert BlogPost.non_hidden == BlogPost.where(hidden: false)
 	end
 
 	test "should scope trashed posts" do
@@ -168,6 +186,16 @@ class BlogPostTest < ActiveSupport::TestCase
 
 			blog_post.updated_at = Time.now + 1
 			assert blog_post.edited?
+		end
+	end
+
+	test "should check if trash-canned" do
+		loop_blog_posts( blog_modifiers: { 'trashed' => true } ) do |blog_post|
+			assert blog_post.trash_canned?
+		end
+
+		loop_blog_posts( blog_modifiers: { 'trashed' => false } ) do |blog_post|
+			assert_not blog_post.trash_canned?
 		end
 	end
 

@@ -3,23 +3,39 @@ module FactoryHelper
 	@@numbers = {}
 	@@modifiers = {}
 	@@numbers[:archiving] = [:one]
-	@@modifiers[:archiving] = [:trashed]
+	@@modifiers[:archiving] = [:trashed, :hidden]
 	@@numbers[:blog_post] = [:one]
-	@@modifiers[:blog_post] = [:trashed, :motd]
+	@@modifiers[:blog_post] = [:trashed, :hidden, :motd]
 	@@numbers[:comment] = [:one]
-	@@modifiers[:comment] = [:trashed]
+	@@modifiers[:comment] = [:trashed, :hidden]
 	@@numbers[:document] = [:one]
-	@@modifiers[:document] = [:trashed]
+	@@modifiers[:document] = [:trashed, :hidden]
 	@@numbers[:forum_post] = [:one]
-	@@modifiers[:forum_post] = [:trashed, :sticky, :motd]
+	@@modifiers[:forum_post] = [:trashed, :hidden, :sticky, :motd]
 	@@numbers[:session] = [:one, :two, :three]
 	@@modifiers[:session] = []
 	@@numbers[:suggestion] = [:one]
-	@@modifiers[:suggestion] = [:trashed]
+	@@modifiers[:suggestion] = [:trashed, :hidden]
 	@@numbers[:user] = [:one]
-	@@modifiers[:user] = [:trashed, :admin]
+	@@modifiers[:user] = [:trashed, :hidden, :admin]
 	@@numbers[:version] = [:one]
 	@@modifiers[:version] = [:hidden]
+
+	def fixture_modifiers
+		@@modifiers.transform_values do |modifiers|
+			modifiers.map do |modifier|
+				modifier.to_s
+			end
+		end 
+	end
+
+	def fixture_numbers
+		@@numbers.transform_values do |numbers|
+			numbers.map do |number|
+				number.to_s
+			end
+		end
+	end
 
 	def loop_model( name: nil, modifiers: {}, numbers: {} )
 
@@ -49,6 +65,10 @@ module FactoryHelper
 				data_set[:id] += 1
 			end
 		end
+	end
+
+	def model_combos name
+		[true, false].repeated_permutation(@@modifiers[name].count).count * @@numbers[name].count
 	end
 
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_06_15_011636) do
+ActiveRecord::Schema.define(version: 2020_01_31_165719) do
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -39,6 +39,7 @@ ActiveRecord::Schema.define(version: 2019_06_15_011636) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "trashed", default: false
+    t.boolean "hidden", default: false
   end
 
   create_table "blog_posts", force: :cascade do |t|
@@ -49,6 +50,7 @@ ActiveRecord::Schema.define(version: 2019_06_15_011636) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "trashed", default: false
+    t.boolean "hidden", default: false
   end
 
   create_table "comments", force: :cascade do |t|
@@ -59,6 +61,7 @@ ActiveRecord::Schema.define(version: 2019_06_15_011636) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "trashed", default: false
+    t.boolean "hidden", default: false
     t.index ["post_type", "post_id"], name: "index_comments_on_post_type_and_post_id"
     t.index ["user_id"], name: "index_comments_on_user_id"
   end
@@ -72,6 +75,7 @@ ActiveRecord::Schema.define(version: 2019_06_15_011636) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "trashed", default: false
+    t.boolean "hidden", default: false
     t.index ["article_type", "article_id"], name: "index_documents_on_article_type_and_article_id"
     t.index ["local_id"], name: "index_documents_on_local_id"
   end
@@ -85,6 +89,7 @@ ActiveRecord::Schema.define(version: 2019_06_15_011636) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "trashed", default: false
+    t.boolean "hidden", default: false
     t.index ["user_id"], name: "index_forum_posts_on_user_id"
   end
 
@@ -109,6 +114,7 @@ ActiveRecord::Schema.define(version: 2019_06_15_011636) do
     t.boolean "trashed", default: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.boolean "hidden", default: false
     t.index ["citation_type", "citation_id"], name: "index_suggestions_on_citation_type_and_citation_id"
     t.index ["user_id"], name: "index_suggestions_on_user_id"
   end
@@ -123,6 +129,7 @@ ActiveRecord::Schema.define(version: 2019_06_15_011636) do
     t.boolean "trashed", default: false
     t.text "bio"
     t.datetime "last_active"
+    t.boolean "hidden", default: false
   end
 
   create_table "versions", force: :cascade do |t|

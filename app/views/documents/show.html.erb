@@ -5,6 +5,9 @@
 	<% end %>
 	/ <%= article_path(@article, link: true) %>
 	<% unless @version ||= nil %>
+		<% if @document.trashed? %>
+			/ <%= trashed_article_documents_path(@article, link: true) %>
+		<% end %>
 		/ <%= article_document_path(@article, @document, link: true) %>
 	<% else %>
 		/ <%= link_to @source.title, archiving_document_path(@article, @source) %>

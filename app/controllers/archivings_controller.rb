@@ -1,27 +1,29 @@
 class ArchivingsController < ApplicationController
 
-	before_action :require_admin, except: [:index, :show]
-	before_action :require_untrashed_user, except: [:index, :show, :trashed]
-	before_action :require_admin_for_trashed, only: [:show]
+	before_action :require_admin, except: [:index, :trashed, :show]
+	before_action :require_untrashed_user, except: [:index, :trashed, :show]
+	before_action :require_unhidden_user, only: [:new, :create]
+	before_action :set_archiving, except: [:index, :trashed, :new, :create]
+	before_action :require_admin_for_hidden_archiving, only: [:show]
+	before_action :require_untrashed_archiving, only: [:edit, :update]
+	before_action :require_trashed_archiving, only: [:destroy]
 
 	before_action :set_document_bucket, unless: -> { Rails.env.test? }
-	after_action :mark_activity, only: [:create, :update, :trash, :untrash, :destroy], if: :logged_in?
+	after_action :mark_activity, only: [:create, :update, :hide, :unhide, :trash, :untrash, :destroy], if: :logged_in?
 
 	def index
 		@archivings = Archiving.non_trashed.includes(:documents)
+		@archivings = @archivings.non_hidden unless admin_user?
 	end
 
 	def trashed
 		@archivings = Archiving.trashed.includes(:documents)
+		@archivings = @archivings.non_hidden unless admin_user?
 	end
 
 	def show
-		@archiving = Archiving.find( params[:id] )
-		if admin_user?
-			@documents = @archiving.documents
-		else
-			@documents = @archiving.documents.non_trashed
-		end
+		@documents = @archiving.documents.non_trashed
+		@documents = @documents.non_hidden unless admin_user?
 	end
 
 	def new
@@ -40,11 +42,9 @@ class ArchivingsController < ApplicationController
 	end
 
 	def edit
-		@archiving = Archiving.find( params[:id] )
 	end
 
 	def update
-		@archiving = Archiving.find( params[:id] )
 		if @archiving.update(archiving_params)
 			flash[:success] = "The archiving has been successfully updated."
 			redirect_to @archiving
@@ -54,8 +54,27 @@ class ArchivingsController < ApplicationController
 		end
 	end
 
+	def hide
+		if @archiving.update_columns(hidden: true)
+			flash[:success] = "The archiving has been successfully hidden."
+			redirect_to @archiving
+		else
+			flash[:failure] = "There was a problem hiding the archiving."
+			redirect_back fallback_url: @archiving
+		end
+	end
+
+	def unhide
+		if @archiving.update_columns(hidden: false)
+			flash[:success] = "The archiving has been successfully unhidden."
+			redirect_to @archiving
+		else
+			flash[:failure] = "There was a problem unhiding the archiving."
+			redirect_back fallback_url: @archiving
+		end
+	end
+
 	def trash
-		@archiving = Archiving.find( params[:id] )
 		if @archiving.update_columns(trashed: true)
 			flash[:success] = "The archiving has been successfully trashed."
 			redirect_to @archiving
@@ -66,7 +85,6 @@ class ArchivingsController < ApplicationController
 	end
 
 	def untrash
-		@archiving = Archiving.find( params[:id] )
 		if @archiving.update_columns(trashed: false)
 			flash[:success] = "The archiving has been successfully restored."
 			redirect_to @archiving
@@ -77,7 +95,6 @@ class ArchivingsController < ApplicationController
 	end
 
 	def destroy
-		@archiving = Archiving.find( params[:id] )
 		if @archiving.destroy
 			flash[:success] = "Archiving deleted."
 			redirect_to archivings_path
@@ -94,9 +111,27 @@ class ArchivingsController < ApplicationController
 			params.require(:archiving).permit(:title, :content)
 		end
 
-		def require_admin_for_trashed
-			unless admin_user? || !Archiving.find( params[:id] ).trashed?
-				flash[:warning] = "This archiving has been trashed and cannot be viewed."
+		def set_archiving
+			@archiving = Archiving.find( params[:id] )
+		end
+
+		def require_admin_for_hidden_archiving
+			unless admin_user? || !@archiving.hidden?
+				flash[:warning] = "This archiving is hidden and cannot be viewed."
+				redirect_back fallback_location: archivings_path
+			end
+		end
+
+		def require_untrashed_archiving
+			if @archiving.trashed?
+				flash[:warning] = "This archiving must be untrashed before proceeding"
+				redirect_back fallback_location: archivings_path
+			end
+		end
+
+		def require_trashed_archiving
+			unless @archiving.trashed?
+				flash[:warning] = "This archiving must be trashed before proceeding"
 				redirect_back fallback_location: archivings_path
 			end
 		end

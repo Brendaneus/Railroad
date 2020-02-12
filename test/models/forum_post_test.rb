@@ -2,11 +2,13 @@ require 'test_helper'
 
 class ForumPostTest < ActiveSupport::TestCase
 
+	fixtures :forum_posts, :users, :comments
+
 	def setup
 		load_forum_posts
 	end
 
-	test "should associate with Users (required)" do
+	test "should associate with User (required)" do
 		load_users
 
 		loop_forum_posts do |forum_post, forum_post_key, user_key|
@@ -21,27 +23,32 @@ class ForumPostTest < ActiveSupport::TestCase
 		loop_forum_posts do |forum_post, forum_post_key, poster_key|
 			assert forum_post.comments ==
 				load_comments( flat_array: true,
-					archiving_numbers: [], blog_numbers: [],
-					only: {poster: poster_key, forum_post: forum_post_key} )
+					include_suggestions: false,
+					include_blogs: false,
+					only: { poster: poster_key, forum_post: forum_post_key } )
 		end
 	end
 
 	test "should associate with Commenters" do
 		loop_forum_posts do |forum_post, forum_post_key, poster_key|
-			assert forum_post.commenters == load_users(flat_array: true)
+			assert forum_post.commenters ==
+				load_users( flat_array: true )
 		end
 	end
 
 	test "should dependent destroy Comments" do
-		load_comments( archiving_numbers: [], blog_numbers: [] )
+		load_comments( include_suggestions: false,
+			include_blogs: false )
 
 		loop_forum_posts do |forum_post, forum_post_key, poster_key|
 			forum_post.destroy
 
 			assert_raise(ActiveRecord::RecordNotFound) { forum_post.reload }
 
-			loop_comments( archiving_numbers: [], blog_numbers: [],
+			loop_comments( include_suggestions: false,
+				include_blogs: false,
 				only: { poster: poster_key, forum_post: forum_post_key } ) do |comment|
+
 				assert_raise(ActiveRecord::RecordNotFound) { comment.reload }
 			end
 		end
@@ -57,15 +64,15 @@ class ForumPostTest < ActiveSupport::TestCase
 		end
 	end
 
-	test "should validate title length (maximum: 64)" do
+	test "should validate title length (maximum: 96)" do
 		loop_forum_posts do |forum_post|
 			forum_post.title = "X"
 			assert forum_post.valid?
 
-			forum_post.title = "X" * 64
+			forum_post.title = "X" * 96
 			assert forum_post.valid?
 
-			forum_post.title = "X" * 65
+			forum_post.title = "X" * 97
 			assert_not forum_post.valid?
 		end
 	end
@@ -99,12 +106,17 @@ class ForumPostTest < ActiveSupport::TestCase
 	end
 
 	test "should default sticky as false" do
-		new_forum_post = create(:forum_post, motd: nil)
+		new_forum_post = create(:forum_post, sticky: nil)
 		assert_not new_forum_post.sticky?
 	end
 
+	test "should default hidden as false" do
+		new_forum_post = create(:forum_post, hidden: nil)
+		assert_not new_forum_post.hidden?
+	end
+
 	test "should default trashed as false" do
-		new_forum_post = create(:forum_post, motd: nil)
+		new_forum_post = create(:forum_post, trashed: nil)
 		assert_not new_forum_post.trashed?
 	end
 
@@ -118,6 +130,21 @@ class ForumPostTest < ActiveSupport::TestCase
 
 	test "should scope non-sticky posts" do
 		assert ForumPost.non_stickies == ForumPost.where(sticky: false)
+	end
+
+	test "should scope hidden posts" do
+		assert ForumPost.hidden == ForumPost.where(hidden: true)
+	end
+
+	test "should scope non-hidden posts" do
+		assert ForumPost.non_hidden == ForumPost.where(hidden: false)
+	end
+
+	test "should scope non-hidden or owned posts" do
+		loop_users(reload: true) do |user|
+			assert ForumPost.non_hidden_or_owned_by(user) ==
+				ForumPost.where(hidden: false).or(ForumPost.where(user: user))
+		end
 	end
 
 	test "should scope trashed posts" do
@@ -156,22 +183,42 @@ class ForumPostTest < ActiveSupport::TestCase
 	end
 
 	test "should check if owner is admin" do
-		loop_forum_posts( user_modifiers: {'trashed' => nil, 'admin' => true} ) do |forum_post|
-			assert forum_post.admin?
+		loop_forum_posts( user_modifiers: { 'admin' => true } ) do |forum_post|
+			assert forum_post.owner_admin?
 		end
 
-		loop_forum_posts( user_modifiers: {'trashed' => nil, 'admin' => false} ) do |forum_post|
-			assert_not forum_post.admin?
+		loop_forum_posts( user_modifiers: { 'admin' => false } ) do |forum_post|
+			assert_not forum_post.owner_admin?
+		end
+	end
+
+	test "should check if owner is hidden" do
+		loop_forum_posts( user_modifiers: { 'hidden' => true } ) do |forum_post|
+			assert forum_post.owner_hidden?
+		end
+
+		loop_forum_posts( user_modifiers: { 'hidden' => false } ) do |forum_post|
+			assert_not forum_post.owner_hidden?
 		end
 	end
 
 	test "should check if owner is trashed" do
-		loop_forum_posts( user_modifiers: {'trashed' => true, 'admin' => nil} ) do |forum_post|
+		loop_forum_posts( user_modifiers: { 'trashed' => true } ) do |forum_post|
 			assert forum_post.owner_trashed?
 		end
 
-		loop_forum_posts( user_modifiers: {'trashed' => false, 'admin' => nil} ) do |forum_post|
+		loop_forum_posts( user_modifiers: { 'trashed' => false } ) do |forum_post|
 			assert_not forum_post.owner_trashed?
+		end
+	end
+
+	test "should check if trash-canned" do
+		loop_forum_posts( forum_modifiers: { 'trashed' => true } ) do |forum_post|
+			assert forum_post.trash_canned?
+		end
+
+		loop_forum_posts( forum_modifiers: { 'trashed' => false } ) do |forum_post|
+			assert_not forum_post.trash_canned?
 		end
 	end
 

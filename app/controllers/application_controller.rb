@@ -24,6 +24,13 @@ class ApplicationController < ActionController::Base
 		end
 	end
 
+	def require_unhidden_user
+		if hidden_user?
+			flash[:warning] = "Your account is hidden.  You must visit your profile page to go public before continuing."
+			redirect_back fallback_location: current_user
+		end
+	end
+
 	def require_untrashed_user
 		if trashed_user?
 			flash[:warning] = "Your account is inactive.  You must visit your profile page to reactivate before continuing."

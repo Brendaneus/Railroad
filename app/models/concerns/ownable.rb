@@ -12,8 +12,12 @@ module Ownable
 		end
 	end
 
-	def admin?
+	def owner_admin?
 		self.user && self.user.admin?
+	end
+
+	def owner_hidden?
+		!self.user.nil? && self.user.hidden?
 	end
 
 	def owner_trashed?

@@ -99,6 +99,26 @@ module SuggestionsHelper
 		end
 	end
 
+	def hide_citation_suggestion_path(citation, suggestion)
+		if citation.class == Archiving
+			hide_archiving_suggestion_path(citation, suggestion)
+		elsif citation.class == Document
+			hide_archiving_document_suggestion_path(citation.article, citation, suggestion)
+		else
+			raise "Error constructing Hide Suggestion Path: Citation type unknown"
+		end
+	end
+
+	def unhide_citation_suggestion_path(citation, suggestion)
+		if citation.class == Archiving
+			unhide_archiving_suggestion_path(citation, suggestion)
+		elsif citation.class == Document
+			unhide_archiving_document_suggestion_path(citation.article, citation, suggestion)
+		else
+			raise "Error constructing unhide_citation_suggestion_path Suggestion Path: Citation type unknown"
+		end
+	end
+
 	def trash_citation_suggestion_path(citation, suggestion)
 		if citation.class == Archiving
 			trash_archiving_suggestion_path(citation, suggestion)
@@ -126,6 +146,16 @@ module SuggestionsHelper
 			archiving_document_suggestion_comments_path(citation.article, citation, suggestion)
 		else
 			raise "Error constructing Suggestion Comments Path: Citation type unknown"
+		end
+	end
+
+	def trashed_citation_suggestion_comments_path(citation, suggestion)
+		if citation.class == Archiving
+			trashed_archiving_suggestion_comments_path(citation, suggestion)
+		elsif citation.class == Document
+			trashed_archiving_document_suggestion_comments_path(citation.article, citation, suggestion)
+		else
+			raise "Error constructing Trashed Suggestion Comments Path: Citation type unknown"
 		end
 	end
 

@@ -1,6 +1,7 @@
 class BlogPost < ApplicationRecord
 
 	include Editable
+	include Hidable
 	include Trashable
 	
 	has_many :documents, as: :article, dependent: :destroy
