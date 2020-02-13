@@ -41,7 +41,7 @@ class ForumPostsController < ApplicationController
 	end
 
 	def show
-		@comments = @forum_post.comments.includes(:user).order(created_at: :desc)
+		@comments = @forum_post.comments.non_trashed.includes(:user).order(created_at: :desc)
 
 		unless admin_user?
 			if logged_in?
