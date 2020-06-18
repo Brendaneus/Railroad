@@ -6,7 +6,7 @@
 
 	<%= link_to "Trashed Posts", trashed_forum_posts_path %>
 
-	<%= link_to "New Post", new_forum_post_path if untrashed_user? %>
+	<%= link_to "New Post", new_forum_post_path if untrashed_user? && unhidden_user? %>
 
 </div>
 

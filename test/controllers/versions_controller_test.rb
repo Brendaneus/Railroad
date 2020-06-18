@@ -2,685 +2,445 @@ require 'test_helper'
 
 class VersionsControllerTest < ActionDispatch::IntegrationTest
 
-	fixtures :users, :archivings, :documents, :versions
-
 	def setup
-		load_users
-		load_archivings
-		load_documents
+	end
+
+	def populate_users
+		@user = create(:user)
+		# @other_user = create(:user, name: "Other User", email: "other_user@example.com")
+		@admin_user = create(:user, name: "Admin User", email: "admin_user@example.com", admin: true)
+		# @hidden_admin_user = create(:user, name: "Hidden Admin User", email: "hidden_admin_user@example.com", admin: true, hidden: true)
+		@trashed_admin_user = create(:user, name: "Trashed Admin User", email: "trashed_admin_user@example.com", admin: true, trashed: true)
+		# @hidden_user = create(:user, name: "Hidden User", email: "hidden_user@example.com", hidden: true)
+		# @trashed_user = create(:user, name: "Trashed User", email: "trashed_user@example.com", trashed: true)
+		# @hidden_trashed_user = create(:user, name: "Hidden Trashed User", email: "hidden_trashed_user@example.com", hidden: true, trashed: true)
+	end
+
+	def populate_archivings
+		@archiving = create(:archiving)
+		@hidden_archiving = create(:archiving, title: "Hidden Archiving", hidden: true)
+		# @trashed_archiving = create(:archiving, title: "Trashed Archiving", trashed: true)
+		# @hidden_trashed_archiving = create(:archiving, title: "Hidden Trashed Archiving", hidden: true, trashed: true)
+	end
+
+	def populate_documents
+		@archiving_document = create(:document, article: @archiving, title: "Document")
+		@archiving_hidden_document = create(:document, article: @archiving, title: "Hidden Document", hidden: true)
+		# @archiving_trashed_document = create(:document, article: @archiving, title: "Trashed Document", trashed: true)
+		# @archiving_hidden_trashed_document = create(:document, article: @archiving, title: "Hidden Trashed Document", hidden: true, trashed: true)
+		@hidden_archiving_document = create(:document, article: @hidden_archiving, title: "Document")
+		# @trashed_archiving_document = create(:document, article: @trashed_archiving, title: "Document")
+	end
+
+	def populate_versions
+		@archiving_version = create(:version, item: @archiving)
+		@archiving_hidden_version = create(:version, item: @archiving, hidden: true)
+		@archiving_document_version = create(:version, item: @archiving_document)
+		@archiving_document_hidden_version = create(:version, item: @archiving_document, hidden: true)
+		@archiving_hidden_document_version = create(:version, item: @archiving_hidden_document)
+		@hidden_archiving_version = create(:version, item: @hidden_archiving)
+		@hidden_archiving_document_version = create(:version, item: @hidden_archiving_document)
 	end
 
 	test "should get index" do
-		load_versions
+		populate_users
+		populate_archivings
+		populate_documents
+		populate_versions
+
+		# [require_admin_for_hidden_archiving_or_document]
+		get archiving_versions_path(@hidden_archiving)
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		get archiving_document_versions_path(@hidden_archiving, @hidden_archiving_document)
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		get archiving_document_versions_path(@archiving, @archiving_hidden_document)
+		assert flash[:warning]
+		assert_response :redirect
+
+		# [require_admin_for_hidden_archiving_or_document]
+		log_in_as @user
+		clear_flashes
+		get archiving_versions_path(@hidden_archiving)
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		get archiving_document_versions_path(@hidden_archiving, @hidden_archiving_document)
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		get archiving_document_versions_path(@archiving, @archiving_hidden_document)
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
 
 		## Guest
-		# Archivings, Un-Hidden -- Success
-		loop_archivings( archiving_modifiers: { 'hidden' => false } ) do |archiving, archiving_key|
+		# Archiving
+		get archiving_versions_path(@archiving)
+		assert_response :success
 
-			get archiving_versions_path(archiving)
-			assert_response :success
+		# version links (un-hidden)
+		assert_select 'a[href=?]', archiving_version_path(@archiving, @archiving_version), 1
+		assert_select 'a[href=?]', archiving_version_path(@archiving, @archiving_hidden_version), 0
 
-			# non-hidden version links
-			loop_versions( include_documents: false,
-					only: { archiving: archiving_key },
-					version_modifiers: { 'hidden' => false } ) do |version|
-				assert_select 'main a[href=?]', archiving_version_path(archiving, version), 1
-			end
-			loop_versions( include_documents: false,
-					only: { archiving: archiving_key },
-					version_modifiers: { 'hidden' => true },
-					include_original: false, include_current: false ) do |version|
-				assert_select 'main a[href=?]', archiving_version_path(archiving, version), 0
-			end
+		# Document
+		get archiving_document_versions_path(@archiving, @archiving_document)
+		assert_response :success
 
-			# Documents, Un-Hidden -- Success
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key },
-				document_modifiers: { 'hidden' => false } ) do |document, document_key|
-
-				get archiving_document_versions_path(archiving, document)
-				assert_response :success
-
-				# non-hidden version links
-				loop_versions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						version_modifiers: { 'hidden' => false } ) do |version|
-					assert_select 'main a[href=?]', archiving_document_version_path(archiving, document, version), 1
-				end
-				loop_versions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						version_modifiers: { 'hidden' => true },
-						include_original: false, include_current: false ) do |version|
-					assert_select 'main a[href=?]', archiving_document_version_path(archiving, document, version), 0
-				end
-			end
-
-			# Documents, Hidden -- Redirect
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key },
-				document_modifiers: { 'hidden' => true } ) do |document|
-
-				get archiving_document_versions_path(archiving, document)
-				assert_response :redirect
-			end
-		end
-
-		# Archivings, Hidden -- Redirect
-		loop_archivings( archiving_modifiers: { 'hidden' => true } ) do |archiving, archiving_key|
-
-			get archiving_versions_path(archiving)
-			assert_response :redirect
-
-			# Documents -- Redirect
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key } ) do |document|
-
-				get archiving_document_versions_path(archiving, document)
-				assert_response :redirect
-			end
-		end
+		# version links (un-hidden)
+		assert_select 'a[href=?]', archiving_document_version_path(@archiving, @archiving_document, @archiving_document_version), 1
+		assert_select 'a[href=?]', archiving_document_version_path(@archiving, @archiving_document, @archiving_document_hidden_version), 0
 
 
-		## Users, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
+		## Admin
+		log_in_as @admin_user
 
-			# Archivings, Un-Hidden -- Success
-			loop_archivings( archiving_modifiers: { 'hidden' => false } ) do |archiving, archiving_key|
+		# Archiving
+		get archiving_versions_path(@archiving)
+		assert_response :success
 
-				get archiving_versions_path(archiving)
-				assert_response :success
+		# version links
+		assert_select 'a[href=?]', archiving_version_path(@archiving, @archiving_version), 1
+		assert_select 'a[href=?]', archiving_version_path(@archiving, @archiving_hidden_version), 1
 
-				# non-hidden version links
-				loop_versions( include_documents: false,
-						only: { archiving: archiving_key },
-						version_modifiers: { 'hidden' => false } ) do |version|
-					assert_select 'main a[href=?]', archiving_version_path(archiving, version), 1
-				end
-				loop_versions( include_documents: false,
-						only: { archiving: archiving_key },
-						version_modifiers: { 'hidden' => true },
-						include_original: false, include_current: false ) do |version|
-					assert_select 'main a[href=?]', archiving_version_path(archiving, version), 0
-				end
+		# Document
+		get archiving_document_versions_path(@archiving, @archiving_document)
+		assert_response :success
 
-				# Documents, Un-Hidden -- Success
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => false } ) do |document, document_key|
-
-					get archiving_document_versions_path(archiving, document)
-					assert_response :success
-
-					# non-hidden version links
-					loop_versions( include_archivings: false,
-							only: { archiving_document: (archiving_key + '_' + document_key) },
-							version_modifiers: { 'hidden' => false } ) do |version|
-						assert_select 'main a[href=?]', archiving_document_version_path(archiving, document, version), 1
-					end
-					loop_versions( include_archivings: false,
-							only: { archiving_document: (archiving_key + '_' + document_key) },
-							version_modifiers: { 'hidden' => true },
-							include_original: false, include_current: false ) do |version|
-						assert_select 'main a[href=?]', archiving_document_version_path(archiving, document, version), 0
-					end
-				end
-
-				# Documents, Hidden -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => true } ) do |document|
-
-					get archiving_document_versions_path(archiving, document)
-					assert_response :redirect
-				end
-			end
-
-			# Archivings, Hidden -- Redirect
-			loop_archivings( archiving_modifiers: { 'hidden' => true } ) do |archiving, archiving_key|
-
-				get archiving_versions_path(archiving)
-				assert_response :redirect
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document|
-
-					get archiving_document_versions_path(archiving, document)
-					assert_response :redirect
-				end
-			end
-
-			log_out
-		end
-
-
-		## Users, Admin
-		loop_users( user_modifiers: { 'admin' => true } ) do |user|
-			log_in_as user
-
-			# Archivings -- Success
-			loop_archivings do |archiving, archiving_key|
-
-				get archiving_versions_path(archiving)
-				assert_response :success
-
-				# non-hidden version links
-				loop_versions( include_documents: false,
-						only: { archiving: archiving_key } ) do |version|
-					assert_select 'main a[href=?]', archiving_version_path(archiving, version), 1
-				end
-
-				# Documents -- Success
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					get archiving_document_versions_path(archiving, document)
-					assert_response :success
-
-					# non-hidden version links
-					loop_versions( include_archivings: false,
-							only: { archiving_document: (archiving_key + '_' + document_key) } ) do |version|
-						assert_select 'main a[href=?]', archiving_document_version_path(archiving, document, version), 1
-					end
-				end
-			end
-
-			log_out
-		end
+		# version links
+		assert_select 'a[href=?]', archiving_document_version_path(@archiving, @archiving_document, @archiving_document_version), 1
+		assert_select 'a[href=?]', archiving_document_version_path(@archiving, @archiving_document, @archiving_document_hidden_version), 1
 	end
 
 	test "should get show" do
-		load_versions
+		populate_users
+		populate_archivings
+		populate_documents
+		populate_versions
+
+		# [require_admin_for_hidden_archiving_or_document]
+		get archiving_version_path(@hidden_archiving, @hidden_archiving_version)
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		get archiving_document_version_path(@hidden_archiving, @hidden_archiving_document, @hidden_archiving_document_version)
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		get archiving_document_version_path(@archiving, @archiving_hidden_document, @archiving_hidden_document_version)
+		assert flash[:warning]
+		assert_response :redirect
+
+		# [require_admin_for_hidden_archiving_or_document]
+		log_in_as @user
+		clear_flashes
+		get archiving_version_path(@hidden_archiving, @hidden_archiving_version)
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		get archiving_document_version_path(@hidden_archiving, @hidden_archiving_document, @hidden_archiving_document_version)
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		get archiving_document_version_path(@archiving, @archiving_hidden_document, @archiving_hidden_document_version)
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+		# [require_admin_for_hidden_version]
+		clear_flashes
+		get archiving_version_path(@archiving, @archiving_hidden_version)
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		get archiving_document_version_path(@archiving, @archiving_document, @archiving_document_hidden_version)
+		assert flash[:warning]
+		assert_response :redirect
+
+		# [require_admin_for_hidden_version]
+		log_in_as @user
+		clear_flashes
+		get archiving_version_path(@archiving, @archiving_hidden_version)
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		get archiving_document_version_path(@archiving, @archiving_document, @archiving_document_hidden_version)
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
 
 		## Guest
-		# Archivings, Un-Hidden
-		loop_archivings( archiving_modifiers: { 'hidden' => false } ) do |archiving, archiving_key|
+		# Archiving Version
+		get archiving_version_path(@archiving, @archiving_version)
+		assert_response :success
 
-			# Versions, Non-Hidden -- Success
-			loop_versions( include_documents: false,
-				only: { archiving: archiving_key },
-				version_modifiers: { 'hidden' => false } ) do |version|
+		# no control panel
+		assert_select 'div.control', 0
+		assert_select 'a[href=?]', hide_archiving_version_path(@archiving, @archiving_version), 0
+		assert_select 'a[href=?]', unhide_archiving_version_path(@archiving, @archiving_version), 0
+		assert_select 'a[href=?][data-method=delete]', archiving_version_path(@archiving, @archiving_version), 0
 
-				get archiving_version_path(archiving, version)
-				assert_response :success
+		# Document Version
+		get archiving_document_version_path(@archiving, @archiving_document, @archiving_document_version)
+		assert_response :success
 
-				# no control panel
-				assert_select 'div.control', 0
-				assert_select 'a[href=?][data-method=patch]', hide_archiving_version_path(archiving, version), 0
-				assert_select 'a[href=?][data-method=patch]', unhide_archiving_version_path(archiving, version), 0
-				assert_select 'a[href=?][data-method=delete]', archiving_version_path(archiving, version), 0
-			end
+		# no control panel
+		assert_select 'div.control', 0
+		assert_select 'a[href=?]', hide_archiving_document_version_path(@archiving, @archiving_document, @archiving_document_version), 0
+		assert_select 'a[href=?]', unhide_archiving_document_version_path(@archiving, @archiving_document, @archiving_document_version), 0
+		assert_select 'a[href=?][data-method=delete]', archiving_document_version_path(@archiving, @archiving_document, @archiving_document_version), 0
 
-			# Versions, Hidden -- Redirect
-			loop_versions( include_documents: false,
-				only: { archiving: archiving_key },
-				version_modifiers: { 'hidden' => true },
-				include_original: false, include_current: false ) do |version|
 
-				get archiving_version_path(archiving, version)
-				assert_response :redirect
-			end
+		## Admin
+		log_in_as @admin_user
 
-			# Documents, Un-Hidden
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key },
-				document_modifiers: { 'hidden' => false } ) do |document, document_key|
+		# Archiving Version
+		get archiving_version_path(@archiving, @archiving_version)
+		assert_response :success
 
-				# Versions, Non-Hidden -- Success
-				loop_versions( include_archivings: false,
-					only: { archiving_document: (archiving_key + '_' + document_key) },
-					version_modifiers: { 'hidden' => false } ) do |version|
-
-					get archiving_document_version_path(archiving, document, version)
-					assert_response :success
-
-					# no control panel
-					assert_select 'div.control', 0
-					assert_select 'a[href=?][data-method=patch]', hide_archiving_document_version_path(archiving, document, version), 0
-					assert_select 'a[href=?][data-method=patch]', unhide_archiving_document_version_path(archiving, document, version), 0
-					assert_select 'a[href=?][data-method=delete]', archiving_document_version_path(archiving, document, version), 0
-				end
-
-				# Versions, Hidden -- Redirect
-				loop_versions( include_archivings: false,
-					only: { archiving_document: (archiving_key + '_' + document_key) },
-					version_modifiers: { 'hidden' => true },
-					include_original: false, include_current: false ) do |version|
-
-					get archiving_document_version_path(archiving, document, version)
-					assert_response :redirect
-				end
-			end
-
-			# Documents, Hidden -- Redirect
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key },
-				document_modifiers: { 'hidden' => true } ) do |document, document_key|
-
-				loop_versions( include_archivings: false,
-					only: { archiving_document: (archiving_key + '_' + document_key) } ) do |version|
-
-					get archiving_document_version_path(archiving, document, version)
-					assert_response :redirect
-				end
-			end
+		# admin control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', hide_archiving_version_path(@archiving, @archiving_version), 1
 		end
+		assert_select 'a[href=?]', unhide_archiving_version_path(@archiving, @archiving_version), 0
+		assert_select 'a[href=?][data-method=delete]', archiving_version_path(@archiving, @archiving_version), 0
 
-		# Archivings, Hidden -- Redirect
-		loop_archivings( archiving_modifiers: { 'hidden' => true } ) do |archiving, archiving_key|
+		# Archiving Version, Hidden
+		get archiving_version_path(@archiving, @archiving_hidden_version)
+		assert_response :success
 
-			loop_versions( include_documents: false,
-				only: { archiving: archiving_key } ) do |version|
-
-				get archiving_version_path(archiving, version)
-				assert_response :redirect
-			end
-
-			# Documents -- Redirect
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key } ) do |document, document_key|
-
-				loop_versions( include_archivings: false,
-					only: { archiving_document: (archiving_key + '_' + document_key) } ) do |version|
-
-					get archiving_document_version_path(archiving, document, version)
-					assert_response :redirect
-				end
-			end
+		# admin control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', unhide_archiving_version_path(@archiving, @archiving_hidden_version), 1
+			assert_select 'a[href=?][data-method=delete]', archiving_version_path(@archiving, @archiving_hidden_version), 1
 		end
+		assert_select 'a[href=?]', hide_archiving_version_path(@archiving, @archiving_hidden_version), 0
 
+		# Document Version
+		get archiving_document_version_path(@archiving, @archiving_document, @archiving_document_version)
+		assert_response :success
 
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			# Archivings, Un-Hidden
-			loop_archivings( archiving_modifiers: { 'hidden' => false } ) do |archiving, archiving_key|
-
-				# Versions, Non-Hidden -- Success
-				loop_versions( include_documents: false,
-					only: { archiving: archiving_key },
-					version_modifiers: { 'hidden' => false } ) do |version|
-
-					get archiving_version_path(archiving, version)
-					assert_response :success
-
-					# no control panel
-					assert_select 'div.control', 0
-					assert_select 'a[href=?][data-method=patch]', hide_archiving_version_path(archiving, version), 0
-					assert_select 'a[href=?][data-method=patch]', unhide_archiving_version_path(archiving, version), 0
-					assert_select 'a[href=?][data-method=delete]', archiving_version_path(archiving, version), 0
-				end
-
-				# Versions, Hidden -- Redirect
-				loop_versions( include_documents: false,
-					only: { archiving: archiving_key },
-					version_modifiers: { 'hidden' => true },
-					include_original: false, include_current: false ) do |version|
-
-					get archiving_version_path(archiving, version)
-					assert_response :redirect
-				end
-
-				# Documents, Un-Hidden
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => false } ) do |document, document_key|
-
-					# Versions, Non-Hidden -- Success
-					loop_versions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						version_modifiers: { 'hidden' => false } ) do |version|
-
-						get archiving_document_version_path(archiving, document, version)
-						assert_response :success
-
-						# no control panel
-						assert_select 'div.control', 0
-						assert_select 'a[href=?][data-method=patch]', hide_archiving_document_version_path(archiving, document, version), 0
-						assert_select 'a[href=?][data-method=patch]', unhide_archiving_document_version_path(archiving, document, version), 0
-						assert_select 'a[href=?][data-method=delete]', archiving_document_version_path(archiving, document, version), 0
-					end
-
-					# Versions, Hidden -- Redirect
-					loop_versions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						version_modifiers: { 'hidden' => true },
-						include_original: false, include_current: false ) do |version|
-
-						get archiving_document_version_path(archiving, document, version)
-						assert_response :redirect
-					end
-				end
-
-				# Documents, Hidden -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => true } ) do |document, document_key|
-
-					loop_versions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |version|
-
-						get archiving_document_version_path(archiving, document, version)
-						assert_response :redirect
-					end
-				end
-			end
-
-			# Archivings, Hidden -- Redirect
-			loop_archivings( archiving_modifiers: { 'hidden' => true } ) do |archiving, archiving_key|
-
-				loop_versions( include_documents: false,
-					only: { archiving: archiving_key } ) do |version|
-
-					get archiving_version_path(archiving, version)
-					assert_response :redirect
-				end
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					loop_versions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |version|
-
-						get archiving_document_version_path(archiving, document, version)
-						assert_response :redirect
-					end
-				end
-			end
-
-			log_out
+		# no control panel
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', hide_archiving_document_version_path(@archiving, @archiving_document, @archiving_document_version), 1
 		end
+		assert_select 'a[href=?]', unhide_archiving_document_version_path(@archiving, @archiving_document, @archiving_document_version), 0
+		assert_select 'a[href=?][data-method=delete]', archiving_document_version_path(@archiving, @archiving_document, @archiving_document_version), 0
+
+		log_out
 
 
-		## User, Admin, Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user|
-			log_in_as user
+		## Admin, Trashed
+		log_in_as @trashed_admin_user
 
-			# Archivings -- Success
-			loop_archivings do |archiving, archiving_key|
+		# Archiving Version, Hidden
+		get archiving_version_path(@archiving, @archiving_hidden_version)
+		assert_response :success
 
-				loop_versions( include_documents: false,
-					only: { archiving: archiving_key } ) do |version|
-
-					get archiving_version_path(archiving, version)
-					assert_response :success
-
-					# no control panel
-					assert_select 'div.admin.control' do
-						assert_select 'a[href=?][data-method=patch]', hide_archiving_version_path(archiving, version), !version.hidden?
-						assert_select 'a[href=?][data-method=patch]', unhide_archiving_version_path(archiving, version), version.hidden?
-					end
-					assert_select 'a[href=?][data-method=delete]', archiving_version_path(archiving, version), 0
-				end
-
-				# Documents -- Success
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					loop_versions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |version|
-
-						get archiving_document_version_path(archiving, document, version)
-						assert_response :success
-
-						# no control panel
-						assert_select 'div.control' do
-							assert_select 'a[href=?][data-method=patch]', hide_archiving_document_version_path(archiving, document, version), !version.hidden?
-							assert_select 'a[href=?][data-method=patch]', unhide_archiving_document_version_path(archiving, document, version), version.hidden?
-						end
-						assert_select 'a[href=?][data-method=delete]', archiving_document_version_path(archiving, document, version), 0
-					end
-				end
-			end
-
-			log_out
+		# admin control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', unhide_archiving_version_path(@archiving, @archiving_hidden_version), 1
 		end
-
-
-		## User, Admin, Un-Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |user|
-			log_in_as user
-
-			# Archivings -- Success
-			loop_archivings do |archiving, archiving_key|
-
-				loop_versions( include_documents: false,
-					only: { archiving: archiving_key } ) do |version|
-
-					get archiving_version_path(archiving, version)
-					assert_response :success
-
-					# admin control panel
-					assert_select 'div.admin.control' do
-						assert_select 'a[href=?][data-method=patch]', hide_archiving_version_path(archiving, version), !version.hidden?
-						assert_select 'a[href=?][data-method=patch]', unhide_archiving_version_path(archiving, version), version.hidden?
-						assert_select 'a[href=?][data-method=delete]', archiving_version_path(archiving, version), version.hidden?
-					end
-				end
-
-				# Documents -- Success
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					loop_versions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |version|
-
-						get archiving_document_version_path(archiving, document, version)
-						assert_response :success
-
-						# admin control panel
-						assert_select 'div.admin.control' do
-							assert_select 'a[href=?][data-method=patch]', hide_archiving_document_version_path(archiving, document, version), !version.hidden?
-							assert_select 'a[href=?][data-method=patch]', unhide_archiving_document_version_path(archiving, document, version), version.hidden?
-							assert_select 'a[href=?][data-method=delete]', archiving_document_version_path(archiving, document, version), version.hidden?
-						end
-					end
-				end
-			end
-
-			log_out
-		end
+		assert_select 'a[href=?]', hide_archiving_version_path(@archiving, @archiving_hidden_version), 0
+		assert_select 'a[href=?][data-method=delete]', archiving_version_path(@archiving, @archiving_hidden_version), 0
 	end
 
-	test "should patch hide (only un-trashed admins)" do
-		load_versions
+	test "should patch/put hide (only un-trashed admins)" do
+		populate_users
+		populate_archivings
+		populate_documents
+		populate_versions
 
-		## Guest
-		loop_versions( version_modifiers: { 'hidden' => false },
-			include_original: false, include_current: false ) do |version|
-
-			assert_no_changes -> { version.hidden? }, from: false do
-				patch hide_item_version_path(version.item, version)
-				version.reload
-			end
-			assert_response :redirect
+		# [require_admin]
+		assert_no_changes -> { @archiving_version.hidden }, from: false do
+			patch hide_archiving_version_path(@archiving, @archiving_version)
+			@archiving_version.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
 
-
-		## User, Trashed
-		loop_users( user_modifiers: { 'trashed' => true } ) do |user|
-			log_in_as user
-
-			loop_versions( version_modifiers: { 'hidden' => false },
-				include_original: false, include_current: false ) do |version|
-
-				assert_no_changes -> { version.hidden? }, from: false do
-					patch hide_item_version_path(version.item, version)
-					version.reload
-				end
-				assert_response :redirect
-			end
-
-			log_out
+		# [require_admin]
+		log_in_as @user
+		clear_flashes
+		assert_no_changes -> { @archiving_version.hidden }, from: false do
+			patch hide_archiving_version_path(@archiving, @archiving_version)
+			@archiving_version.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
 
-
-		## User, Un-Trashed, Non-Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => false } ) do |user|
-			log_in_as user
-
-			loop_versions( version_modifiers: { 'hidden' => false },
-				include_original: false, include_current: false ) do |version|
-
-				assert_no_changes -> { version.hidden? }, from: false do
-					patch hide_item_version_path(version.item, version)
-					version.reload
-				end
-				assert_response :redirect
-			end
-
-			log_out
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		clear_flashes
+		assert_no_changes -> { @archiving_version.hidden }, from: false do
+			patch hide_archiving_version_path(@archiving, @archiving_version)
+			@archiving_version.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
 
 
-		## User, Un-Trashed, Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user|
-			log_in_as user
+		## Admin
+		log_in_as @admin_user
 
-			loop_versions( version_modifiers: { 'hidden' => false },
-				include_original: false, include_current: false ) do |version|
-
-				assert_changes -> { version.hidden? }, from: false, to: true do
-					patch hide_item_version_path(version.item, version)
-					version.reload
-				end
-				assert_response :redirect
-
-				version.update_columns(hidden: false)
-			end
-
-			log_out
+		# Failure
+		clear_flashes
+		assert_no_changes -> { @archiving_hidden_version.hidden }, from: true do
+			patch hide_archiving_version_path(@archiving, @archiving_hidden_version)
+			@archiving_hidden_version.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
+
+		# Success - PATCH
+		clear_flashes
+		assert_changes -> { @archiving_version.hidden }, from: false, to: true do
+			patch hide_archiving_version_path(@archiving, @archiving_version)
+			@archiving_version.reload
+		end
+		assert flash[:success]
+		assert_response :redirect
+		@archiving_version.update_columns(hidden: false)
+
+		# Success - PUT
+		clear_flashes
+		assert_changes -> { @archiving_version.hidden }, from: false, to: true do
+			put hide_archiving_version_path(@archiving, @archiving_version)
+			@archiving_version.reload
+		end
+		assert flash[:success]
+		assert_response :redirect
 	end
 
-	test "should patch unhide (only un-trashed admins)" do
-		load_versions
+	test "should patch/put unhide (only un-trashed admins)" do
+		populate_users
+		populate_archivings
+		populate_documents
+		populate_versions
 
-		## Guest
-		loop_versions( version_modifiers: { 'hidden' => true },
-			include_original: false, include_current: false ) do |version|
-
-			assert_no_changes -> { version.hidden? }, from: true do
-				patch unhide_item_version_path(version.item, version)
-				version.reload
-			end
-			assert_response :redirect
+		# [require_admin]
+		assert_no_changes -> { @archiving_hidden_version.hidden }, from: true do
+			patch unhide_archiving_version_path(@archiving, @archiving_hidden_version)
+			@archiving_hidden_version.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
 
-
-		## User, Trashed
-		loop_users( user_modifiers: { 'trashed' => true } ) do |user|
-			log_in_as user
-
-			loop_versions( version_modifiers: { 'hidden' => true },
-				include_original: false, include_current: false ) do |version|
-
-				assert_no_changes -> { version.hidden? }, from: true do
-					patch unhide_item_version_path(version.item, version)
-					version.reload
-				end
-				assert_response :redirect
-			end
-
-			log_out
+		# [require_admin]
+		log_in_as @user
+		clear_flashes
+		assert_no_changes -> { @archiving_hidden_version.hidden }, from: true do
+			patch unhide_archiving_version_path(@archiving, @archiving_hidden_version)
+			@archiving_hidden_version.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
 
-
-		## User, Un-Trashed, Non-Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => false } ) do |user|
-			log_in_as user
-
-			loop_versions( version_modifiers: { 'hidden' => true },
-				include_original: false, include_current: false ) do |version|
-
-				assert_no_changes -> { version.hidden? }, from: true do
-					patch unhide_item_version_path(version.item, version)
-					version.reload
-				end
-				assert_response :redirect
-			end
-
-			log_out
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		clear_flashes
+		assert_no_changes -> { @archiving_hidden_version.hidden }, from: true do
+			patch unhide_archiving_version_path(@archiving, @archiving_hidden_version)
+			@archiving_hidden_version.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
 
 
-		## User, Un-Trashed, Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user|
-			log_in_as user
+		## Admin
+		log_in_as @admin_user
 
-			loop_versions( version_modifiers: { 'hidden' => true },
-				include_original: false, include_current: false ) do |version|
-
-				assert_changes -> { version.hidden? }, from: true, to: false do
-					patch unhide_item_version_path(version.item, version)
-					version.reload
-				end
-				assert_response :redirect
-
-				version.update_columns(hidden: true)
-			end
-
-			log_out
+		# Failure
+		clear_flashes
+		assert_no_changes -> { @archiving_version.hidden }, from: false do
+			patch unhide_archiving_version_path(@archiving, @archiving_version)
+			@archiving_version.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
+
+		# Success - PATCH
+		clear_flashes
+		assert_changes -> { @archiving_hidden_version.hidden }, from: true, to: false do
+			patch unhide_archiving_version_path(@archiving, @archiving_hidden_version)
+			@archiving_hidden_version.reload
+		end
+		assert flash[:success]
+		assert_response :redirect
+		@archiving_hidden_version.update_columns(hidden: true)
+
+		# Success - PUT
+		clear_flashes
+		assert_changes -> { @archiving_hidden_version.hidden }, from: true, to: false do
+			put unhide_archiving_version_path(@archiving, @archiving_hidden_version)
+			@archiving_hidden_version.reload
+		end
+		assert flash[:success]
+		assert_response :redirect
 	end
 
 	test "should delete destroy (only un-trashed admins)" do
-		load_versions
+		populate_users
+		populate_archivings
+		populate_documents
+		populate_versions
 
-		## Guest
-		loop_versions do |version|
-			assert_no_difference 'PaperTrail::Version.count' do
-				delete item_version_path(version.item, version)
-			end
+		# [require_admin]
+		assert_no_difference 'PaperTrail::Version.count' do
+			delete archiving_version_path(@archiving, @archiving_hidden_version)
 		end
+		assert flash[:warning]
+		assert_response :redirect
 
-
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			loop_versions do |version|
-				assert_no_difference 'PaperTrail::Version.count' do
-					delete item_version_path(version.item, version)
-				end
-			end
-
-			log_out
+		# [require_admin]
+		log_in_as @user
+		clear_flashes
+		assert_no_difference 'PaperTrail::Version.count' do
+			delete archiving_version_path(@archiving, @archiving_hidden_version)
 		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
 
-
-		## User, Trashed, Non-Admin
-		loop_users( user_modifiers: { 'trashed' => true, 'admin' => true } ) do |user|
-			log_in_as user
-
-			loop_versions do |version|
-				assert_no_difference 'PaperTrail::Version.count' do
-					delete item_version_path(version.item, version)
-				end
-			end
-
-			log_out
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		clear_flashes
+		assert_no_difference 'PaperTrail::Version.count' do
+			delete archiving_version_path(@archiving, @archiving_hidden_version)
 		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
 
 
-		## User, Un-Trashed, Non-Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user, user_key|
-			log_in_as user
+		## Admin
+		log_in_as @admin_user
 
-			loop_versions( version_numbers: [user_key.split('_').last],
-				include_original: false, include_current: false,
-				version_modifiers: { 'hidden' => user.hidden? } ) do |version|
-
-				assert_difference 'PaperTrail::Version.count', -1 do
-					delete item_version_path(version.item, version)
-				end
-			end
-
-			log_out
+		# Failure
+		clear_flashes
+		assert_no_difference 'PaperTrail::Version.count' do
+			delete archiving_version_path(@archiving, @archiving_version)
 		end
+		assert flash[:warning]
+		assert_response :redirect
+
+		# Success
+		clear_flashes
+		assert_difference 'PaperTrail::Version.count', -1 do
+			delete archiving_version_path(@archiving, @archiving_hidden_version)
+		end
+		assert flash[:success]
+		assert_response :redirect
+		assert_raise(ActiveRecord::RecordNotFound) { @archiving_hidden_version.reload }
 	end
 
 end

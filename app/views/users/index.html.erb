@@ -2,13 +2,9 @@
 	/ <%= link_to "Users", users_path %>
 <% end %>
 
-<% if admin_user? %>
-
-	<div class="admin control">
-		<%= link_to "Trashed Users", trashed_users_path %>
-	</div>
-
-<% end %>
+<div class="<%= ( admin_user? ) ? "admin " : "" %>control">
+	<%= link_to "Trashed Users", trashed_users_path %>
+</div>
 
 <main>
 	<%= (render @users) || (tag.h2 "There's no one here...") %>

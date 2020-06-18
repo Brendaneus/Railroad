@@ -1,15 +1,11 @@
 <div class="<%= (admin_user?) ? "admin " : "" %>control">
 	<% if admin_user? && untrashed_user? %>
 
-		<% unless @archiving.trashed? %>
-
-			<%= link_to "Edit Archiving", edit_archiving_path( @archiving ) %>
-			
-			<%= link_to "Hide Archiving", hide_archiving_path( @archiving ), method: :patch unless @archiving.hidden? %>
-			
-			<%= link_to "Show Archiving", unhide_archiving_path( @archiving ), method: :patch if @archiving.hidden? %>
-
-		<% end %>
+		<%= link_to "Edit Archiving", edit_archiving_path( @archiving ) unless @archiving.trashed? %>
+		
+		<%= link_to "Hide Archiving", hide_archiving_path( @archiving ), method: :patch unless @archiving.hidden? %>
+		
+		<%= link_to "Show Archiving", unhide_archiving_path( @archiving ), method: :patch if @archiving.hidden? %>
 			
 		<%= link_to "Trash Archiving", trash_archiving_path( @archiving ), method: :patch unless @archiving.trashed? %>
 

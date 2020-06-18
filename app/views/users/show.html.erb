@@ -17,11 +17,11 @@
 
 				<%= link_to "Edit Profile", edit_user_path( @user ) %>
 
-				<%= link_to "Hide Profile", hide_user_path( @user ), method: :patch unless @user.hidden? %>
-
-				<%= link_to "Show Profile", unhide_user_path( @user ), method: :patch if @user.hidden? %>
-
 			<% end %>
+
+			<%= link_to "Hide Profile", hide_user_path( @user ), method: :patch unless @user.hidden? %>
+
+			<%= link_to "Show Profile", unhide_user_path( @user ), method: :patch if @user.hidden? %>
 
 			<%= link_to "Trash Profile", trash_user_path( @user ), method: :patch unless @user.trashed? %>
 

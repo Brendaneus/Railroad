@@ -2,14 +2,45 @@ require 'test_helper'
 
 class BlogPostsControllerTest < ActionDispatch::IntegrationTest
 
-	fixtures :users, :blog_posts, :documents, :comments
-
 	def setup
-		load_users
+	end
+
+	def populate_users
+		@user = create(:user)
+		@other_user = create(:user, name: "Other User", email: "other_user@example.com")
+		@hidden_user = create(:user, name: "Hidden User", email: "hidden_user@example.com", hidden: true)
+		@trashed_user = create(:user, name: "Trashed User", email: "trashed_user@example.com", trashed: true)
+		@admin_user = create(:user, name: "Admin User", email: "admin_user@example.com", admin: true)
+		@hidden_admin_user = create(:user, name: "Hidden Admin User", email: "hidden_admin_user@example.com", admin: true, hidden: true)
+		@trashed_admin_user = create(:user, name: "Trashed Admin User", email: "trashed_admin_user@example.com", admin: true, trashed: true)
+		# @hidden_trashed_user = create(:user, name: "Hidden Trashed User", email: "hidden_trashed_user@example.com", hidden: true, trashed: true)
+	end
+
+	def populate_blog_posts
+		@blog_post = create(:blog_post)
+		@hidden_blog_post = create(:blog_post, title: "Hidden Blog Post", hidden: true)
+		@trashed_blog_post = create(:blog_post, title: "Trashed Blog Post", trashed: true)
+		@hidden_trashed_blog_post = create(:blog_post, title: "Hidden Trashed Blog Post", hidden: true, trashed: true)
+	end
+
+	def populate_documents
+		@document = create(:document, article: @blog_post, title: "Document")
+		@hidden_document = create(:document, article: @blog_post, title: "Hidden Document", hidden: true)
+		@trashed_document = create(:document, article: @blog_post, title: "Trashed Document", trashed: true)
+	end
+
+	def populate_comments
+		@user_comment = create(:comment, user: @user, post: @blog_post, content: "User's Comment")
+		@user_hidden_comment = create(:comment, user: @user, post: @blog_post, content: "User's Hidden Comment", hidden: true)
+		@user_trashed_comment = create(:comment, user: @user, post: @blog_post, content: "User's Trashed Comment", trashed: true)
+		@other_user_comment = create(:comment, user: @other_user, post: @blog_post, content: "Other User's Comment")
+		@other_user_hidden_comment = create(:comment, user: @other_user, post: @blog_post, content: "Other User's Hidden Comment", hidden: true)
+		@other_user_trashed_comment = create(:comment, user: @other_user, post: @blog_post, content: "Other User's Trashed Comment", trashed: true)
 	end
 
 	test "should get index" do
-		load_blog_posts
+		populate_users
+		populate_blog_posts
 
 		## Guest
 		get blog_posts_path
@@ -23,974 +54,746 @@ class BlogPostsControllerTest < ActionDispatch::IntegrationTest
 		assert_select 'a[href=?]', new_blog_post_path, 0
 
 		# un-trashed, un-hidden blog post links
-		loop_blog_posts( blog_modifiers: { 'trashed' => false, 'hidden' => false } ) do |blog_post|
-			assert_select 'main a[href=?]', blog_post_path(blog_post), 1
+		assert_select 'main a[href=?]', blog_post_path(@blog_post), 1
+		assert_select 'main a[href=?]', blog_post_path(@hidden_blog_post), 0
+		assert_select 'main a[href=?]', blog_post_path(@trashed_blog_post), 0
+
+
+		## User
+		log_in_as @user
+
+		get blog_posts_path
+		assert_response :success
+
+		# control panel
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', trashed_blog_posts_path, 1
 		end
-		loop_blog_posts( blog_modifiers: { 'trashed' => true } ) do |blog_post|
-			assert_select 'main a[href=?]', blog_post_path(blog_post), 0
-		end
-		loop_blog_posts( blog_modifiers: { 'hidden' => true } ) do |blog_post|
-			assert_select 'main a[href=?]', blog_post_path(blog_post), 0
-		end
+		assert_select 'div.admin.control', 0
+		assert_select 'a[href=?]', new_blog_post_path, 0
 
+		# un-trashed, un-hidden blog post links
+		assert_select 'main a[href=?]', blog_post_path(@blog_post), 1
+		assert_select 'main a[href=?]', blog_post_path(@hidden_blog_post), 0
+		assert_select 'main a[href=?]', blog_post_path(@trashed_blog_post), 0
 
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			get blog_posts_path
-			assert_response :success
-
-			# control panel
-			assert_select 'div.control' do
-				assert_select 'a[href=?]', trashed_blog_posts_path, 1
-			end
-			assert_select 'div.admin.control', 0
-			assert_select 'a[href=?]', new_blog_post_path, 0
-
-			# un-trashed, un-hidden blog post links
-			loop_blog_posts( blog_modifiers: { 'trashed' => false, 'hidden' => false } ) do |blog_post|
-				assert_select 'main a[href=?]', blog_post_path(blog_post), 1
-			end
-			loop_blog_posts( blog_modifiers: { 'trashed' => true } ) do |blog_post|
-				assert_select 'main a[href=?]', blog_post_path(blog_post), 0
-			end
-			loop_blog_posts( blog_modifiers: { 'hidden' => true } ) do |blog_post|
-				assert_select 'main a[href=?]', blog_post_path(blog_post), 0
-			end
-
-			log_out
-		end
+		log_out
 
 
 		## User, Admin
-		loop_users( user_modifiers: { 'admin' => true } ) do |user|
-			log_in_as user
+		log_in_as @admin_user
 
-			get blog_posts_path
-			assert_response :success
+		get blog_posts_path
+		assert_response :success
 
-			# admin control panel
-			assert_select 'div.admin.control' do
-				assert_select 'a[href=?]', trashed_blog_posts_path, 1
-				assert_select 'a[href=?]', new_blog_post_path, !user.trashed?
-			end
-
-			# un-trashed blog post links
-			loop_blog_posts( blog_modifiers: { 'trashed' => false } ) do |blog_post|
-				assert_select 'main a[href=?]', blog_post_path(blog_post), 1
-			end
-			loop_blog_posts( blog_modifiers: { 'trashed' => true } ) do |blog_post|
-				assert_select 'main a[href=?]', blog_post_path(blog_post), 0
-			end
-
-			log_out
+		# admin control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', trashed_blog_posts_path, 1
+			assert_select 'a[href=?]', new_blog_post_path, 1
 		end
+
+		# un-trashed blog post links
+		assert_select 'main a[href=?]', blog_post_path(@blog_post), 1
+		assert_select 'main a[href=?]', blog_post_path(@hidden_blog_post), 1
+		assert_select 'main a[href=?]', blog_post_path(@trashed_blog_post), 0
+
+		log_out
+
+
+		## User, Admin, Hidden
+		log_in_as @hidden_admin_user
+
+		get blog_posts_path
+		assert_response :success
+
+		# admin control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', trashed_blog_posts_path, 1
+			assert_select 'a[href=?]', new_blog_post_path, 0
+		end
+
+		# un-trashed blog post links
+		assert_select 'main a[href=?]', blog_post_path(@blog_post), 1
+		assert_select 'main a[href=?]', blog_post_path(@hidden_blog_post), 1
+		assert_select 'main a[href=?]', blog_post_path(@trashed_blog_post), 0
+
+		log_out
+
+
+		## User, Admin, Trashed
+		log_in_as @trashed_admin_user
+
+		get blog_posts_path
+		assert_response :success
+
+		# admin control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', trashed_blog_posts_path, 1
+			assert_select 'a[href=?]', new_blog_post_path, 0
+		end
+
+		# un-trashed blog post links
+		assert_select 'main a[href=?]', blog_post_path(@blog_post), 1
+		assert_select 'main a[href=?]', blog_post_path(@hidden_blog_post), 1
+		assert_select 'main a[href=?]', blog_post_path(@trashed_blog_post), 0
+
+		log_out
 	end
 
 	test "should get trashed" do
-		load_blog_posts
+		populate_users
+		populate_blog_posts
 
 		## Guest
 		get trashed_blog_posts_path
 		assert_response :success
 
-		# trashed, un-hidden blog_post links
-		loop_blog_posts( blog_modifiers: { 'trashed' => true, 'hidden' => false } ) do |blog_post|
-			assert_select 'main a[href=?]', blog_post_path(blog_post), 1
-		end
-		loop_blog_posts( blog_modifiers: { 'trashed' => false } ) do |blog_post|
-			assert_select 'main a[href=?]', blog_post_path(blog_post), 0
-		end
-		loop_blog_posts( blog_modifiers: { 'hidden' => true } ) do |blog_post|
-			assert_select 'main a[href=?]', blog_post_path(blog_post), 0
-		end
+		# trashed, un-hidden blog post links
+		assert_select 'main a[href=?]', blog_post_path(@blog_post), 0
+		assert_select 'main a[href=?]', blog_post_path(@hidden_blog_post), 0
+		assert_select 'main a[href=?]', blog_post_path(@trashed_blog_post), 1
+		assert_select 'main a[href=?]', blog_post_path(@hidden_trashed_blog_post), 0
 
 
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
+		## User
+		log_in_as @user
 
-			get trashed_blog_posts_path
-			assert_response :success
+		get trashed_blog_posts_path
+		assert_response :success
 
-			# trashed, un-hidden blog_post links
-			loop_blog_posts( blog_modifiers: { 'trashed' => true, 'hidden' => false } ) do |blog_post|
-				assert_select 'main a[href=?]', blog_post_path(blog_post), 1
-			end
-			loop_blog_posts( blog_modifiers: { 'trashed' => false } ) do |blog_post|
-				assert_select 'main a[href=?]', blog_post_path(blog_post), 0
-			end
-			loop_blog_posts( blog_modifiers: { 'hidden' => true } ) do |blog_post|
-				assert_select 'main a[href=?]', blog_post_path(blog_post), 0
-			end
+		# trashed, un-hidden blog post links
+		assert_select 'main a[href=?]', blog_post_path(@blog_post), 0
+		assert_select 'main a[href=?]', blog_post_path(@hidden_blog_post), 0
+		assert_select 'main a[href=?]', blog_post_path(@trashed_blog_post), 1
+		assert_select 'main a[href=?]', blog_post_path(@hidden_trashed_blog_post), 0
 
-			log_out
-		end
+		log_out
 
 
 		## User, Admin
-		loop_users( user_modifiers: { 'admin' => true } ) do |user|
-			log_in_as user
+		log_in_as @admin_user
 
-			get trashed_blog_posts_path
-			assert_response :success
+		get trashed_blog_posts_path
+		assert_response :success
 
-			# trashed blog_post links
-			loop_blog_posts( blog_modifiers: { 'trashed' => true } ) do |blog_post|
-				assert_select 'main a[href=?]', blog_post_path(blog_post), 1
-			end
-			loop_blog_posts( blog_modifiers: { 'trashed' => false } ) do |blog_post|
-				assert_select 'main a[href=?]', blog_post_path(blog_post), 0
-			end
+		# trashed, un-hidden blog post links
+		assert_select 'main a[href=?]', blog_post_path(@blog_post), 0
+		assert_select 'main a[href=?]', blog_post_path(@hidden_blog_post), 0
+		assert_select 'main a[href=?]', blog_post_path(@trashed_blog_post), 1
+		assert_select 'main a[href=?]', blog_post_path(@hidden_trashed_blog_post), 1
 
-			log_out
-		end
+		log_out
 	end
 
 	test "should get show" do
-		load_blog_posts
-		load_documents
-		load_comments
+		populate_users
+		populate_blog_posts
+		populate_documents
+		populate_comments
+
+		# [require_admin_for_hidden]
+		get blog_post_path(@hidden_blog_post)
+		assert_response :redirect
+		assert flash[:warning]
+
+		# [require_admin_for_hidden]
+		log_in_as @user
+		clear_flashes
+		get blog_post_path(@hidden_blog_post)
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
 
 		## Guest
-		# Blog Posts, Un-Hidden -- Success
-		loop_blog_posts( blog_modifiers: { 'hidden' => false } ) do |blog_post, blog_post_key|
-			get blog_post_path(blog_post)
+		get blog_post_path(@blog_post)
+		assert_response :success
+
+		# admin control panel
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', trashed_blog_post_documents_path(@blog_post), 1
+			assert_select 'a[href=?]', trashed_blog_post_comments_path(@blog_post), 1
+		end
+		assert_select 'div.admin.control', 0
+		assert_select 'a[href=?]', edit_blog_post_path(@blog_post), 0
+		assert_select 'a[href=?][data-method=patch]', hide_blog_post_path(@blog_post), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_blog_post_path(@blog_post), 0
+		assert_select 'a[href=?][data-method=patch]', trash_blog_post_path(@blog_post), 0
+		assert_select 'a[href=?][data-method=patch]', untrash_blog_post_path(@blog_post), 0
+		assert_select 'a[href=?][data-method=delete]', blog_post_path(@blog_post), 0
+		assert_select 'a[href=?]', new_blog_post_document_path(@blog_post), 0
+
+		# un-hidden, un-trashed document links
+		assert_select 'main a[href=?]', blog_post_document_path(@blog_post, @document), 1
+		assert_select 'main a[href=?]', blog_post_document_path(@blog_post, @hidden_document), 0
+		assert_select 'main a[href=?]', blog_post_document_path(@blog_post, @trashed_document), 0
+
+		# new comment form
+		assert_select 'form[action=?][method=post]', blog_post_comments_path(@blog_post), 1
+
+		# un-hidden, un-trashed comments
+		assert_select 'main p', { text: @user_comment.content, count: 1 }
+		assert_select 'form[action=?]', blog_post_comment_path(@blog_post, @user_comment), 0
+		[ @user_hidden_comment, @user_trashed_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 0 }
+			assert_select 'form[action=?]', blog_post_comment_path(@blog_post, comment), 0
+		end
+
+
+		## User
+		log_in_as @user
+
+		get blog_post_path(@blog_post)
+		assert_response :success
+
+		# un-trashed comment forms and un-owned, un-hidden, un-trashed comments
+		[ @user_comment, @user_hidden_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 0 }
+			assert_select 'form[action=?]', blog_post_comment_path(@blog_post, comment), 1
+		end
+		assert_select 'main p', { text: @other_user_comment.content, count: 1 }
+		assert_select 'form[action=?]', blog_post_comment_path(@blog_post, @other_user_comment), 0
+		[ @user_trashed_comment, @other_user_hidden_comment, @other_user_trashed_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 0 }
+			assert_select 'form[action=?]', blog_post_comment_path(@blog_post, comment), 0
+		end
+
+		log_out
+
+
+		## User, Hidden
+		## User, Trashed
+		[ @hidden_user, @trashed_user ].each do |user|
+			log_in_as user
+
+			get blog_post_path(@blog_post)
 			assert_response :success
 
-			# control panel
-			assert_select 'div.control' do
-				assert_select 'a[href=?]', trashed_blog_post_documents_path(blog_post), 1
-				assert_select 'a[href=?]', trashed_blog_post_comments_path(blog_post), 1
-			end
-			assert_select 'div.admin.control', 0
-			assert_select 'a[href=?]', edit_blog_post_path(blog_post), 0
-			assert_select 'a[href=?][data-method=patch]', hide_blog_post_path(blog_post), 0
-			assert_select 'a[href=?][data-method=patch]', unhide_blog_post_path(blog_post), 0
-			assert_select 'a[href=?][data-method=patch]', trash_blog_post_path(blog_post), 0
-			assert_select 'a[href=?][data-method=patch]', untrash_blog_post_path(blog_post), 0
-			assert_select 'a[href=?][data-method=delete]', blog_post_path(blog_post), 0
-			assert_select 'a[href=?]', new_blog_post_document_path(blog_post), 0
-
-			# un-trashed, un-hidden document links
-			loop_documents( include_archivings: false,
-					only: { blog_post: blog_post_key },
-					document_modifiers: { 'trashed' => false, 'hidden' => false } ) do |document|
-				assert_select 'main a[href=?]', blog_post_document_path(blog_post, document), 1
-			end
-			loop_documents( include_archivings: false,
-					only: { blog_post: blog_post_key },
-					document_modifiers: { 'trashed' => true } ) do |document|
-				assert_select 'main a[href=?]', blog_post_document_path(blog_post, document), 0
-			end
-			loop_documents( include_archivings: false,
-					only: { blog_post: blog_post_key },
-					document_modifiers: { 'hidden' => true } ) do |document|
-				assert_select 'main a[href=?]', blog_post_document_path(blog_post, document), 0
-			end
-
-			# new comment form
-			assert_select 'form[action=?][method=post]', blog_post_comments_path(blog_post), !blog_post.trashed?
-
-			# un-trashed, un-hidden comments
-			loop_comments( include_archivings: false, include_documents: false, include_forums: false,
-					only: { blog_post: blog_post_key },
-					comment_modifiers: { 'trashed' => false, 'hidden' => false } ) do |comment|
-				assert_select 'main p', { text: comment.content, count: 1 }
-				assert_select 'form[action=?][method=post]', blog_post_comment_path(blog_post, comment), 0
-			end
-			loop_comments( include_archivings: false, include_documents: false, include_forums: false,
-					only: { blog_post: blog_post_key },
-					comment_modifiers: { 'trashed' => true } ) do |comment|
-				assert_select 'main p', { text: comment.content, count: 0 }
-				assert_select 'form[action=?][method=post]', blog_post_comment_path(blog_post, comment), 0
-			end
-			loop_comments( include_archivings: false, include_documents: false, include_forums: false,
-					only: { blog_post: blog_post_key },
-					comment_modifiers: { 'hidden' => true } ) do |comment|
-				assert_select 'main p', { text: comment.content, count: 0 }
-				assert_select 'form[action=?][method=post]', blog_post_comment_path(blog_post, comment), 0
-			end
-		end
-
-		# Blog Posts, Hidden -- Redirect
-		loop_blog_posts( blog_modifiers: { 'hidden' => true } ) do |blog_post|
-			get blog_post_path(blog_post)
-			assert_response :redirect
-		end
-
-
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user, user_key|
-			log_in_as user
-
-			# Blog Posts, Un-Hidden -- Success
-			loop_blog_posts( blog_modifiers: { 'hidden' => false } ) do |blog_post, blog_post_key|
-
-				get blog_post_path(blog_post)
-				assert_response :success
-
-				# control panel
-				assert_select 'div.control' do
-					assert_select 'a[href=?]', trashed_blog_post_documents_path(blog_post), 1
-					assert_select 'a[href=?]', trashed_blog_post_comments_path(blog_post), 1
-				end
-				assert_select 'div.admin.control', 0
-				assert_select 'a[href=?]', edit_blog_post_path(blog_post), 0
-				assert_select 'a[href=?][data-method=patch]', hide_blog_post_path(blog_post), 0
-				assert_select 'a[href=?][data-method=patch]', unhide_blog_post_path(blog_post), 0
-				assert_select 'a[href=?][data-method=patch]', trash_blog_post_path(blog_post), 0
-				assert_select 'a[href=?][data-method=patch]', untrash_blog_post_path(blog_post), 0
-				assert_select 'a[href=?][data-method=delete]', blog_post_path(blog_post), 0
-				assert_select 'a[href=?]', new_blog_post_document_path(blog_post), 0
-
-				# un-trashed, un-hidden document links
-				loop_documents( include_archivings: false,
-						only: { blog_post: blog_post_key },
-						document_modifiers: { 'hidden' => false, 'trashed' => false } ) do |document|
-					assert_select 'main a[href=?]', blog_post_document_path(blog_post, document), 1
-				end
-				loop_documents( include_archivings: false,
-						only: { blog_post: blog_post_key },
-						document_modifiers: { 'trashed' => true } ) do |document|
-					assert_select 'main a[href=?]', blog_post_document_path(blog_post, document), 0
-				end
-				loop_documents( include_archivings: false,
-						only: { blog_post: blog_post_key },
-						document_modifiers: { 'hidden' => true } ) do |document|
-					assert_select 'main a[href=?]', blog_post_document_path(blog_post, document), 0
-				end
-
-				# new comment form
-				assert_select 'form[action=?][method=post]', blog_post_comments_path(blog_post), !blog_post.trashed? && !user.trashed? && !user.hidden?
-
-				# owned, un-trashed comment forms
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false,
-						only: { blog_post: blog_post_key, user: user_key },
-						comment_modifiers: { 'trashed' => false },
-						include_guests: false ) do |comment|
-					assert_select 'main p', { text: comment.content, count: ((blog_post.trashed? || user.trashed?) ? 1 : 0) }
-					assert_select 'form[action=?][method=post]', blog_post_comment_path(blog_post, comment), !blog_post.trashed? && !user.trashed?
-				end
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false,
-						only: { blog_post: blog_post_key, user: user_key },
-						comment_modifiers: { 'trashed' => true },
-						include_guests: false ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 0 }
-					assert_select 'form[action=?][method=post]', blog_post_comment_path(blog_post, comment), 0
-				end
-				# un-owned, un-hidden, un-trashed comments
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false,
-						only: { blog_post: blog_post_key },
-						except: { user: user_key },
-						comment_modifiers: { 'trashed' => false, 'hidden' => false } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 1 }
-					assert_select 'form[action=?][method=post]', blog_post_comment_path(blog_post, comment), 0
-				end
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false,
-						only: { blog_post: blog_post_key },
-						except: { user: user_key },
-						comment_modifiers: { 'trashed' => true } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 0 }
-					assert_select 'form[action=?][method=post]', blog_post_comment_path(blog_post, comment), 0
-				end
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false,
-						only: { blog_post: blog_post_key },
-						except: { user: user_key },
-						comment_modifiers: { 'hidden' => true } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 0 }
-					assert_select 'form[action=?][method=post]', blog_post_comment_path(blog_post, comment), 0
-				end
-			end
-
-			# Blog Posts, Hidden -- Redirect
-			loop_blog_posts( blog_modifiers: { 'hidden' => true } ) do |blog_post|
-				get blog_post_path(blog_post)
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-
-		## User, Admin
-		loop_users( user_modifiers: { 'admin' => true } ) do |user|
-			log_in_as user
-
-			# Blog Posts -- Success
-			loop_blog_posts do |blog_post, blog_post_key|
-
-				get blog_post_path(blog_post)
-				assert_response :success
-
-				# admin control panel
-				assert_select 'div.admin.control' do
-					assert_select 'a[href=?]', edit_blog_post_path(blog_post), !blog_post.trashed? && !user.trashed?
-					assert_select 'a[href=?][data-method=patch]', hide_blog_post_path(blog_post), !blog_post.trashed? && !blog_post.hidden? && !user.trashed?
-					assert_select 'a[href=?][data-method=patch]', unhide_blog_post_path(blog_post), !blog_post.trashed? && blog_post.hidden? && !user.trashed?
-					assert_select 'a[href=?][data-method=patch]', trash_blog_post_path(blog_post), !blog_post.trashed? && !user.trashed?
-					assert_select 'a[href=?][data-method=patch]', untrash_blog_post_path(blog_post), blog_post.trashed? && !user.trashed?
-					assert_select 'a[href=?][data-method=delete]', blog_post_path(blog_post), blog_post.trashed? && !user.trashed?
-					assert_select 'a[href=?]', new_blog_post_document_path(blog_post), !blog_post.trashed? && !user.trashed? && !user.hidden?
-					assert_select 'a[href=?]', trashed_blog_post_documents_path(blog_post), 1
-					assert_select 'a[href=?]', trashed_blog_post_comments_path(blog_post), 1
-				end
-
-				# un-trashed document links
-				loop_documents( include_archivings: false,
-						only: { blog_post: blog_post_key },
-						document_modifiers: { 'trashed' => false } ) do |document|
-					assert_select 'main a[href=?]', blog_post_document_path(blog_post, document), 1
-				end
-				loop_documents( include_archivings: false,
-						only: { blog_post: blog_post_key },
-						document_modifiers: { 'trashed' => true } ) do |document|
-					assert_select 'main a[href=?]', blog_post_document_path(blog_post, document), 0
-				end
-
-				# new comment form
-				assert_select 'form[action=?][method=post]', blog_post_comments_path(blog_post), !blog_post.trashed? && !user.trashed? && !user.hidden?
-
-				# un-trashed comment forms
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false,
-						only: { blog_post: blog_post_key },
-						comment_modifiers: { 'trashed' => false } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: ((blog_post.trashed? || user.trashed?) ? 1 : 0) }
-					assert_select 'form[action=?][method=post]', blog_post_comment_path(blog_post, comment), !blog_post.trashed? && !user.trashed?
-				end
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false,
-						only: { blog_post: blog_post_key },
-						comment_modifiers: { 'trashed' => true } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 0 }
-					assert_select 'form[action=?][method=post]', blog_post_comment_path(blog_post, comment), 0
-				end
-			end
-
-			log_out
-		end
-	end
-
-	test "should get new (only un-trashed, un-hidden admins)" do
-
-		## Guest -- Redirect
-		get new_blog_post_path
-		assert_response :redirect
-
-
-		## User, Non-Admin -- Redirect
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			get new_blog_post_path
-			assert_response :redirect
-
-			log_out
-		end
-
-
-		## User, Admin, Trashed -- Redirect
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user|
-			log_in_as user
-
-			get new_blog_post_path
-			assert_response :redirect
-
-			log_out
-		end
-
-
-		## User, Admin, Hidden -- Redirect
-		loop_users( user_modifiers: { 'admin' => true, 'hidden' => true } ) do |user|
-			log_in_as user
-
-			get new_blog_post_path
-			assert_response :redirect
-
-			log_out
-		end
-
-
-		## User, Admin, Un-Hidden, Un-Trashed -- Success
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false, 'hidden' => false } ) do |user|
-			log_in_as user
-
-			get new_blog_post_path
-			assert_response :success
-
-			log_out
-		end
-	end
-
-	test "should post create (only un-trashed, un-hidden admins)" do
-
-		## Guest -- Redirect
-		assert_no_difference 'BlogPost.count' do
-			post blog_posts_path, params: { blog_post: {
-				title: "Guest's New Blog Post",
-				content: "Sample Text"
-			} }
-		end
-		assert_response :redirect
-
-
-		## User, Non-Admin -- Redirect
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			assert_no_difference 'BlogPost.count' do
-				post blog_posts_path, params: { blog_post: {
-					title: user.name.possessive + " New Blog Post",
-					content: "Sample Text"
-				} }
-			end
-			assert_response :redirect
-
-			log_out
-		end
-
-
-		## User, Admin, Trashed -- Redirect
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user|
-			log_in_as user
-
-			assert_no_difference 'BlogPost.count' do
-				post blog_posts_path, params: { blog_post: {
-					title: user.name.possessive + " New Blog Post",
-					content: "Sample Text"
-				} }
-			end
-			assert_response :redirect
-
-			log_out
-		end
-
-
-		## User, Admin, Hidden -- Redirect
-		loop_users( user_modifiers: { 'admin' => true, 'hidden' => true } ) do |user|
-			log_in_as user
-
-			assert_no_difference 'BlogPost.count' do
-				post blog_posts_path, params: { blog_post: {
-					title: user.name.possessive + " New Blog Post",
-					content: "Sample Text"
-				} }
-			end
-			assert_response :redirect
-
-			log_out
-		end
-
-
-		## User, Admin, Un-Hidden, Un-Trashed -- Success
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false, 'hidden' => false } ) do |user|
-			log_in_as user
-
-			assert_difference 'BlogPost.count', 1 do
-				post blog_posts_path, params: { blog_post: {
-					title: user.name.possessive + " New Blog Post",
-					content: "Sample Text"
-				} }
-			end
-
-			log_out
-		end
-	end
-
-	test "should get edit (only un-trashed admins)" do
-		load_blog_posts
-
-		## Guest -- Redirect
-		loop_blog_posts do |blog_post|
-			get edit_blog_post_path(blog_post)
-			assert_response :redirect
-		end
-
-
-		## User, Non-Admin -- Redirect
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			loop_blog_posts do |blog_post|
-				get edit_blog_post_path(blog_post)
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-
-		## User, Admin, Trashed -- Redirect
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user|
-			log_in_as user
-
-			loop_blog_posts do |blog_post|
-				get edit_blog_post_path(blog_post)
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-
-		## User, Admin, Un-Trashed -- Success
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |user|
-			log_in_as user
-
-			# Blog Posts, Un-Trashed -- Success
-			loop_blog_posts( blog_modifiers: { 'trashed' => false } ) do |blog_post|
-				get edit_blog_post_path(blog_post)
-				assert_response :success
-			end
-
-			# Blog Posts, Trashed -- Redirect
-			loop_blog_posts( blog_modifiers: { 'trashed' => true } ) do |blog_post|
-				get edit_blog_post_path(blog_post)
-				assert_response :redirect
-			end
-
-			log_out
-		end
-	end
-
-	test "should patch update (only un-trashed admins)" do
-		load_blog_posts
-
-		## Guest -- Redirect
-		loop_blog_posts do |blog_post, blog_post_key|
-			assert_no_changes -> { blog_post.title } do
-				patch blog_post_path(blog_post), params: { blog_post: {
-					title: "Guest's Edited Blog Post"
-				} }
-				blog_post.reload
-			end
-			assert_response :redirect
-		end
-
-
-		## User, Non-Admin -- Redirect
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			loop_blog_posts do |blog_post, blog_post_key|
-				assert_no_changes -> { blog_post.title } do
-					patch blog_post_path(blog_post), params: { blog_post: {
-						title: user.name.possessive + " Edited " + blog_post_key.split('_').map(&:capitalize).join(' ')
-					} }
-					blog_post.reload
-				end
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-
-		## User, Admin, Trashed -- Redirect
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user|
-			log_in_as user
-
-			loop_blog_posts do |blog_post, blog_post_key|
-				assert_no_changes -> { blog_post.title } do
-					patch blog_post_path(blog_post), params: { blog_post: {
-						title: user.name.possessive + " Edited " + blog_post_key.split('_').map(&:capitalize).join(' ')
-					} }
-					blog_post.reload
-				end
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-
-		## User, Admin, Un-Trashed -- Success
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |user|
-			log_in_as user
-
-			# Blog Posts, Un-Trashed -- Success
-			loop_blog_posts( blog_modifiers: { 'trashed' => false } ) do |blog_post, blog_post_key|
-				assert_changes -> { blog_post.title } do
-					patch blog_post_path(blog_post), params: { blog_post: {
-						title: user.name.possessive + " Edited " + blog_post_key.split('_').map(&:capitalize).join(' ')
-					} }
-					blog_post.reload
-				end
-				assert_response :redirect
-			end
-
-			# Blog Posts, Trashed -- Redirect
-			loop_blog_posts( blog_modifiers: { 'trashed' => true } ) do |blog_post, blog_post_key|
-				assert_no_changes -> { blog_post.title } do
-					patch blog_post_path(blog_post), params: { blog_post: {
-						title: user.name.possessive + " Edited " + blog_post_key.split('_').map(&:capitalize).join(' ')
-					} }
-					blog_post.reload
-				end
-				assert_response :redirect
-			end
-
-			log_out
-		end
-	end
-
-	test "should patch hide (only un-trashed admins)" do
-		load_blog_posts
-
-		## Guest -- Redirect
-		loop_blog_posts( blog_modifiers: { 'hidden' => false } ) do |blog_post|
-			assert_no_changes -> { blog_post.updated_at } do
-				assert_no_changes -> { blog_post.hidden? }, from: false do
-					patch hide_blog_post_path(blog_post)
-					blog_post.reload
-				end
-			end
-			assert_response :redirect
-		end
-
-
-		## User, Non-Admin -- Redirect
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			loop_blog_posts( blog_modifiers: { 'hidden' => false } ) do |blog_post|
-				assert_no_changes -> { blog_post.updated_at } do
-					assert_no_changes -> { blog_post.hidden? }, from: false do
-						patch hide_blog_post_path(blog_post)
-						blog_post.reload
-					end
-				end
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-
-		## User, Admin, Trashed -- Redirect
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user|
-			log_in_as user
-
-			loop_blog_posts( blog_modifiers: { 'hidden' => false } ) do |blog_post|
-				assert_no_changes -> { blog_post.updated_at } do
-					assert_no_changes -> { blog_post.hidden? }, from: false do
-						patch hide_blog_post_path(blog_post)
-						blog_post.reload
-					end
-				end
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-
-		## User, Admin, Un-Trashed -- Success
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |user|
-			log_in_as user
-
-			loop_blog_posts( blog_modifiers: { 'hidden' => false } ) do |blog_post|
-				assert_no_changes -> { blog_post.updated_at } do
-					assert_changes -> { blog_post.hidden? }, from: false, to: true do
-						patch hide_blog_post_path(blog_post)
-						blog_post.reload
-					end
-				end
-				assert_response :redirect
-
-				blog_post.update_columns(hidden: false)
-			end
-
-			log_out
-		end
-	end
-
-	test "should patch unhide (only un-trashed admins)" do
-		load_blog_posts
-
-		## Guest -- Redirect
-		loop_blog_posts( blog_modifiers: { 'hidden' => true } ) do |blog_post|
-			assert_no_changes -> { blog_post.updated_at } do
-				assert_no_changes -> { blog_post.hidden? }, from: true do
-					patch unhide_blog_post_path(blog_post)
-					blog_post.reload
-				end
-			end
-			assert_response :redirect
-		end
-
-
-		## User, Non-Admin -- Redirect
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			loop_blog_posts( blog_modifiers: { 'trashed' => false, 'hidden' => true } ) do |blog_post|
-				assert_no_changes -> { blog_post.updated_at } do
-					assert_no_changes -> { blog_post.hidden? }, from: true do
-						patch unhide_blog_post_path(blog_post)
-						blog_post.reload
-					end
-				end
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-
-		## User, Admin, Trashed -- Redirect
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user|
-			log_in_as user
-
-			loop_blog_posts( blog_modifiers: { 'trashed' => false, 'hidden' => true } ) do |blog_post|
-				assert_no_changes -> { blog_post.updated_at } do
-					assert_no_changes -> { blog_post.hidden? }, from: true do
-						patch unhide_blog_post_path(blog_post)
-						blog_post.reload
-					end
-				end
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-
-		## User, Admin, Un-Trashed -- Success
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |user|
-			log_in_as user
-
-			loop_blog_posts( blog_modifiers: { 'hidden' => true } ) do |blog_post|
-				assert_no_changes -> { blog_post.updated_at } do
-					assert_changes -> { blog_post.hidden? }, from: true, to: false do
-						patch unhide_blog_post_path(blog_post)
-						blog_post.reload
-					end
-				end
-				assert_response :redirect
-				
-				blog_post.update_columns(hidden: true)
-			end
-
-			log_out
-		end
-	end
-
-	test "should patch trash (only un-trashed admins)" do
-		load_blog_posts
-
-		## Guest -- Redirect
-		loop_blog_posts( blog_modifiers: { 'trashed' => false } ) do |blog_post|
-			assert_no_changes -> { blog_post.updated_at } do
-				assert_no_changes -> { blog_post.trashed? }, from: false do
-					patch trash_blog_post_path(blog_post)
-					blog_post.reload
-				end
-			end
-			assert_response :redirect
-		end
-
-		## User, Non-Admin -- Redirect
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			loop_blog_posts( blog_modifiers: { 'trashed' => false } ) do |blog_post|
-				assert_no_changes -> { blog_post.updated_at } do
-					assert_no_changes -> { blog_post.trashed? }, from: false do
-						patch trash_blog_post_path(blog_post)
-						blog_post.reload
-					end
-				end
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-		## User, Admin, Trashed -- Redirect
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user|
-			log_in_as user
-
-			loop_blog_posts( blog_modifiers: { 'trashed' => false } ) do |blog_post|
-				assert_no_changes -> { blog_post.updated_at } do
-					assert_no_changes -> { blog_post.trashed? }, from: false do
-						patch trash_blog_post_path(blog_post)
-						blog_post.reload
-					end
-				end
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-		## User, Admin, Un-Trashed -- Success
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |user|
-			log_in_as user
-
-			loop_blog_posts( blog_modifiers: { 'trashed' => false } ) do |blog_post|
-				assert_no_changes -> { blog_post.updated_at } do
-					assert_changes -> { blog_post.trashed? }, from: false, to: true do
-						patch trash_blog_post_path(blog_post)
-						blog_post.reload
-					end
-				end
-				assert_response :redirect
-
-				blog_post.update_columns(trashed: false)
-			end
-
-			log_out
-		end
-	end
-
-	test "should patch untrash (only un-trashed admins)" do
-		load_blog_posts
-
-		## Guest -- Redirect
-		loop_blog_posts( blog_modifiers: { 'trashed' => true } ) do |blog_post|
-			assert_no_changes -> { blog_post.updated_at } do
-				assert_no_changes -> { blog_post.trashed? }, from: true do
-					patch untrash_blog_post_path(blog_post)
-					blog_post.reload
-				end
-			end
-			assert_response :redirect
-		end
-
-
-		## User, Non-Admin -- Redirect
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			loop_blog_posts( blog_modifiers: { 'trashed' => true } ) do |blog_post|
-				assert_no_changes -> { blog_post.updated_at } do
-					assert_no_changes -> { blog_post.trashed? }, from: true do
-						patch untrash_blog_post_path(blog_post)
-						blog_post.reload
-					end
-				end
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-
-		## User, Admin, Trashed -- Redirect
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user|
-			log_in_as user
-
-			loop_blog_posts( blog_modifiers: { 'trashed' => true } ) do |blog_post|
-				assert_no_changes -> { blog_post.updated_at } do
-					assert_no_changes -> { blog_post.trashed? }, from: true do
-						patch untrash_blog_post_path(blog_post)
-						blog_post.reload
-					end
-				end
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-
-		## User, Admin, Un-Trashed -- Success
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |user|
-			log_in_as user
-
-			loop_blog_posts( blog_modifiers: { 'trashed' => true } ) do |blog_post|
-				assert_no_changes -> { blog_post.updated_at } do
-					assert_changes -> { blog_post.trashed? }, from: true, to: false do
-						patch untrash_blog_post_path(blog_post)
-						blog_post.reload
-					end
-				end
-				assert_response :redirect
-				
-				blog_post.update_columns(trashed: true)
-			end
-
-			log_out
-		end
-	end
-
-	test "should delete destroy (only un-trashed admin)" do
-		load_blog_posts
-
-		## Guest
-		# Blog Posts -- Redirect
-		loop_blog_posts do |blog_post|
-			assert_no_difference 'BlogPost.count' do
-				delete blog_post_path(blog_post)
-			end
-			assert_nothing_raised { blog_post.reload }
-			assert_response :redirect
-		end
-
-
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			# Blog Posts -- Redirect
-			loop_blog_posts do |blog_post|
-				assert_no_difference 'BlogPost.count' do
-					delete blog_post_path(blog_post)
-				end
-				assert_nothing_raised { blog_post.reload }
-				assert_response :redirect
-			end
+			# no new comment form
+			assert_select 'form[action=?][method=post]', blog_post_comments_path(@blog_post), 0
 
 			log_out
 		end
 
 
 		## User, Admin, Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user|
-			log_in_as user
+		log_in_as @trashed_admin_user
 
-			# Blog Posts -- Redirect
-			loop_blog_posts do |blog_post|
-				assert_no_difference 'BlogPost.count' do
-					delete blog_post_path(blog_post)
-				end
-				assert_nothing_raised { blog_post.reload }
-				assert_response :redirect
-			end
+		get blog_post_path(@blog_post)
+		assert_response :success
 
-			log_out
+		# admin control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', trashed_blog_post_documents_path(@blog_post), 1
+			assert_select 'a[href=?]', trashed_blog_post_comments_path(@blog_post), 1
+		end
+		assert_select 'a[href=?]', edit_blog_post_path(@blog_post), 0
+		assert_select 'a[href=?][data-method=patch]', hide_blog_post_path(@blog_post), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_blog_post_path(@blog_post), 0
+		assert_select 'a[href=?][data-method=patch]', trash_blog_post_path(@blog_post), 0
+		assert_select 'a[href=?][data-method=patch]', untrash_blog_post_path(@blog_post), 0
+		assert_select 'a[href=?][data-method=delete]', blog_post_path(@blog_post), 0
+		assert_select 'a[href=?]', new_blog_post_document_path(@blog_post), 0
+
+		log_out
+
+
+		## User, Admin
+		log_in_as @admin_user
+
+		get blog_post_path(@blog_post)
+		assert_response :success
+
+		# admin control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', edit_blog_post_path(@blog_post), 1
+			assert_select 'a[href=?][data-method=patch]', hide_blog_post_path(@blog_post), 1
+			assert_select 'a[href=?][data-method=patch]', unhide_blog_post_path(@blog_post), 0
+			assert_select 'a[href=?][data-method=patch]', trash_blog_post_path(@blog_post), 1
+			assert_select 'a[href=?][data-method=patch]', untrash_blog_post_path(@blog_post), 0
+			assert_select 'a[href=?][data-method=delete]', blog_post_path(@blog_post), 0
+			assert_select 'a[href=?]', new_blog_post_document_path(@blog_post), 1
+			assert_select 'a[href=?]', trashed_blog_post_documents_path(@blog_post), 1
+			assert_select 'a[href=?]', trashed_blog_post_comments_path(@blog_post), 1
 		end
 
+		# un-trashed document links
+		assert_select 'main a[href=?]', blog_post_document_path(@blog_post, @document), 1
+		assert_select 'main a[href=?]', blog_post_document_path(@blog_post, @hidden_document), 1
+		assert_select 'main a[href=?]', blog_post_document_path(@blog_post, @trashed_document), 0
 
-		## User, Admin, Un-Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |user, user_key|
-			log_in_as user
+		# new comment form
+		assert_select 'form[action=?][method=post]', blog_post_comments_path(@blog_post), 1
 
-			# Blog Posts, Un-Trashed -- Redirect
-			loop_blog_posts( blog_numbers: [user_key.split('_').last],
-				blog_modifiers: { 'trashed' => false } ) do |blog_post|
-
-				assert_no_difference 'BlogPost.count' do
-					delete blog_post_path(blog_post)
-				end
-				assert_nothing_raised { blog_post.reload }
-				assert_response :redirect
-			end
-
-			# Blog Posts, Trashed -- Success
-			loop_blog_posts( blog_numbers: [user_key.split('_').last],
-				blog_modifiers: { 'hidden' => user.hidden, 'trashed' => true } ) do |blog_post|
-
-				assert_difference 'BlogPost.count', -1 do
-					delete blog_post_path(blog_post)
-				end
-				assert_raise(ActiveRecord::RecordNotFound) { blog_post.reload }
-				assert_response :redirect
-			end
-
-			log_out
+		# un-trashed comment forms
+		[ @user_comment, @user_hidden_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 0 }
+			assert_select 'form[action=?]', blog_post_comment_path(@blog_post, comment), 1
 		end
+		assert_select 'main p', { text: @user_trashed_comment.content, count: 0 }
+
+		get blog_post_path(@hidden_blog_post)
+		assert_response :success
+
+		# admin control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', edit_blog_post_path(@hidden_blog_post), 1
+			assert_select 'a[href=?][data-method=patch]', hide_blog_post_path(@hidden_blog_post), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_blog_post_path(@hidden_blog_post), 1
+			assert_select 'a[href=?][data-method=patch]', trash_blog_post_path(@hidden_blog_post), 1
+			assert_select 'a[href=?][data-method=patch]', untrash_blog_post_path(@hidden_blog_post), 0
+			assert_select 'a[href=?][data-method=delete]', blog_post_path(@hidden_blog_post), 0
+			assert_select 'a[href=?]', new_blog_post_document_path(@hidden_blog_post), 1
+			assert_select 'a[href=?]', trashed_blog_post_documents_path(@hidden_blog_post), 1
+			assert_select 'a[href=?]', trashed_blog_post_comments_path(@hidden_blog_post), 1
+		end
+
+		get blog_post_path(@trashed_blog_post)
+		assert_response :success
+
+		# admin control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', edit_blog_post_path(@trashed_blog_post), 0
+			assert_select 'a[href=?][data-method=patch]', hide_blog_post_path(@trashed_blog_post), 1
+			assert_select 'a[href=?][data-method=patch]', unhide_blog_post_path(@trashed_blog_post), 0
+			assert_select 'a[href=?][data-method=patch]', trash_blog_post_path(@trashed_blog_post), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_blog_post_path(@trashed_blog_post), 1
+			assert_select 'a[href=?][data-method=delete]', blog_post_path(@trashed_blog_post), 1
+			assert_select 'a[href=?]', new_blog_post_document_path(@trashed_blog_post), 0
+			assert_select 'a[href=?]', trashed_blog_post_documents_path(@trashed_blog_post), 1
+			assert_select 'a[href=?]', trashed_blog_post_comments_path(@trashed_blog_post), 1
+		end
+
+		get blog_post_path(@hidden_trashed_blog_post)
+		assert_response :success
+
+		# admin control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', edit_blog_post_path(@hidden_trashed_blog_post), 0
+			assert_select 'a[href=?][data-method=patch]', hide_blog_post_path(@hidden_trashed_blog_post), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_blog_post_path(@hidden_trashed_blog_post), 1
+			assert_select 'a[href=?][data-method=patch]', trash_blog_post_path(@hidden_trashed_blog_post), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_blog_post_path(@hidden_trashed_blog_post), 1
+			assert_select 'a[href=?][data-method=delete]', blog_post_path(@hidden_trashed_blog_post), 1
+			assert_select 'a[href=?]', new_blog_post_document_path(@hidden_trashed_blog_post), 0
+			assert_select 'a[href=?]', trashed_blog_post_documents_path(@hidden_trashed_blog_post), 1
+			assert_select 'a[href=?]', trashed_blog_post_comments_path(@hidden_trashed_blog_post), 1
+		end
+	end
+
+	test "should get new (only un-trashed, un-hidden admins)" do
+		populate_users
+		populate_blog_posts
+
+		# [require_admin]
+		get new_blog_post_path
+		assert_response :redirect
+		assert flash[:warning]
+
+		# [require_admin]
+		log_in_as @user
+		clear_flashes
+		get new_blog_post_path
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		clear_flashes
+		get new_blog_post_path
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+		# [require_unhidden_user]
+		log_in_as @hidden_admin_user
+		clear_flashes
+		get new_blog_post_path
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+
+		## User, Admin
+		log_in_as @admin_user
+
+		clear_flashes
+		get new_blog_post_path
+		assert_response :success
+
+		assert_select 'form' do
+			assert_select 'input[name="blog_post[title]"][type="text"]', 1
+			assert_select 'textarea[name="blog_post[content]"]', 1
+		end
+	end
+
+	test "should post create (only un-trashed, un-hidden admins)" do
+		populate_users
+		populate_blog_posts
+
+		# [require_admin]
+		post blog_posts_path, params: { blog_post: { title: "New Blog Post" } }
+		assert_response :redirect
+		assert flash[:warning]
+
+		# [require_admin]
+		log_in_as @user
+		clear_flashes
+		post blog_posts_path, params: { blog_post: { title: "New Blog Post" } }
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		clear_flashes
+		post blog_posts_path, params: { blog_post: { title: "New Blog Post" } }
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+		# [require_unhidden_user]
+		log_in_as @hidden_admin_user
+		clear_flashes
+		post blog_posts_path, params: { blog_post: { title: "New Blog Post" } }
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+
+		## User, Admin
+		log_in_as @admin_user
+
+		# Failure
+		clear_flashes
+		assert_no_difference 'BlogPost.count' do
+			post blog_posts_path, params: { blog_post: { title: "Bad Blog Post" } }
+		end
+		assert flash[:failure]
+		assert_response :ok
+
+		assert_select 'form' do
+			assert_select 'input[name="blog_post[title]"][type="text"]', 1
+			assert_select 'textarea[name="blog_post[content]"]', 1
+		end
+
+		# Success
+		clear_flashes
+		assert_difference 'BlogPost.count', 1 do
+			post blog_posts_path, params: { blog_post: { title: "New Blog Post", content: "Sample Content" } }
+		end
+		assert flash[:success]
+		assert_response :redirect
+	end
+
+	test "should get edit (only un-trashed admins)" do
+		populate_users
+		populate_blog_posts
+
+		# [require_admin]
+		get edit_blog_post_path(@blog_post)
+		assert_response :redirect
+		assert flash[:warning]
+
+		# [require_admin]
+		log_in_as @user
+		clear_flashes
+		get edit_blog_post_path(@blog_post)
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		clear_flashes
+		get edit_blog_post_path(@blog_post)
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+		# [require_untrashed_blog_post]
+		log_in_as @admin_user
+		clear_flashes
+		get edit_blog_post_path(@trashed_blog_post)
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+
+		## User, Admin
+		log_in_as @admin_user
+		clear_flashes
+		get edit_blog_post_path(@blog_post)
+		assert_response :success
+
+		assert_select 'form' do
+			assert_select 'input[name="blog_post[title]"][type="text"]', 1
+			assert_select 'textarea[name="blog_post[content]"]', 1
+		end
+	end
+
+	test "should patch update (only un-trashed admins)" do
+		populate_users
+		populate_blog_posts
+
+		# [require_admin]
+		patch blog_post_path(@blog_post), params: { blog_post: { title: "Updated Title" } }
+		assert_response :redirect
+		assert flash[:warning]
+
+		# [require_admin]
+		log_in_as @user
+		clear_flashes
+		patch blog_post_path(@blog_post), params: { blog_post: { title: "Updated Title" } }
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		clear_flashes
+		patch blog_post_path(@blog_post), params: { blog_post: { title: "Updated Title" } }
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+		# [require_untrashed_blog_post]
+		log_in_as @admin_user
+		clear_flashes
+		patch blog_post_path(@trashed_blog_post), params: { blog_post: { title: "Updated Title" } }
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+
+		## User, Admin
+		log_in_as @admin_user
+
+		# Failure
+		clear_flashes
+		assert_no_changes -> { @blog_post.title } do
+			patch blog_post_path(@blog_post), params: { blog_post: { title: @hidden_blog_post.title } }
+			@blog_post.reload
+		end
+		assert flash[:failure]
+		assert_response :ok
+
+		assert_select 'form' do
+			assert_select 'input[name="blog_post[title]"][type="text"]', 1
+			assert_select 'textarea[name="blog_post[content]"]', 1
+		end
+
+		# PATCH, Success
+		clear_flashes
+		assert_changes -> { @blog_post.title } do
+			patch blog_post_path(@blog_post), params: { blog_post: { title: "PATCH Update" } }
+			@blog_post.reload
+		end
+		assert flash[:success]
+		assert_response :redirect
+
+		# PUT, Success
+		clear_flashes
+		assert_changes -> { @blog_post.title } do
+			patch blog_post_path(@blog_post), params: { blog_post: { title: "PUT Update" } }
+			@blog_post.reload
+		end
+		assert flash[:success]
+		assert_response :redirect
+	end
+
+	test "should patch hide (only un-trashed admins)" do
+		populate_users
+		populate_blog_posts
+
+		# [require_admin]
+		patch hide_blog_post_path(@blog_post)
+		assert_response :redirect
+		assert flash[:warning]
+
+		# [require_admin]
+		log_in_as @user
+		clear_flashes
+		patch hide_blog_post_path(@blog_post)
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		clear_flashes
+		patch hide_blog_post_path(@blog_post)
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+
+		## User, Admin
+		log_in_as @admin_user
+		clear_flashes
+		assert_changes -> { @blog_post.hidden }, from: false, to: true do
+			patch hide_blog_post_path(@blog_post)
+			@blog_post.reload
+		end
+		assert_response :redirect
+		assert flash[:success]
+	end
+
+	test "should patch unhide (only un-trashed admins)" do
+		populate_users
+		populate_blog_posts
+
+		# [require_admin]
+		patch unhide_blog_post_path(@hidden_blog_post)
+		assert_response :redirect
+		assert flash[:warning]
+
+		# [require_admin]
+		log_in_as @user
+		clear_flashes
+		patch unhide_blog_post_path(@hidden_blog_post)
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		clear_flashes
+		patch unhide_blog_post_path(@hidden_blog_post)
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+
+		## User, Admin
+		log_in_as @admin_user
+		clear_flashes
+		assert_changes -> { @hidden_blog_post.hidden }, from: true, to: false do
+			patch unhide_blog_post_path(@hidden_blog_post)
+			@hidden_blog_post.reload
+		end
+		assert_response :redirect
+		assert flash[:success]
+	end
+
+	test "should patch trash (only un-trashed admins)" do
+		populate_users
+		populate_blog_posts
+
+		# [require_admin]
+		patch trash_blog_post_path(@blog_post)
+		assert_response :redirect
+		assert flash[:warning]
+
+		# [require_admin]
+		log_in_as @user
+		clear_flashes
+		patch trash_blog_post_path(@blog_post)
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		clear_flashes
+		patch trash_blog_post_path(@blog_post)
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+
+		## User, Admin
+		log_in_as @admin_user
+		clear_flashes
+		assert_changes -> { @blog_post.trashed }, from: false, to: true do
+			patch trash_blog_post_path(@blog_post)
+			@blog_post.reload
+		end
+		assert_response :redirect
+		assert flash[:success]
+	end
+
+	test "should patch untrash (only un-trashed admins)" do
+		populate_users
+		populate_blog_posts
+
+		# [require_admin]
+		patch untrash_blog_post_path(@trashed_blog_post)
+		assert_response :redirect
+		assert flash[:warning]
+
+		# [require_admin]
+		log_in_as @user
+		clear_flashes
+		patch untrash_blog_post_path(@trashed_blog_post)
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		clear_flashes
+		patch untrash_blog_post_path(@trashed_blog_post)
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+
+		## User, Admin
+		log_in_as @admin_user
+		clear_flashes
+		assert_changes -> { @trashed_blog_post.trashed }, from: true, to: false do
+			patch untrash_blog_post_path(@trashed_blog_post)
+			@trashed_blog_post.reload
+		end
+		assert_response :redirect
+		assert flash[:success]
+	end
+
+	test "should delete destroy (only un-trashed admin)" do
+		populate_users
+		populate_blog_posts
+
+		# [require_admin]
+		delete blog_post_path(@trashed_blog_post)
+		assert_response :redirect
+		assert flash[:warning]
+
+		# [require_admin]
+		log_in_as @user
+		clear_flashes
+		delete blog_post_path(@trashed_blog_post)
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		clear_flashes
+		delete blog_post_path(@trashed_blog_post)
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+		# [require_trashed_blog_post]
+		log_in_as @admin_user
+		clear_flashes
+		delete blog_post_path(@blog_post)
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+
+		## User, Admin
+		log_in_as @admin_user
+		clear_flashes
+		assert_difference 'BlogPost.count', -1 do
+			delete blog_post_path(@trashed_blog_post)
+		end
+		assert_response :redirect
+		assert flash[:success]
+		assert_raise(ActiveRecord::RecordNotFound) { @trashed_blog_post.reload }
 	end
 
 end

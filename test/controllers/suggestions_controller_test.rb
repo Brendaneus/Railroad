@@ -2,3439 +2,1565 @@ require 'test_helper'
 
 class SuggestionsControllerTest < ActionDispatch::IntegrationTest
 
-	fixtures :users, :archivings, :documents, :suggestions, :comments
-
 	def setup
-		load_users
-		load_archivings
-		load_documents
+	end
+
+	def populate_users
+		@user = create(:user)
+		@other_user = create(:user, name: "Other User", email: "other_user@example.com")
+		@hidden_user = create(:user, name: "Hidden User", email: "hidden_user@example.com", hidden: true)
+		@trashed_user = create(:user, name: "Trashed User", email: "trashed_user@example.com", trashed: true)
+		@admin_user = create(:user, name: "Admin User", email: "admin_user@example.com", admin: true)
+		# @hidden_admin_user = create(:user, name: "Hidden Admin User", email: "hidden_admin_user@example.com", admin: true, hidden: true)
+		@trashed_admin_user = create(:user, name: "Trashed Admin User", email: "trashed_admin_user@example.com", admin: true, trashed: true)
+		# @hidden_trashed_user = create(:user, name: "Hidden Trashed User", email: "hidden_trashed_user@example.com", hidden: true, trashed: true)
+	end
+
+	def populate_archivings
+		@archiving = create(:archiving)
+		@hidden_archiving = create(:archiving, title: "Hidden Archiving", hidden: true)
+		@trashed_archiving = create(:archiving, title: "Trashed Archiving", trashed: true)
+		@hidden_trashed_archiving = create(:archiving, title: "Hidden Trashed Archiving", hidden: true, trashed: true)
+	end
+
+	def populate_documents
+		@archiving_document = create(:document, article: @archiving, title: "Document")
+		@archiving_hidden_document = create(:document, article: @archiving, title: "Hidden Document", hidden: true)
+		@archiving_trashed_document = create(:document, article: @archiving, title: "Trashed Document", trashed: true)
+		@archiving_hidden_trashed_document = create(:document, article: @archiving, title: "Hidden Trashed Document", hidden: true, trashed: true)
+		@hidden_archiving_document = create(:document, article: @hidden_archiving, title: "Document")
+		@trashed_archiving_document = create(:document, article: @trashed_archiving, title: "Document")
+	end
+
+	def populate_suggestions
+		@archiving_user_suggestion = create(:suggestion, citation: @archiving, user: @user, name: "User's Suggestion for Archiving", title: "User's Title Edit for Archiving")
+		@archiving_user_hidden_suggestion = create(:suggestion, citation: @archiving, user: @user, name: "User's Hidden Suggestion for Archiving", title: "User's Hidden Title Edit for Archiving", hidden: true)
+		@archiving_user_trashed_suggestion = create(:suggestion, citation: @archiving, user: @user, name: "User's Trashed Suggestion for Archiving", title: "User's Trashed Title Edit for Archiving", trashed: true)
+		@archiving_user_hidden_trashed_suggestion = create(:suggestion, citation: @archiving, user: @user, name: "User's Hidden, Trashed Suggestion for Archiving", title: "User's Hidden, Trashed Title Edit for Archiving", hidden: true, trashed: true)
+		@archiving_other_user_suggestion = create(:suggestion, citation: @archiving, user: @other_user, name: "Other User's Suggestion for Archiving", title: "Other User's Title Edit for Archiving")
+		@archiving_other_user_hidden_suggestion = create(:suggestion, citation: @archiving, user: @other_user, name: "Other User's Hidden Suggestion for Archiving", title: "Other User's Hidden Title Edit for Archiving", hidden: true)
+		@archiving_other_user_trashed_suggestion = create(:suggestion, citation: @archiving, user: @other_user, name: "Other User's Trashed Suggestion for Archiving", title: "Other User's Trashed Title Edit for Archiving", trashed: true)
+		@archiving_other_user_hidden_trashed_suggestion = create(:suggestion, citation: @archiving, user: @other_user, name: "Other User's Hidden, Trashed Suggestion for Archiving", title: "Other User's Hidden, Trashed Title Edit for Archiving", hidden: true, trashed: true)
+		# @archiving_hidden_user_suggestion = create(:suggestion, citation: @archiving, user: @hidden_user, name: "Hidden User's Suggestion for Archiving")
+		@archiving_trashed_user_suggestion = create(:suggestion, citation: @archiving, user: @trashed_user, name: "Trashed User's Suggestion for Archiving", title: "Trashed User's Title Edit for Archiving")
+		@archiving_trashed_user_hidden_suggestion = create(:suggestion, citation: @archiving, user: @trashed_user, name: "Trashed User's Hidden Suggestion for Archiving", title: "Trashed User's Hidden Title Edit for Archiving", hidden: true)
+		@archiving_trashed_user_trashed_suggestion = create(:suggestion, citation: @archiving, user: @trashed_user, name: "Trashed User's Trashed Suggestion for Archiving", title: "Trashed User's Trashed Title Edit for Archiving", trashed: true)
+		# @archiving_trashed_admin_user_suggestion = create(:suggestion, citation: @archiving, user: @trashed_admin_user, name: "Trashed Admin User's Suggestion for Archiving")
+		@hidden_archiving_user_suggestion = create(:suggestion, citation: @hidden_archiving, user: @user, name: "User's Suggestion for Hidden Archiving", title: "User's Title Edit for Hidden Archiving")
+		@hidden_archiving_user_hidden_suggestion = create(:suggestion, citation: @hidden_archiving, user: @user, name: "User's Hidden Suggestion for Hidden Archiving", title: "User's Hidden Title Edit for Hidden Archiving", hidden: true)
+		@hidden_archiving_user_trashed_suggestion = create(:suggestion, citation: @hidden_archiving, user: @user, name: "User's Trashed Suggestion for Hidden Archiving", title: "User's Trashed Title Edit for Hidden Archiving", trashed: true)
+		@hidden_archiving_document_user_suggestion = create(:suggestion, citation: @hidden_archiving_document, user: @user, name: "User's Suggestion for Hidden Archiving's Document", title: "User's Title Edit for Hidden Archiving's Document")
+		@hidden_archiving_document_user_hidden_suggestion = create(:suggestion, citation: @hidden_archiving_document, user: @user, name: "User's Hidden Suggestion for Hidden Archiving's Document", title: "User's Hidden Title Edit for Hidden Archiving's Document", hidden: true)
+		@hidden_archiving_document_user_trashed_suggestion = create(:suggestion, citation: @hidden_archiving_document, user: @user, name: "User's Trashed Suggestion for Hidden Archiving's Document", title: "User's Trashed Title Edit for Hidden Archiving's Document", trashed: true)
+		@trashed_archiving_user_suggestion = create(:suggestion, citation: @trashed_archiving, user: @user, name: "User's Suggestion for Trashed Archiving", title: "User's Title Edit for Trashed Archiving")
+		@trashed_archiving_document_user_suggestion = create(:suggestion, citation: @trashed_archiving_document, user: @user, name: "User's Suggestion for Trashed Archiving's Document", title: "User's Title Edit for Trashed Archiving's Document")
+		@archiving_document_user_suggestion = create(:suggestion, citation: @archiving_document, user: @user, name: "User's Suggestion for Archiving's Document", title: "User's Title Edit for Archiving's Document")
+		@archiving_document_user_hidden_suggestion = create(:suggestion, citation: @archiving_document, user: @user, name: "User's Hidden Suggestion for Archiving's Document", title: "User's Hidden Title Edit for Archiving's Document", hidden: true)
+		@archiving_document_user_trashed_suggestion = create(:suggestion, citation: @archiving_document, user: @user, name: "User's Trashed Suggestion for Archiving's Document", title: "User's Trashed Title Edit for Archiving's Document", trashed: true)
+		@archiving_document_user_hidden_trashed_suggestion = create(:suggestion, citation: @archiving_document, user: @user, name: "User's Hidden, Trashed Suggestion for Archiving's Document", title: "User's Hidden, Trashed Title Edit for Archiving's Document", hidden: true, trashed: true)
+		@archiving_document_other_user_suggestion = create(:suggestion, citation: @archiving_document, user: @other_user, name: "Other User's Suggestion for Archiving's Document", title: "Other User's Title Edit for Archiving's Document")
+		@archiving_document_other_user_hidden_suggestion = create(:suggestion, citation: @archiving_document, user: @other_user, name: "Other User's Hidden Suggestion for Archiving's Document", title: "Other User's Hidden Title Edit for Archiving's Document", hidden: true)
+		@archiving_document_other_user_trashed_suggestion = create(:suggestion, citation: @archiving_document, user: @other_user, name: "Other User's Trashed Suggestion for Archiving's Document", title: "Other User's Trashed Title Edit for Archiving's Document", trashed: true)
+		@archiving_document_other_user_hidden_trashed_suggestion = create(:suggestion, citation: @archiving_document, user: @other_user, name: "Other User's Hidden, Trashed Suggestion for Archiving's Document", title: "Other User's Hidden, Trashed Title Edit for Archiving's Document", hidden: true, trashed: true)
+		@archiving_hidden_document_user_suggestion = create(:suggestion, citation: @archiving_hidden_document, user: @user, name: "User's Suggestion for Archiving's Hidden Document", title: "User's Title Edit for Archiving's Hidden Document")
+		@archiving_hidden_document_user_hidden_suggestion = create(:suggestion, citation: @archiving_hidden_document, user: @user, name: "User's Hidden Suggestion for Archiving's Hidden Document", title: "User's Hidden Title Edit for Archiving's Hidden Document", hidden: true)
+		@archiving_hidden_document_user_trashed_suggestion = create(:suggestion, citation: @archiving_hidden_document, user: @user, name: "User's Trashed Suggestion for Archiving's Hidden Document", title: "User's Trashed Title Edit for Archiving's Hidden Document", trashed: true)
+	end
+
+	def populate_comments
+		@user_comment = create(:comment, post: @archiving_user_suggestion, user: @user, content: "User's Comment for User's Suggestion for Archiving")
+		@user_hidden_comment = create(:comment, post: @archiving_user_suggestion, user: @user, content: "User's Hidden Comment for User's Suggestion for Archiving", hidden: true)
+		@user_trashed_comment = create(:comment, post: @archiving_user_suggestion, user: @user, content: "User's Trashed Comment for User's Suggestion for Archiving", trashed: true)
+		@user_hidden_trashed_comment = create(:comment, post: @archiving_user_suggestion, user: @user, content: "User's Hidden, Trashed Comment for User's Suggestion for Archiving", hidden: true, trashed: true)
+		@other_user_comment = create(:comment, post: @archiving_user_suggestion, user: @other_user, content: "Other User's Comment for User's Suggestion for Archiving")
+		@other_user_hidden_comment = create(:comment, post: @archiving_user_suggestion, user: @other_user, content: "Other User's Hidden Comment for User's Suggestion for Archiving", hidden: true)
+		@other_user_trashed_comment = create(:comment, post: @archiving_user_suggestion, user: @other_user, content: "Other User's Trashed Comment for User's Suggestion for Archiving", trashed: true)
+		@other_user_hidden_trashed_comment = create(:comment, post: @archiving_user_suggestion, user: @other_user, content: "Other User's Hidden, Trashed Comment for User's Suggestion for Archiving", hidden: true, trashed: true)
 	end
 
 	test "should get index" do
-		load_suggestions
+		populate_users
+		populate_archivings
+		populate_documents
+		populate_suggestions
+
+		# [require_admin_for_hidden_archiving_or_document]
+		get archiving_suggestions_path(@hidden_archiving)
+		assert_response :redirect
+		assert flash[:warning]
+		clear_flashes
+		get archiving_document_suggestions_path(@hidden_archiving, @hidden_archiving_document)
+		assert_response :redirect
+		assert flash[:warning]
+		clear_flashes
+		get archiving_document_suggestions_path(@archiving, @archiving_hidden_document)
+		assert_response :redirect
+		assert flash[:warning]
+
+		# [require_admin_for_hidden_archiving_or_document]
+		log_in_as(@user)
+		clear_flashes
+		get archiving_suggestions_path(@hidden_archiving)
+		assert_response :redirect
+		assert flash[:warning]
+		clear_flashes
+		get archiving_document_suggestions_path(@hidden_archiving, @hidden_archiving_document)
+		assert_response :redirect
+		assert flash[:warning]
+		clear_flashes
+		get archiving_document_suggestions_path(@archiving, @archiving_hidden_document)
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
 
 		## Guest
-		# Archivings, Un-Hidden -- Success
-		loop_archivings( archiving_modifiers: { 'hidden' => false } ) do |archiving, archiving_key|
+		# Archiving
+		get archiving_suggestions_path(@archiving)
+		assert_response :success
 
-			get archiving_suggestions_path(archiving)
-			assert_response :success
+		# control panel (non-admin, no-new)
+		assert_select 'div.admin.control', 0
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', trashed_archiving_suggestions_path(@archiving), 1
+		end
+		assert_select 'a[href=?]', new_archiving_suggestion_path(@archiving), 0
 
-			# control panel
-			assert_select 'div.admin.control', 0
-			assert_select 'div.control' do
-				assert_select 'a[href=?]', trashed_archiving_suggestions_path(archiving), 1
-			end
-			assert_select 'a[href=?]', new_archiving_suggestion_path(archiving), 0
+		# suggestion links (un-trashed & un-hidden)
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_suggestion), 1
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_hidden_suggestion), 0
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion), 0
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_hidden_trashed_suggestion), 0
 
-			# un-trashed, un-hidden suggestion links
-			loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'trashed' => false, 'hidden' => false } ) do |suggestion, suggestion_key|
-				assert_select 'a[href=?]', archiving_suggestion_path(archiving, suggestion), 1
-			end
-			loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'trashed' => true } ) do |suggestion, suggestion_key|
-				assert_select 'a[href=?]', archiving_suggestion_path(archiving, suggestion), 0
-			end
-			loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'hidden' => true } ) do |suggestion, suggestion_key|
-				assert_select 'a[href=?]', archiving_suggestion_path(archiving, suggestion), 0
-			end
+		# Document
+		get archiving_document_suggestions_path(@archiving, @archiving_document)
+		assert_response :success
 
-			# Documents, Un-Hidden -- Success
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key },
-				document_modifiers: { 'hidden' => false } ) do |document, document_key|				
+		# control panel (non-admin, no-new)
+		assert_select 'div.admin.control', 0
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', trashed_archiving_document_suggestions_path(@archiving, @archiving_document), 1
+		end
+		assert_select 'a[href=?]', new_archiving_document_suggestion_path(@archiving, @archiving_document), 0
 
-				get archiving_document_suggestions_path(archiving, document)
-				assert_response :success
+		# suggestion links (un-trashed & un-hidden)
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_suggestion), 1
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_hidden_suggestion), 0
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_trashed_suggestion), 0
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_hidden_trashed_suggestion), 0
 
-				# control panel
-				assert_select 'div.admin.control', 0
-				assert_select 'div.control' do
-					assert_select 'a[href=?]', trashed_archiving_document_suggestions_path(archiving, document), 1
-				end
-				assert_select 'a[href=?]', new_archiving_document_suggestion_path(archiving, document), 0
 
-				# un-trashed, un-hidden suggestion links
-				loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'trashed' => false, 'hidden' => false } ) do |suggestion|
-					assert_select 'a[href=?]', archiving_document_suggestion_path(archiving, document, suggestion), 1
-				end
-				loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-					assert_select 'a[href=?]', archiving_document_suggestion_path(archiving, document, suggestion), 0
-				end
-				loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'hidden' => true } ) do |suggestion|
-					assert_select 'a[href=?]', archiving_document_suggestion_path(archiving, document, suggestion), 0
-				end
-			end
+		## User
+		log_in_as @user
 
-			# Documents, Hidden -- Redirect
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key },
-				document_modifiers: { 'hidden' => true } ) do |document|				
+		# Archiving
+		get archiving_suggestions_path(@archiving)
+		assert_response :success
 
-				get archiving_document_suggestions_path(archiving, document)
-				assert_response :redirect
-			end
+		# control panel (non-admin)
+		assert_select 'div.admin.control', 0
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', trashed_archiving_suggestions_path(@archiving), 1
+			assert_select 'a[href=?]', new_archiving_suggestion_path(@archiving), 1
 		end
 
-		# Archivings, Hidden -- Redirect
-		loop_archivings( archiving_modifiers: { 'hidden' => true } ) do |archiving, archiving_key|
-			get archiving_suggestions_path(archiving)
-			assert_response :redirect
+		# suggestion links (owned & un-trashed)
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_suggestion), 1
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_hidden_suggestion), 1
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion), 0
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_hidden_trashed_suggestion), 0
+		# suggestion links (un-owned, un-trashed, & un-hidden)
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_other_user_suggestion), 1
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_other_user_hidden_suggestion), 0
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_other_user_trashed_suggestion), 0
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_other_user_hidden_trashed_suggestion), 0
 
-			# Documents -- Redirect
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key } ) do |document|
+		# Document
+		get archiving_document_suggestions_path(@archiving, @archiving_document)
+		assert_response :success
 
-				get archiving_document_suggestions_path(archiving, document)
-				assert_response :redirect
-			end
+		# control panel
+		assert_select 'div.admin.control', 0
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', trashed_archiving_document_suggestions_path(@archiving, @archiving_document), 1
+			assert_select 'a[href=?]', new_archiving_document_suggestion_path(@archiving, @archiving_document), 1
 		end
 
+		# suggestion links (owned & un-trashed)
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_suggestion), 1
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_hidden_suggestion), 1
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_trashed_suggestion), 0
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_hidden_trashed_suggestion), 0
+		# suggestion links (un-owned, un-trashed, & un-hidden)
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_other_user_suggestion), 1
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_other_user_hidden_suggestion), 0
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_other_user_trashed_suggestion), 0
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_other_user_hidden_trashed_suggestion), 0
 
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user, user_key|
-			log_in_as user
+		log_out
 
-			# Archivings, Un-Hidden -- Success
-			loop_archivings( archiving_modifiers: { 'hidden' => false } ) do |archiving, archiving_key|
-				get archiving_suggestions_path(archiving)
-				assert_response :success
 
-				# control panel
-				assert_select 'div.admin.control', 0
-				assert_select 'div.control' do
-					assert_select 'a[href=?]', trashed_archiving_suggestions_path(archiving), 1
-					assert_select 'a[href=?]', new_archiving_suggestion_path(archiving), !user.trashed?
-				end
+		## User, Trashed
+		log_in_as @trashed_user
 
-				# owned, un-trashed suggestion links
-				loop_suggestions( include_documents: false,
-						only: { archiving: archiving_key, user: user_key },
-						suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-					assert_select 'a[href=?]', archiving_suggestion_path(archiving, suggestion), 1
-				end
-				loop_suggestions( include_documents: false,
-						only: { archiving: archiving_key, user: user_key },
-						suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-					assert_select 'a[href=?]', archiving_suggestion_path(archiving, suggestion), 0
-				end
-				# un-owned, un-trashed, un-hidden suggestion links
-				loop_suggestions( include_documents: false,
-						only: { archiving: archiving_key },
-						except: { user: user_key },
-						suggestion_modifiers: { 'trashed' => false, 'hidden' => false } ) do |suggestion|
-					assert_select 'a[href=?]', archiving_suggestion_path(archiving, suggestion), 1
-				end
-				loop_suggestions( include_documents: false,
-						only: { archiving: archiving_key },
-						except: { user: user_key },
-						suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-					assert_select 'a[href=?]', archiving_suggestion_path(archiving, suggestion), 0
-				end
-				loop_suggestions( include_documents: false,
-						only: { archiving: archiving_key },
-						except: { user: user_key },
-						suggestion_modifiers: { 'hidden' => true } ) do |suggestion|
-					assert_select 'a[href=?]', archiving_suggestion_path(archiving, suggestion), 0
-				end
+		# Archiving
+		get archiving_suggestions_path(@archiving)
+		assert_response :success
 
-				# Documents, Un-Hidden -- Success
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => false } ) do |document, document_key|				
+		# control panel (non-admin, no-new)
+		assert_select 'div.admin.control', 0
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', trashed_archiving_suggestions_path(@archiving), 1
+		end
+		assert_select 'a[href=?]', new_archiving_suggestion_path(@archiving), 0
 
-					get archiving_document_suggestions_path(archiving, document)
-					assert_response :success
+		# Document
+		get archiving_document_suggestions_path(@archiving, @archiving_document)
+		assert_response :success
 
-					# control panel
-					assert_select 'div.admin.control', 0
-					assert_select 'div.control' do
-						assert_select 'a[href=?]', trashed_archiving_document_suggestions_path(archiving, document), 1
-						assert_select 'a[href=?]', new_archiving_document_suggestion_path(archiving, document), !user.trashed?
-					end
+		# control panel (non-admin, no-new)
+		assert_select 'div.admin.control', 0
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', trashed_archiving_document_suggestions_path(@archiving, @archiving_document), 1
+		end
+		assert_select 'a[href=?]', new_archiving_document_suggestion_path(@archiving, @archiving_document), 0
 
-					# owned, un-trashed suggestion links
-					loop_suggestions( include_archivings: false,
-							only: { archiving_document: (archiving_key + '_' + document_key), user: user_key },
-							suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-						assert_select 'a[href=?]', archiving_document_suggestion_path(archiving, document, suggestion), 1
-					end
-					loop_suggestions( include_archivings: false,
-							only: { archiving_document: (archiving_key + '_' + document_key), user: user_key },
-							suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-						assert_select 'a[href=?]', archiving_document_suggestion_path(archiving, document, suggestion), 0
-					end
-					# un-owned, un-trashed, un-hidden suggestion links
-					loop_suggestions( include_archivings: false,
-							only: { archiving_document: (archiving_key + '_' + document_key) },
-							except: { user: user_key },
-							suggestion_modifiers: { 'trashed' => false, 'hidden' => false } ) do |suggestion|
-						assert_select 'a[href=?]', archiving_document_suggestion_path(archiving, document, suggestion), 1
-					end
-					loop_suggestions( include_archivings: false,
-							only: { archiving_document: (archiving_key + '_' + document_key) },
-							except: { user: user_key },
-							suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-						assert_select 'a[href=?]', archiving_document_suggestion_path(archiving, document, suggestion), 0
-					end
-					loop_suggestions( include_archivings: false,
-							only: { archiving_document: (archiving_key + '_' + document_key) },
-							except: { user: user_key },
-							suggestion_modifiers: { 'hidden' => true } ) do |suggestion|
-						assert_select 'a[href=?]', archiving_document_suggestion_path(archiving, document, suggestion), 0
-					end
-				end
+		log_out
 
-				# Documents, Hidden -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => true } ) do |document|				
 
-					get archiving_document_suggestions_path(archiving, document)
-					assert_response :redirect
-				end
-			end
+		## Admin
+		log_in_as @admin_user
 
-			# Archivings, Hidden -- Redirect
-			loop_archivings( archiving_modifiers: { 'hidden' => true } ) do |archiving, archiving_key|
-				get archiving_suggestions_path(archiving)
-				assert_response :redirect
+		# Archiving
+		get archiving_suggestions_path(@archiving)
+		assert_response :success
 
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document|				
-
-					get archiving_document_suggestions_path(archiving, document)
-					assert_response :redirect
-				end
-			end
-
-			log_out
+		# control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', trashed_archiving_suggestions_path(@archiving), 1
+			assert_select 'a[href=?]', new_archiving_suggestion_path(@archiving), 1
 		end
 
+		# suggestion links (un-trashed)
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_suggestion), 1
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_hidden_suggestion), 1
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion), 0
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_hidden_trashed_suggestion), 0
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_other_user_suggestion), 1
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_other_user_hidden_suggestion), 1
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_other_user_trashed_suggestion), 0
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_other_user_hidden_trashed_suggestion), 0
 
-		## User, Admin
-		loop_users( user_modifiers: { 'admin' => true } ) do |user, user_key|
-			log_in_as user
+		# Document
+		get archiving_document_suggestions_path(@archiving, @archiving_document)
+		assert_response :success
 
-			# Archivings -- Success
-			loop_archivings do |archiving, archiving_key|
-				get archiving_suggestions_path(archiving)
-				assert_response :success
-
-				# control panel
-				assert_select 'div.admin.control' do
-					assert_select 'a[href=?]', trashed_archiving_suggestions_path(archiving), 1
-					assert_select 'a[href=?]', new_archiving_suggestion_path(archiving), !user.trashed?
-				end
-
-				# un-trashed suggestion links
-				loop_suggestions( include_documents: false,
-						only: { archiving: archiving_key },
-						suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-					assert_select 'a[href=?]', archiving_suggestion_path(archiving, suggestion), 1
-				end
-				loop_suggestions( include_documents: false,
-						only: { archiving: archiving_key },
-						suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-					assert_select 'a[href=?]', archiving_suggestion_path(archiving, suggestion), 0
-				end
-
-				# Documents -- Success
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|				
-
-					get archiving_document_suggestions_path(archiving, document)
-					assert_response :success
-
-					# control panel
-					assert_select 'div.admin.control' do
-						assert_select 'a[href=?]', trashed_archiving_document_suggestions_path(archiving, document), 1
-						assert_select 'a[href=?]', new_archiving_document_suggestion_path(archiving, document), !user.trashed?
-					end
-
-					# un-trashed suggestion links
-					loop_suggestions( include_archivings: false,
-							only: { archiving_document: (archiving_key + '_' + document_key) },
-							suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-						assert_select 'a[href=?]', archiving_document_suggestion_path(archiving, document, suggestion), 1
-					end
-					loop_suggestions( include_archivings: false,
-							only: { archiving_document: (archiving_key + '_' + document_key) },
-							suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-						assert_select 'a[href=?]', archiving_document_suggestion_path(archiving, document, suggestion), 0
-					end
-				end
-			end
-
-			log_out
+		# control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', trashed_archiving_document_suggestions_path(@archiving, @archiving_document), 1
+			assert_select 'a[href=?]', new_archiving_document_suggestion_path(@archiving, @archiving_document), 1
 		end
+
+		# suggestion links (un-trashed)
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_suggestion), 1
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_hidden_suggestion), 1
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_trashed_suggestion), 0
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_hidden_trashed_suggestion), 0
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_other_user_suggestion), 1
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_other_user_hidden_suggestion), 1
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_other_user_trashed_suggestion), 0
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_other_user_hidden_trashed_suggestion), 0
+
+		log_out
+
+
+		## Admin, Trashed
+		log_in_as @trashed_admin_user
+
+		# Archiving
+		get archiving_suggestions_path(@archiving)
+		assert_response :success
+
+		# control panel (no-new)
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', trashed_archiving_suggestions_path(@archiving), 1
+		end
+		assert_select 'a[href=?]', new_archiving_suggestion_path(@archiving), 0
+
+		# Document
+		get archiving_document_suggestions_path(@archiving, @archiving_document)
+		assert_response :success
+
+		# control panel (no-new)
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', trashed_archiving_document_suggestions_path(@archiving, @archiving_document), 1
+		end
+		assert_select 'a[href=?]', new_archiving_document_suggestion_path(@archiving, @archiving_document), 0
 	end
 
 	test "should get trashed" do
-		load_suggestions
+		populate_users
+		populate_archivings
+		populate_documents
+		populate_suggestions
+
+		# [require_admin_for_hidden_archiving_or_document]
+		get trashed_archiving_suggestions_path(@hidden_archiving)
+		assert_response :redirect
+		assert flash[:warning]
+		clear_flashes
+		get trashed_archiving_document_suggestions_path(@hidden_archiving, @hidden_archiving_document)
+		assert_response :redirect
+		assert flash[:warning]
+		clear_flashes
+		get trashed_archiving_document_suggestions_path(@archiving, @archiving_hidden_document)
+		assert_response :redirect
+		assert flash[:warning]
+
+		# [require_admin_for_hidden_archiving_or_document]
+		log_in_as(@user)
+		clear_flashes
+		get trashed_archiving_suggestions_path(@hidden_archiving)
+		assert_response :redirect
+		assert flash[:warning]
+		clear_flashes
+		get trashed_archiving_document_suggestions_path(@hidden_archiving, @hidden_archiving_document)
+		assert_response :redirect
+		assert flash[:warning]
+		clear_flashes
+		get trashed_archiving_document_suggestions_path(@archiving, @archiving_hidden_document)
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
 
 		## Guest
-		# Archivings -- Redirect
-		loop_archivings do |archiving, archiving_key|
-			get trashed_archiving_suggestions_path(archiving)
-			assert_response :redirect
+		# Archiving
+		get trashed_archiving_suggestions_path(@archiving)
+		assert_response :success
 
-			# Documents -- Redirect
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key } ) do |document, document_key|
+		# suggestion links (trashed & un-hidden)
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_suggestion), 0
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_hidden_suggestion), 0
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion), 1
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_hidden_trashed_suggestion), 0
 
-				get trashed_archiving_document_suggestions_path(archiving, document)
-				assert_response :redirect
-			end
-		end
+		# Document
+		get trashed_archiving_document_suggestions_path(@archiving, @archiving_document)
+		assert_response :success
 
-
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user, user_key|
-			log_in_as user
-
-			# Archivings, Un-Hidden -- Success
-			loop_archivings( archiving_modifiers: { 'hidden' => false } ) do |archiving, archiving_key|
-				get trashed_archiving_suggestions_path(archiving)
-				assert_response :success
-
-				# owned, trashed suggestion links
-				loop_suggestions( include_documents: false,
-						only: { archiving: archiving_key, user: user_key },
-						suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-					assert_select 'a[href=?]', archiving_suggestion_path(archiving, suggestion), 1
-				end
-				loop_suggestions( include_documents: false,
-						only: { archiving: archiving_key, user: user_key },
-						suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-					assert_select 'a[href=?]', archiving_suggestion_path(archiving, suggestion), 0
-				end
-				# un-owned, trashed, un-hidden suggestion links
-				loop_suggestions( include_documents: false,
-						only: { archiving: archiving_key },
-						except: { user: user_key },
-						suggestion_modifiers: { 'trashed' => true, 'hidden' => false } ) do |suggestion|
-					assert_select 'a[href=?]', archiving_suggestion_path(archiving, suggestion), 1
-				end
-				loop_suggestions( include_documents: false,
-						only: { archiving: archiving_key },
-						except: { user: user_key },
-						suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-					assert_select 'a[href=?]', archiving_suggestion_path(archiving, suggestion), 0
-				end
-				loop_suggestions( include_documents: false,
-						only: { archiving: archiving_key },
-						except: { user: user_key },
-						suggestion_modifiers: { 'hidden' => true } ) do |suggestion|
-					assert_select 'a[href=?]', archiving_suggestion_path(archiving, suggestion), 0
-				end
-
-				# Documents, Un-Hidden -- Success
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => false } ) do |document, document_key|				
-
-					get trashed_archiving_document_suggestions_path(archiving, document)
-					assert_response :success
-
-					# owned, trashed suggestion links
-					loop_suggestions( include_archivings: false,
-							only: { archiving_document: (archiving_key + '_' + document_key), user: user_key },
-							suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-						assert_select 'a[href=?]', archiving_document_suggestion_path(archiving, document, suggestion), 1
-					end
-					loop_suggestions( include_archivings: false,
-							only: { archiving_document: (archiving_key + '_' + document_key), user: user_key },
-							suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-						assert_select 'a[href=?]', archiving_document_suggestion_path(archiving, document, suggestion), 0
-					end
-					# un-owned, trashed, un-hidden suggestion links
-					loop_suggestions( include_archivings: false,
-							only: { archiving_document: (archiving_key + '_' + document_key) },
-							except: { user: user_key },
-							suggestion_modifiers: { 'trashed' => true, 'hidden' => false } ) do |suggestion|
-						assert_select 'a[href=?]', archiving_document_suggestion_path(archiving, document, suggestion), 1
-					end
-					loop_suggestions( include_archivings: false,
-							only: { archiving_document: (archiving_key + '_' + document_key) },
-							except: { user: user_key },
-							suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-						assert_select 'a[href=?]', archiving_document_suggestion_path(archiving, document, suggestion), 0
-					end
-					loop_suggestions( include_archivings: false,
-							only: { archiving_document: (archiving_key + '_' + document_key) },
-							except: { user: user_key },
-							suggestion_modifiers: { 'hidden' => true } ) do |suggestion|
-						assert_select 'a[href=?]', archiving_document_suggestion_path(archiving, document, suggestion), 0
-					end
-				end
-
-				# Documents, Hidden -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => true } ) do |document|				
-
-					get trashed_archiving_document_suggestions_path(archiving, document)
-					assert_response :redirect
-				end
-			end
-
-			# Archivings, Hidden -- Redirect
-			loop_archivings( archiving_modifiers: { 'hidden' => true } ) do |archiving, archiving_key|
-				get trashed_archiving_suggestions_path(archiving)
-				assert_response :redirect
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document|				
-
-					get trashed_archiving_document_suggestions_path(archiving, document)
-					assert_response :redirect
-				end
-			end
-
-			log_out
-		end
+		# suggestion links (trashed & un-hidden)
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_suggestion), 0
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_hidden_suggestion), 0
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_trashed_suggestion), 1
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_hidden_trashed_suggestion), 0
 
 
-		## User, Admin
-		loop_users( user_modifiers: { 'admin' => true } ) do |user, user_key|
-			log_in_as user
+		## User
+		log_in_as @user
 
-			# Archivings -- Success
-			loop_archivings do |archiving, archiving_key|
-				get trashed_archiving_suggestions_path(archiving)
-				assert_response :success
+		# Archiving
+		get trashed_archiving_suggestions_path(@archiving)
+		assert_response :success
 
-				# trashed suggestion links
-				loop_suggestions( include_documents: false,
-						only: { archiving: archiving_key },
-						suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-					assert_select 'a[href=?]', archiving_suggestion_path(archiving, suggestion), 1
-				end
-				loop_suggestions( include_documents: false,
-						only: { archiving: archiving_key },
-						suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-					assert_select 'a[href=?]', archiving_suggestion_path(archiving, suggestion), 0
-				end
+		# suggestion links (owned & trashed)
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_suggestion), 0
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_hidden_suggestion), 0
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion), 1
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_hidden_trashed_suggestion), 1
+		# suggestion links (un-owned, trashed, & hidden)
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_other_user_suggestion), 0
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_other_user_hidden_suggestion), 0
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_other_user_trashed_suggestion), 1
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_other_user_hidden_trashed_suggestion), 0
 
-				# Documents -- Success
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|				
+		# Document
+		get trashed_archiving_document_suggestions_path(@archiving, @archiving_document)
+		assert_response :success
 
-					get trashed_archiving_document_suggestions_path(archiving, document)
-					assert_response :success
+		# suggestion links (owned & trashed)
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_suggestion), 0
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_hidden_suggestion), 0
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_trashed_suggestion), 1
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_hidden_trashed_suggestion), 1
+		# suggestion links (un-owned, trashed, & hidden)
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_other_user_suggestion), 0
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_other_user_hidden_suggestion), 0
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_other_user_trashed_suggestion), 1
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_other_user_hidden_trashed_suggestion), 0
 
-					# trashed suggestion links
-					loop_suggestions( include_archivings: false,
-							only: { archiving_document: (archiving_key + '_' + document_key) },
-							suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-						assert_select 'a[href=?]', archiving_document_suggestion_path(archiving, document, suggestion), 1
-					end
-					loop_suggestions( include_archivings: false,
-							only: { archiving_document: (archiving_key + '_' + document_key) },
-							suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-						assert_select 'a[href=?]', archiving_document_suggestion_path(archiving, document, suggestion), 0
-					end
-				end
-			end
+		log_out
 
-			log_out
-		end
+
+		## Admin
+		log_in_as @admin_user
+
+		# Archiving
+		get trashed_archiving_suggestions_path(@archiving)
+		assert_response :success
+
+		# suggestion links (trashed)
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_suggestion), 0
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_hidden_suggestion), 0
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion), 1
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_user_hidden_trashed_suggestion), 1
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_other_user_suggestion), 0
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_other_user_hidden_suggestion), 0
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_other_user_trashed_suggestion), 1
+		assert_select 'a[href=?]', archiving_suggestion_path(@archiving, @archiving_other_user_hidden_trashed_suggestion), 1
+
+		# Document
+		get trashed_archiving_document_suggestions_path(@archiving, @archiving_document)
+		assert_response :success
+
+		# suggestion links (trashed)
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_suggestion), 0
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_hidden_suggestion), 0
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_trashed_suggestion), 1
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_hidden_trashed_suggestion), 1
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_other_user_suggestion), 0
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_other_user_hidden_suggestion), 0
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_other_user_trashed_suggestion), 1
+		assert_select 'a[href=?]', archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_other_user_hidden_trashed_suggestion), 1
+
+		log_out
 	end
 
 	test "should get show" do
-		load_suggestions
-		load_comments
+		populate_users
+		populate_archivings
+		populate_documents
+		populate_suggestions
+		populate_comments
+
+		# [require_admin_for_hidden_archiving_or_document]
+		get archiving_suggestion_path(@hidden_archiving, @hidden_archiving_user_suggestion)
+		assert_response :redirect
+		assert flash[:warning]
+		clear_flashes
+		get archiving_document_suggestion_path(@hidden_archiving, @hidden_archiving_document, @hidden_archiving_document_user_suggestion)
+		assert_response :redirect
+		assert flash[:warning]
+		clear_flashes
+		get archiving_document_suggestion_path(@archiving, @archiving_hidden_document, @archiving_hidden_document_user_suggestion)
+		assert_response :redirect
+		assert flash[:warning]
+
+		# [require_admin_for_hidden_archiving_or_document]
+		log_in_as(@user)
+		clear_flashes
+		get archiving_suggestion_path(@hidden_archiving, @hidden_archiving_user_suggestion)
+		assert_response :redirect
+		assert flash[:warning]
+		clear_flashes
+		get archiving_document_suggestion_path(@hidden_archiving, @hidden_archiving_document, @hidden_archiving_document_user_suggestion)
+		assert_response :redirect
+		assert flash[:warning]
+		clear_flashes
+		get archiving_document_suggestion_path(@archiving, @archiving_hidden_document, @archiving_hidden_document_user_suggestion)
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+		# [require_authorize_or_admin_for_hidden_suggestion]
+		clear_flashes
+		get archiving_suggestion_path(@archiving, @archiving_user_hidden_suggestion)
+		assert_response :redirect
+		assert flash[:warning]
+
+		# [require_authorize_or_admin_for_hidden_suggestion]
+		log_in_as(@user)
+		clear_flashes
+		get archiving_suggestion_path(@archiving, @archiving_other_user_hidden_suggestion)
+		assert_response :redirect
+		assert flash[:warning]
+		clear_flashes
+		log_out
+
 
 		## Guest
-		# Archivings, Un-Hidden
-		loop_archivings( archiving_modifiers: { 'hidden' => false } ) do |archiving, archiving_key|
+		# Archiving Suggestion
+		get archiving_suggestion_path(@archiving, @archiving_user_suggestion)
+		assert_response :success
 
-			# Suggestions, Un-Hidden -- Success
-			loop_suggestions( include_documents: false,
-				only: { archiving: archiving_key },
-				suggestion_modifiers: { 'hidden' => false } ) do |suggestion, suggestion_key, suggester_key|
+		# control panel (non-admin, no-crud)
+		assert_select 'div.admin.control', 0
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', trashed_archiving_suggestion_comments_path(@archiving, @archiving_user_suggestion), 1
+		end
+		assert_select 'a[href=?]', edit_archiving_suggestion_path(@archiving, @archiving_user_suggestion), 0
+		assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_path(@archiving, @archiving_user_suggestion), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_path(@archiving, @archiving_user_suggestion), 0
+		assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_path(@archiving, @archiving_user_suggestion), 0
+		assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_path(@archiving, @archiving_user_suggestion), 0
+		assert_select 'a[href=?][data-method=patch]', merge_archiving_suggestion_path(@archiving, @archiving_user_suggestion), 0
+		assert_select 'a[href=?][data-method=delete]', archiving_suggestion_path(@archiving, @archiving_user_suggestion), 0
 
-				get archiving_suggestion_path(archiving, suggestion)
-				assert_response :success
+		# new comment form
+		assert_select 'form[action=?][method=post]', archiving_suggestion_comments_path(@archiving, @archiving_user_suggestion), 1
 
-				# control panel
-				assert_select 'div.control' do
-					assert_select 'a[href=?]', trashed_archiving_suggestion_comments_path(archiving, suggestion), 1
-				end
-				assert_select 'a[href=?]', edit_archiving_suggestion_path(archiving, suggestion), 0
-				assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_path(archiving, suggestion), 0
-				assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_path(archiving, suggestion), 0
-				assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_path(archiving, suggestion), 0
-				assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_path(archiving, suggestion), 0
-				assert_select 'a[href=?][data-method=patch]', merge_archiving_suggestion_path(archiving, suggestion), 0
-				assert_select 'a[href=?][data-method=delete]', archiving_suggestion_path(archiving, suggestion), 0
-
-				# new comment form
-				assert_select 'form[action=?][method=post]', archiving_suggestion_comments_path(archiving, suggestion), !archiving.trashed && !suggestion.trashed?
-
-				# un-trashed, un-hidden comments
-				loop_comments( include_blogs: false, include_forums: false, include_documents: false,
-						only: { archiving: archiving_key, suggester_suggestion: (suggester_key + '_' + suggestion_key) },
-						comment_modifiers: { 'trashed' => false, 'hidden' => false } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 1 }
-					assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(archiving, suggestion, comment), 0
-				end
-				loop_comments( include_blogs: false, include_forums: false, include_documents: false,
-						only: { archiving: archiving_key, suggester_suggestion: (suggester_key + '_' + suggestion_key) },
-						comment_modifiers: { 'trashed' => true } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 0 }
-					assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(archiving, suggestion, comment), 0
-				end
-				loop_comments( include_blogs: false, include_forums: false, include_documents: false,
-						only: { archiving: archiving_key, suggester_suggestion: (suggester_key + '_' + suggestion_key) },
-						comment_modifiers: { 'hidden' => true } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 0 }
-					assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(archiving, suggestion, comment), 0
-				end
-			end
-
-			# Suggestions, Hidden -- Redirect
-			loop_suggestions( include_documents: false,
-				only: { archiving: archiving_key },
-				suggestion_modifiers: { 'hidden' => true } ) do |suggestion, suggestion_key, suggester_key|
-
-				get archiving_suggestion_path(archiving, suggestion)
-				assert_response :redirect
-			end
-
-			# Documents, Un-Hidden
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key },
-				document_modifiers: { 'hidden' => false } ) do |document, document_key|
-
-				# Suggestions, Un-Hidden -- Success
-				loop_suggestions( include_archivings: false,
-					only: { archiving_document: (archiving_key + '_' + document_key) },
-					suggestion_modifiers: { 'hidden' => false } ) do |suggestion, suggestion_key, suggester_key|
-
-					get archiving_document_suggestion_path(archiving, document, suggestion)
-					assert_response :success
-
-					# control panel
-					assert_select 'div.control' do
-						assert_select 'a[href=?]', trashed_archiving_document_suggestion_comments_path(archiving, document, suggestion), 1
-					end
-					assert_select 'a[href=?]', edit_archiving_document_suggestion_path(archiving, document, suggestion), 0
-					assert_select 'a[href=?][data-method=patch]', hide_archiving_document_suggestion_path(archiving, document, suggestion), 0
-					assert_select 'a[href=?][data-method=patch]', unhide_archiving_document_suggestion_path(archiving, document, suggestion), 0
-					assert_select 'a[href=?][data-method=patch]', trash_archiving_document_suggestion_path(archiving, document, suggestion), 0
-					assert_select 'a[href=?][data-method=patch]', untrash_archiving_document_suggestion_path(archiving, document, suggestion), 0
-					assert_select 'a[href=?][data-method=patch]', merge_archiving_document_suggestion_path(archiving, document, suggestion), 0
-					assert_select 'a[href=?][data-method=delete]', archiving_document_suggestion_path(archiving, document, suggestion), 0
-
-					# new comment form
-					assert_select 'form[action=?][method=post]', archiving_document_suggestion_comments_path(archiving, document, suggestion), !archiving.trashed? && !document.trashed? && !suggestion.trashed?
-
-					# un-trashed, un-hidden comments
-					loop_comments( include_archivings: false, include_blogs: false, include_forums: false,
-							only: { archiving_document: (archiving_key + '_' + document_key), suggester_suggestion: (suggester_key + '_' + suggestion_key) },
-							comment_modifiers: { 'trashed' => false, 'hidden' => false } ) do |comment|
-						assert_select 'main p', { text: comment.content, count: 1 }
-						assert_select 'form[action=?][method=post]', archiving_document_suggestion_comment_path(archiving, document, suggestion, comment), 0
-					end
-					loop_comments( include_archivings: false, include_blogs: false, include_forums: false,
-							only: { archiving_document: (archiving_key + '_' + document_key), suggester_suggestion: (suggester_key + '_' + suggestion_key) },
-							comment_modifiers: { 'trashed' => true } ) do |comment|
-						assert_select 'main p', { text: comment.content, count: 0 }
-						assert_select 'form[action=?][method=post]', archiving_document_suggestion_comment_path(archiving, document, suggestion, comment), 0
-					end
-					loop_comments( include_archivings: false, include_blogs: false, include_forums: false,
-							only: { archiving_document: (archiving_key + '_' + document_key), suggester_suggestion: (suggester_key + '_' + suggestion_key) },
-							comment_modifiers: { 'hidden' => true } ) do |comment|
-						assert_select 'main p', { text: comment.content, count: 0 }
-						assert_select 'form[action=?][method=post]', archiving_document_suggestion_comment_path(archiving, document, suggestion, comment), 0
-					end
-				end
-
-				# Suggestions, Hidden -- Redirect
-				loop_suggestions( include_archivings: false,
-					only: { archiving_document: (archiving_key + '_' + document_key) },
-					suggestion_modifiers: { 'hidden' => true } ) do |suggestion, suggestion_key, suggester_key|
-
-					get archiving_document_suggestion_path(archiving, document, suggestion)
-					assert_response :redirect
-				end
-			end
-
-			# Documents, Hidden -- Redirect
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key },
-				document_modifiers: { 'hidden' => true } ) do |document, document_key|
-
-				loop_suggestions( include_archivings: false,
-					only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion, suggestion_key, suggester_key|
-
-					get archiving_document_suggestion_path(archiving, document, suggestion)
-					assert_response :redirect
-				end
-			end
+		# comments (un-trashed & un-hidden)
+		[ @user_comment,
+			@other_user_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 1 }
+			assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+		end
+		[ @user_hidden_comment,
+			@user_trashed_comment,
+			@user_hidden_trashed_comment,
+			@other_user_hidden_comment,
+			@other_user_trashed_comment,
+			@other_user_hidden_trashed_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 0 }
+			assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
 		end
 
-		# Archivings, Hidden -- Redirect
-		loop_archivings( archiving_modifiers: { 'hidden' => true } ) do |archiving, archiving_key|
+		# Archiving Suggestion, Trashed
+		get archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion)
+		assert_response :success
 
-			loop_suggestions( include_documents: false,
-				only: { archiving: archiving_key } ) do |suggestion|
+		# no new comment form
+		assert_select 'form[action=?][method=post]', archiving_suggestion_comments_path(@archiving, @archiving_user_suggestion), 0
 
-				get archiving_suggestion_path(archiving, suggestion)
-				assert_response :redirect
-			end
+		# Document Suggestion
+		get archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_suggestion)
+		assert_response :success
 
-			# Documents -- Redirect
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key } ) do |document, document_key|
 
-				loop_suggestions( include_archivings: false,
-					only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
+		## User
+		log_in_as @user
 
-					get archiving_document_suggestion_path(archiving, document, suggestion)
-					assert_response :redirect
-				end
-			end
+		# Archiving Suggestion, Owned
+		get archiving_suggestion_path(@archiving, @archiving_user_suggestion)
+		assert_response :success
+
+		# control panel (non-admin, no-merge, no-delete)
+		assert_select 'div.admin.control', 0
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', edit_archiving_suggestion_path(@archiving, @archiving_user_suggestion), 1
+			assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_path(@archiving, @archiving_user_suggestion), 1
+			assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_path(@archiving, @archiving_user_suggestion), 0
+			assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_path(@archiving, @archiving_user_suggestion), 1
+			assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_path(@archiving, @archiving_user_suggestion), 0
+			assert_select 'a[href=?]', trashed_archiving_suggestion_comments_path(@archiving, @archiving_user_suggestion), 1
+		end
+		assert_select 'a[href=?][data-method=patch]', merge_archiving_suggestion_path(@archiving, @archiving_user_suggestion), 0
+		assert_select 'a[href=?][data-method=delete]', archiving_suggestion_path(@archiving, @archiving_user_suggestion), 0
+
+		# new comment form
+		assert_select 'form[action=?][method=post]', archiving_suggestion_comments_path(@archiving, @archiving_user_suggestion), 1
+
+		# comment forms (owned & un-trashed)
+		[ @user_comment,
+			@user_hidden_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 0 }
+			assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 1
+		end
+		# comments (un-owned, un-hidden, & un-trashed)
+		[ @other_user_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 1 }
+			assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+		end
+		[ @user_trashed_comment,
+			@user_hidden_trashed_comment,
+			@other_user_hidden_comment,
+			@other_user_trashed_comment,
+			@other_user_hidden_trashed_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 0 }
+			assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
 		end
 
+		# Archiving Suggestion, Owned, Hidden
+		get archiving_suggestion_path(@archiving, @archiving_user_hidden_suggestion)
+		assert_response :success
 
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user, user_key|
-			log_in_as user
+		# control panel (non-admin, no-merge, no-delete)
+		assert_select 'div.admin.control', 0
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', edit_archiving_suggestion_path(@archiving, @archiving_user_hidden_suggestion), 1
+			assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_path(@archiving, @archiving_user_hidden_suggestion), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_path(@archiving, @archiving_user_hidden_suggestion), 1
+			assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_path(@archiving, @archiving_user_hidden_suggestion), 1
+			assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_path(@archiving, @archiving_user_hidden_suggestion), 0
+			assert_select 'a[href=?]', trashed_archiving_suggestion_comments_path(@archiving, @archiving_user_hidden_suggestion), 1
+		end
+		assert_select 'a[href=?][data-method=patch]', merge_archiving_suggestion_path(@archiving, @archiving_user_hidden_suggestion), 0
+		assert_select 'a[href=?][data-method=delete]', archiving_suggestion_path(@archiving, @archiving_user_hidden_suggestion), 0
 
-			# Archivings, Un-Hidden
-			loop_archivings( archiving_modifiers: { 'hidden' => false } ) do |archiving, archiving_key|
+		# Archiving Suggestion, Owned, Trashed
+		get archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion)
+		assert_response :success
 
-				# Suggestions, Owned -- Success
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key, user: user_key } ) do |suggestion, suggestion_key, suggester_key|
+		# control panel (non-admin, no-merge, no-delete, no-edit)
+		assert_select 'div.admin.control', 0
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', edit_archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion), 0
+			assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion), 1
+			assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion), 0
+			assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion), 1
+			assert_select 'a[href=?]', trashed_archiving_suggestion_comments_path(@archiving, @archiving_user_trashed_suggestion), 1
+		end
+		assert_select 'a[href=?][data-method=patch]', merge_archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion), 0
+		assert_select 'a[href=?][data-method=delete]', archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion), 0
 
-					get archiving_suggestion_path(archiving, suggestion)
-					assert_response :success
+		# no new comment form
+		assert_select 'form[action=?][method=post]', archiving_suggestion_comments_path(@archiving, @archiving_user_trashed_suggestion), 0
 
-					# control panel
-					assert_select 'div.admin.control', 0
-					assert_select 'div.control' do
-						assert_select 'a[href=?]', edit_archiving_suggestion_path(archiving, suggestion), !user.trashed? && !suggestion.trashed?
-						assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_path(archiving, suggestion), !user.trashed? && !suggestion.hidden?
-						assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_path(archiving, suggestion), !user.trashed? && suggestion.hidden?
-						assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_path(archiving, suggestion), !user.trashed? && !suggestion.trashed?
-						assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_path(archiving, suggestion), !user.trashed? && suggestion.trashed?
-						assert_select 'a[href=?]', trashed_archiving_suggestion_comments_path(archiving, suggestion), 1
-					end
-					assert_select 'a[href=?][data-method=patch]', merge_archiving_suggestion_path(archiving, suggestion), 0
-					assert_select 'a[href=?][data-method=delete]', archiving_suggestion_path(archiving, suggestion), 0
+		# Archiving Suggestion, Un-owned
+		get archiving_suggestion_path(@archiving, @archiving_other_user_suggestion)
+		assert_response :success
 
-					# new comment form
-					assert_select 'form[action=?][method=post]', archiving_suggestion_comments_path(archiving, suggestion), !archiving.trashed? && !suggestion.trashed? && !user.trashed? && !user.hidden?
+		# control panel (non-admin, no-crud)
+		assert_select 'div.admin.control', 0
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', trashed_archiving_suggestion_comments_path(@archiving, @archiving_other_user_suggestion), 1
+		end
+		assert_select 'a[href=?]', edit_archiving_suggestion_path(@archiving, @archiving_other_user_suggestion), 0
+		assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_path(@archiving, @archiving_other_user_suggestion), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_path(@archiving, @archiving_other_user_suggestion), 0
+		assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_path(@archiving, @archiving_other_user_suggestion), 0
+		assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_path(@archiving, @archiving_other_user_suggestion), 0
+		assert_select 'a[href=?][data-method=patch]', merge_archiving_suggestion_path(@archiving, @archiving_other_user_suggestion), 0
+		assert_select 'a[href=?][data-method=delete]', archiving_suggestion_path(@archiving, @archiving_other_user_suggestion), 0
 
-					# owned, un-trashed comments
-					loop_comments( include_documents: false, include_blogs: false, include_forums: false,
-							only: { archiving: archiving_key, suggester_suggestion: (suggester_key + '_' + suggestion_key), user: user_key },
-							include_guests: false,
-							comment_modifiers: { 'trashed' => false } ) do |comment|
-						assert_select 'main p', { text: comment.content, count: ((archiving.trashed? || suggestion.trashed? || user.trashed?) ? 1 : 0) }
-						assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(archiving, suggestion, comment), !archiving.trashed? && !suggestion.trashed? && !user.trashed?
-					end
-					loop_comments( include_documents: false, include_blogs: false, include_forums: false,
-							only: { archiving: archiving_key, suggester_suggestion: (suggester_key + '_' + suggestion_key), user: user_key },
-							include_guests: false,
-							comment_modifiers: { 'trashed' => true } ) do |comment|
-						assert_select 'main p', { text: comment.content, count: 0 }
-						assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(archiving, suggestion, comment), 0
-					end
-					# un-owned, un-trashed, un-hidden comments
-					loop_comments( include_documents: false, include_blogs: false, include_forums: false,
-							only: { archiving: archiving_key, suggester_suggestion: (suggester_key + '_' + suggestion_key) },
-							except: { user: user_key },
-							comment_modifiers: { 'trashed' => false, 'hidden' => false } ) do |comment|
-						assert_select 'main p', { text: comment.content, count: 1 }
-						assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(archiving, suggestion, comment), 0
-					end
-					loop_comments( include_documents: false, include_blogs: false, include_forums: false,
-							only: { archiving: archiving_key, suggester_suggestion: (suggester_key + '_' + suggestion_key) },
-							except: { user: user_key },
-							comment_modifiers: { 'trashed' => true } ) do |comment|
-						assert_select 'main p', { text: comment.content, count: 0 }
-						assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(archiving, suggestion, comment), 0
-					end
-					loop_comments( include_documents: false, include_blogs: false, include_forums: false,
-							only: { archiving: archiving_key, suggester_suggestion: (suggester_key + '_' + suggestion_key) },
-							except: { user: user_key },
-							comment_modifiers: { 'hidden' => true } ) do |comment|
-						assert_select 'main p', { text: comment.content, count: 0 }
-						assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(archiving, suggestion, comment), 0
-					end
-				end
 
-				# Suggestions, Un-Owned, Un-Hidden -- Success
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					except: { user: user_key },
-					suggestion_modifiers: { 'hidden' => false } ) do |suggestion, suggestion_key, suggester_key|
+		## Admin
+		log_in_as @admin_user
 
-					get archiving_suggestion_path(archiving, suggestion)
-					assert_response :success
+		# Archiving Suggestion
+		get archiving_suggestion_path(@archiving, @archiving_user_suggestion)
+		assert_response :success
 
-					# control panel
-					assert_select 'div.admin.control', 0
-					assert_select 'div.control' do
-						assert_select 'a[href=?]', trashed_archiving_suggestion_comments_path(archiving, suggestion), 1
-					end
-					assert_select 'a[href=?]', edit_archiving_suggestion_path(archiving, suggestion), 0
-					assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_path(archiving, suggestion), 0
-					assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_path(archiving, suggestion), 0
-					assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_path(archiving, suggestion), 0
-					assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_path(archiving, suggestion), 0
-					assert_select 'a[href=?][data-method=patch]', merge_archiving_suggestion_path(archiving, suggestion), 0
-					assert_select 'a[href=?][data-method=delete]', archiving_suggestion_path(archiving, suggestion), 0
-
-					# new comment form
-					assert_select 'form[action=?][method=post]', archiving_suggestion_comments_path(archiving, suggestion), !archiving.trashed? && !suggestion.trashed? && !user.trashed? && !user.hidden?
-
-					# owned, un-trashed comments
-					loop_comments( include_documents: false, include_blogs: false, include_forums: false,
-							only: { archiving: archiving_key, suggester_suggestion: (suggester_key + '_' + suggestion_key), user: user_key },
-							include_guests: false,
-							comment_modifiers: { 'trashed' => false } ) do |comment|
-						assert_select 'main p', { text: comment.content, count: ((archiving.trashed? || suggestion.trashed? || user.trashed?) ? 1 : 0) }
-						assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(archiving, suggestion, comment), !archiving.trashed? && !suggestion.trashed? && !user.trashed?
-					end
-					loop_comments( include_documents: false, include_blogs: false, include_forums: false,
-							only: { archiving: archiving_key, suggester_suggestion: (suggester_key + '_' + suggestion_key), user: user_key },
-							include_guests: false,
-							comment_modifiers: { 'trashed' => true } ) do |comment|
-						assert_select 'main p', { text: comment.content, count: 0 }
-						assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(archiving, suggestion, comment), 0
-					end
-					# un-owned, un-trashed, un-hidden comments
-					loop_comments( include_documents: false, include_blogs: false, include_forums: false,
-							only: { archiving: archiving_key, suggester_suggestion: (suggester_key + '_' + suggestion_key) },
-							except: { user: user_key },
-							comment_modifiers: { 'trashed' => false, 'hidden' => false } ) do |comment|
-						assert_select 'main p', { text: comment.content, count: 1 }
-						assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(archiving, suggestion, comment), 0
-					end
-					loop_comments( include_documents: false, include_blogs: false, include_forums: false,
-							only: { archiving: archiving_key, suggester_suggestion: (suggester_key + '_' + suggestion_key) },
-							except: { user: user_key },
-							comment_modifiers: { 'trashed' => true } ) do |comment|
-						assert_select 'main p', { text: comment.content, count: 0 }
-						assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(archiving, suggestion, comment), 0
-					end
-					loop_comments( include_documents: false, include_blogs: false, include_forums: false,
-							only: { archiving: archiving_key, suggester_suggestion: (suggester_key + '_' + suggestion_key) },
-							except: { user: user_key },
-							comment_modifiers: { 'hidden' => true } ) do |comment|
-						assert_select 'main p', { text: comment.content, count: 0 }
-						assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(archiving, suggestion, comment), 0
-					end
-				end
-
-				# Suggestions, Un-Owned, Hidden -- Redirect
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					except: { user: user_key },
-					suggestion_modifiers: { 'hidden' => true } ) do |suggestion, suggestion_key, suggester_key|
-
-					get archiving_suggestion_path(archiving, suggestion)
-					assert_response :redirect
-				end
-
-				# Documents, Un-Hidden
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => false } ) do |document, document_key|
-
-					# Suggestions, Owned -- Success
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key), user: user_key } ) do |suggestion, suggestion_key, suggester_key|
-
-						get archiving_document_suggestion_path(archiving, document, suggestion)
-						assert_response :success
-
-						# control panel
-						assert_select 'div.admin.control', 0
-						assert_select 'div.control' do
-							assert_select 'a[href=?]', edit_archiving_document_suggestion_path(archiving, document, suggestion), !user.trashed? && !suggestion.trashed?
-							assert_select 'a[href=?][data-method=patch]', hide_archiving_document_suggestion_path(archiving, document, suggestion), !user.trashed? && !suggestion.hidden?
-							assert_select 'a[href=?][data-method=patch]', unhide_archiving_document_suggestion_path(archiving, document, suggestion), !user.trashed? && suggestion.hidden?
-							assert_select 'a[href=?][data-method=patch]', trash_archiving_document_suggestion_path(archiving, document, suggestion), !user.trashed? && !suggestion.trashed?
-							assert_select 'a[href=?][data-method=patch]', untrash_archiving_document_suggestion_path(archiving, document, suggestion), !user.trashed? && suggestion.trashed?
-							assert_select 'a[href=?]', trashed_archiving_document_suggestion_comments_path(archiving, document, suggestion), 1
-						end
-						assert_select 'a[href=?][data-method=patch]', merge_archiving_document_suggestion_path(archiving, document, suggestion), 0
-						assert_select 'a[href=?][data-method=delete]', archiving_document_suggestion_path(archiving, document, suggestion), 0
-
-						# new comment form
-						assert_select 'form[action=?][method=post]', archiving_document_suggestion_comments_path(archiving, document, suggestion), !archiving.trashed? && !document.trashed? && !suggestion.trashed? && !user.trashed? && !user.hidden?
-
-						# owned, un-trashed comments
-						loop_comments( include_archivings: false, include_blogs: false, include_forums: false,
-								only: { archiving_document: (archiving_key + '_' + document_key), suggester_suggestion: (suggester_key + '_' + suggestion_key), user: user_key },
-								include_guests: false,
-								comment_modifiers: { 'trashed' => false } ) do |comment|
-							assert_select 'main p', { text: comment.content, count: ((archiving.trashed? || document.trashed? || suggestion.trashed? || user.trashed?) ? 1 : 0) }
-							assert_select 'form[action=?][method=post]', archiving_document_suggestion_comment_path(archiving, document, suggestion, comment), !archiving.trashed? && !document.trashed? && !suggestion.trashed? && !user.trashed?
-						end
-						loop_comments( include_archivings: false, include_blogs: false, include_forums: false,
-								only: { archiving_document: (archiving_key + '_' + document_key), suggester_suggestion: (suggester_key + '_' + suggestion_key), user: user_key },
-								include_guests: false,
-								comment_modifiers: { 'trashed' => true } ) do |comment|
-							assert_select 'main p', { text: comment.content, count: 0 }
-							assert_select 'form[action=?][method=post]', archiving_document_suggestion_comment_path(archiving, document, suggestion, comment), 0
-						end
-						# un-owned, un-trashed, un-hidden comments
-						loop_comments( include_archivings: false, include_blogs: false, include_forums: false,
-								only: { archiving_document: (archiving_key + '_' + document_key), suggester_suggestion: (suggester_key + '_' + suggestion_key) },
-								except: { user: user_key },
-								comment_modifiers: { 'trashed' => false, 'hidden' => false } ) do |comment|
-							assert_select 'main p', { text: comment.content, count: 1 }
-							assert_select 'form[action=?][method=post]', archiving_document_suggestion_comment_path(archiving, document, suggestion, comment), 0
-						end
-						loop_comments( include_archivings: false, include_blogs: false, include_forums: false,
-								only: { archiving_document: (archiving_key + '_' + document_key), suggester_suggestion: (suggester_key + '_' + suggestion_key) },
-								except: { user: user_key },
-								comment_modifiers: { 'trashed' => true } ) do |comment|
-							assert_select 'main p', { text: comment.content, count: 0 }
-							assert_select 'form[action=?][method=post]', archiving_document_suggestion_comment_path(archiving, document, suggestion, comment), 0
-						end
-						loop_comments( include_archivings: false, include_blogs: false, include_forums: false,
-								only: { archiving_document: (archiving_key + '_' + document_key), suggester_suggestion: (suggester_key + '_' + suggestion_key) },
-								except: { user: user_key },
-								comment_modifiers: { 'hidden' => true } ) do |comment|
-							assert_select 'main p', { text: comment.content, count: 0 }
-							assert_select 'form[action=?][method=post]', archiving_document_suggestion_comment_path(archiving, document, suggestion, comment), 0
-						end
-					end
-
-					# Suggestions, Un-Owned, Un-Hidden -- Success
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						except: { user: user_key },
-						suggestion_modifiers: { 'hidden' => false } ) do |suggestion, suggestion_key, suggester_key|
-
-						get archiving_document_suggestion_path(archiving, document, suggestion)
-						assert_response :success
-
-						# no control panel
-						assert_select 'div.admin.control', 0
-						assert_select 'div.control' do
-							assert_select 'a[href=?]', trashed_archiving_document_suggestion_comments_path(archiving, document, suggestion), 1
-						end
-						assert_select 'a[href=?]', edit_archiving_document_suggestion_path(archiving, document, suggestion), 0
-						assert_select 'a[href=?][data-method=patch]', hide_archiving_document_suggestion_path(archiving, document, suggestion), 0
-						assert_select 'a[href=?][data-method=patch]', unhide_archiving_document_suggestion_path(archiving, document, suggestion), 0
-						assert_select 'a[href=?][data-method=patch]', trash_archiving_document_suggestion_path(archiving, document, suggestion), 0
-						assert_select 'a[href=?][data-method=patch]', untrash_archiving_document_suggestion_path(archiving, document, suggestion), 0
-						assert_select 'a[href=?][data-method=patch]', merge_archiving_document_suggestion_path(archiving, document, suggestion), 0
-						assert_select 'a[href=?][data-method=delete]', archiving_document_suggestion_path(archiving, document, suggestion), 0
-
-						# new comment form
-						assert_select 'form[action=?][method=post]', archiving_document_suggestion_comments_path(archiving, document, suggestion), !archiving.trashed? && !document.trashed? && !suggestion.trashed? && !user.trashed? && !user.hidden?
-
-						# owned, un-trashed comments
-						loop_comments( include_archivings: false, include_blogs: false, include_forums: false,
-								only: { archiving_document: (archiving_key + '_' + document_key), suggester_suggestion: (suggester_key + '_' + suggestion_key), user: user_key },
-								include_guests: false,
-								comment_modifiers: { 'trashed' => false } ) do |comment|
-							assert_select 'main p', { text: comment.content, count: ((archiving.trashed? || document.trashed? || suggestion.trashed? || user.trashed?) ? 1 : 0) }
-							assert_select 'form[action=?][method=post]', archiving_document_suggestion_comment_path(archiving, document, suggestion, comment), !archiving.trashed? && !document.trashed? && !suggestion.trashed? && !user.trashed?
-						end
-						loop_comments( include_archivings: false, include_blogs: false, include_forums: false,
-								only: { archiving_document: (archiving_key + '_' + document_key), suggester_suggestion: (suggester_key + '_' + suggestion_key), user: user_key },
-								include_guests: false,
-								comment_modifiers: { 'trashed' => true } ) do |comment|
-							assert_select 'main p', { text: comment.content, count: 0 }
-							assert_select 'form[action=?][method=post]', archiving_document_suggestion_comment_path(archiving, document, suggestion, comment), 0
-						end
-						# un-owned, un-trashed, un-hidden comments
-						loop_comments( include_archivings: false, include_blogs: false, include_forums: false,
-								only: { archiving_document: (archiving_key + '_' + document_key), suggester_suggestion: (suggester_key + '_' + suggestion_key) },
-								except: { user: user_key },
-								comment_modifiers: { 'trashed' => false, 'hidden' => false } ) do |comment|
-							assert_select 'main p', { text: comment.content, count: 1 }
-							assert_select 'form[action=?][method=post]', archiving_document_suggestion_comment_path(archiving, document, suggestion, comment), 0
-						end
-						loop_comments( include_archivings: false, include_blogs: false, include_forums: false,
-								only: { archiving_document: (archiving_key + '_' + document_key), suggester_suggestion: (suggester_key + '_' + suggestion_key) },
-								except: { user: user_key },
-								comment_modifiers: { 'trashed' => true } ) do |comment|
-							assert_select 'main p', { text: comment.content, count: 0 }
-							assert_select 'form[action=?][method=post]', archiving_document_suggestion_comment_path(archiving, document, suggestion, comment), 0
-						end
-						loop_comments( include_archivings: false, include_blogs: false, include_forums: false,
-								only: { archiving_document: (archiving_key + '_' + document_key), suggester_suggestion: (suggester_key + '_' + suggestion_key) },
-								except: { user: user_key },
-								comment_modifiers: { 'hidden' => true } ) do |comment|
-							assert_select 'main p', { text: comment.content, count: 0 }
-							assert_select 'form[action=?][method=post]', archiving_document_suggestion_comment_path(archiving, document, suggestion, comment), 0
-						end
-					end
-
-					# Suggestions, Un-Owned, Hidden -- Redirect
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						except: { user: user_key },
-						suggestion_modifiers: { 'hidden' => true } ) do |suggestion, suggestion_key, suggester_key|
-
-						get archiving_document_suggestion_path(archiving, document, suggestion)
-						assert_response :redirect
-					end
-				end
-
-				# Documents, Hidden -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => true } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion, suggestion_key, suggester_key|
-
-						get archiving_document_suggestion_path(archiving, document, suggestion)
-						assert_response :redirect
-					end
-				end
-			end
-
-			# Archivings, Hidden -- Redirect
-			loop_archivings( archiving_modifiers: { 'hidden' => true } ) do |archiving, archiving_key|
-
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key } ) do |suggestion|
-
-					get archiving_suggestion_path(archiving, suggestion)
-					assert_response :redirect
-				end
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
-
-						get archiving_document_suggestion_path(archiving, document, suggestion)
-						assert_response :redirect
-					end
-				end
-			end
-
-			log_out
+		# control panel (admin, no-delete)
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', edit_archiving_suggestion_path(@archiving, @archiving_user_suggestion), 1
+			assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_path(@archiving, @archiving_user_suggestion), 1
+			assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_path(@archiving, @archiving_user_suggestion), 0
+			assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_path(@archiving, @archiving_user_suggestion), 1
+			assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_path(@archiving, @archiving_user_suggestion), 0
+			assert_select 'a[href=?][data-method=patch]', merge_archiving_suggestion_path(@archiving, @archiving_user_suggestion), 1
+			assert_select 'a[href=?][data-method=delete]', archiving_suggestion_path(@archiving, @archiving_user_suggestion), 0
+			assert_select 'a[href=?]', trashed_archiving_suggestion_comments_path(@archiving, @archiving_user_suggestion), 1
 		end
 
+		# new comment form
+		assert_select 'form[action=?][method=post]', archiving_suggestion_comments_path(@archiving, @archiving_user_suggestion), 1
 
-		## User, Admin
-		loop_users( user_modifiers: { 'admin' => true } ) do |user, user_key|
-			log_in_as user
-
-			# Archivings
-			loop_archivings do |archiving, archiving_key|
-
-				# Suggestions -- Success
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key } ) do |suggestion, suggestion_key, suggester_key|
-
-					get archiving_suggestion_path(archiving, suggestion)
-					assert_response :success
-
-					# control panel
-					assert_select 'div.admin.control' do
-						assert_select 'a[href=?]', edit_archiving_suggestion_path(archiving, suggestion), !user.trashed? && !suggestion.trashed?
-						assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_path(archiving, suggestion), !user.trashed? && !suggestion.hidden?
-						assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_path(archiving, suggestion), !user.trashed? && suggestion.hidden?
-						assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_path(archiving, suggestion), !user.trashed? && !suggestion.trashed?
-						assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_path(archiving, suggestion), !user.trashed? && suggestion.trashed?
-						assert_select 'a[href=?][data-method=patch]', merge_archiving_suggestion_path(archiving, suggestion), !user.trashed? && !archiving.trashed? && !suggestion.trashed?
-						assert_select 'a[href=?][data-method=delete]', archiving_suggestion_path(archiving, suggestion), !user.trashed? && suggestion.trashed?
-						assert_select 'a[href=?]', trashed_archiving_suggestion_comments_path(archiving, suggestion), 1
-					end
-
-					# new comment form
-					assert_select 'form[action=?][method=post]', archiving_suggestion_comments_path(archiving, suggestion), !archiving.trashed? && !suggestion.trashed? && !user.trashed? && !user.hidden?
-
-					# un-trashed comments
-					loop_comments( include_documents: false, include_blogs: false, include_forums: false,
-							only: { archiving: archiving_key, suggester_suggestion: (suggester_key + '_' + suggestion_key) },
-							comment_modifiers: { 'trashed' => false } ) do |comment|
-						assert_select 'main p', { text: comment.content, count: ((archiving.trashed? || suggestion.trashed? || user.trashed?) ? 1 : 0) }
-						assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(archiving, suggestion, comment), !archiving.trashed? && !suggestion.trashed? && !user.trashed?
-					end
-					loop_comments( include_documents: false, include_blogs: false, include_forums: false,
-							only: { archiving: archiving_key, suggester_suggestion: (suggester_key + '_' + suggestion_key) },
-							comment_modifiers: { 'trashed' => true } ) do |comment|
-						assert_select 'main p', { text: comment.content, count: 0 }
-						assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(archiving, suggestion, comment), 0
-					end
-				end
-
-				# Documents
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => false } ) do |document, document_key|
-
-					# Suggestions -- Success
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion, suggestion_key, suggester_key|
-
-						get archiving_document_suggestion_path(archiving, document, suggestion)
-						assert_response :success
-
-						# control panel
-						assert_select 'div.admin.control' do
-							assert_select 'a[href=?]', edit_archiving_document_suggestion_path(archiving, document, suggestion), !user.trashed? && !suggestion.trashed?
-							assert_select 'a[href=?][data-method=patch]', hide_archiving_document_suggestion_path(archiving, document, suggestion), !user.trashed? && !suggestion.hidden?
-							assert_select 'a[href=?][data-method=patch]', unhide_archiving_document_suggestion_path(archiving, document, suggestion), !user.trashed? && suggestion.hidden?
-							assert_select 'a[href=?][data-method=patch]', trash_archiving_document_suggestion_path(archiving, document, suggestion), !user.trashed? && !suggestion.trashed?
-							assert_select 'a[href=?][data-method=patch]', untrash_archiving_document_suggestion_path(archiving, document, suggestion), !user.trashed? && suggestion.trashed?
-							assert_select 'a[href=?][data-method=patch]', merge_archiving_document_suggestion_path(archiving, document, suggestion), !user.trashed? && !suggestion.trashed? && !document.trashed?
-							assert_select 'a[href=?][data-method=delete]', archiving_document_suggestion_path(archiving, document, suggestion), !user.trashed? && suggestion.trashed?
-							assert_select 'a[href=?]', trashed_archiving_document_suggestion_comments_path(archiving, document, suggestion), 1
-						end
-
-						# new comment form
-						assert_select 'form[action=?][method=post]', archiving_document_suggestion_comments_path(archiving, document, suggestion), !archiving.trashed? && !document.trashed? && !suggestion.trashed? && !user.trashed? && !user.hidden?
-
-						# owned, un-trashed comments
-						loop_comments( include_archivings: false, include_blogs: false, include_forums: false,
-								only: { archiving_document: (archiving_key + '_' + document_key), suggester_suggestion: (suggester_key + '_' + suggestion_key) },
-								comment_modifiers: { 'trashed' => false } ) do |comment|
-							assert_select 'main p', { text: comment.content, count: ((archiving.trashed? || document.trashed? || suggestion.trashed? || user.trashed?) ? 1 : 0) }
-							assert_select 'form[action=?][method=post]', archiving_document_suggestion_comment_path(archiving, document, suggestion, comment), !archiving.trashed? && !document.trashed? && !suggestion.trashed? && !user.trashed?
-						end
-						loop_comments( include_archivings: false, include_blogs: false, include_forums: false,
-								only: { archiving_document: (archiving_key + '_' + document_key), suggester_suggestion: (suggester_key + '_' + suggestion_key) },
-								comment_modifiers: { 'trashed' => true } ) do |comment|
-							assert_select 'main p', { text: comment.content, count: 0 }
-							assert_select 'form[action=?][method=post]', archiving_document_suggestion_comment_path(archiving, document, suggestion, comment), 0
-						end
-					end
-				end
-			end
-
-			log_out
+		# comment forms (un-trashed)
+		[ @user_comment,
+			@user_hidden_comment,
+			@other_user_comment,
+			@other_user_hidden_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 0 }
+			assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 1
 		end
+		[ @user_trashed_comment,
+			@user_hidden_trashed_comment,
+			@other_user_trashed_comment,
+			@other_user_hidden_trashed_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 0 }
+			assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+		end
+
+		# Archiving Suggestion, Trashed
+		get archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion)
+		assert_response :success
+
+		# control panel (admin, no-merge, no-edit)
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', edit_archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion), 0
+			assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion), 1
+			assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion), 0
+			assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion), 1
+			assert_select 'a[href=?][data-method=patch]', merge_archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion), 0
+			assert_select 'a[href=?][data-method=delete]', archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion), 1
+			assert_select 'a[href=?]', trashed_archiving_suggestion_comments_path(@archiving, @archiving_user_trashed_suggestion), 1
+		end
+
+		# no new comment form
+		assert_select 'form[action=?][method=post]', archiving_suggestion_comments_path(@archiving, @archiving_user_trashed_suggestion), 0
 	end
 
 	test "should get new (only un-trashed, un-hidden users)" do
-		## Guest
-		# Archivings -- Redirect
-		loop_archivings do |archiving, archiving_key|
-			get new_archiving_suggestion_path(archiving)
-			assert_response :redirect
+		populate_users
+		populate_archivings
+		populate_documents
 
-			# Documents -- Redirect
-			loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document|
-				get new_archiving_document_suggestion_path(archiving, document)
-				assert_response :redirect
-			end
+		# [require_login]
+		get new_archiving_suggestion_path(@archiving)
+		assert_response :redirect
+		assert flash[:warning]
+
+		# [require_untrashed_user]
+		log_in_as @trashed_user
+		clear_flashes
+		get new_archiving_suggestion_path(@archiving)
+		assert_response :redirect
+		assert flash[:warning]
+
+		# [require_unhidden_user]
+		log_in_as @hidden_user
+		clear_flashes
+		get new_archiving_suggestion_path(@archiving)
+		assert_response :redirect
+		assert flash[:warning]
+
+		# [require_unhidden_archiving_and_document]
+		log_in_as @user
+		clear_flashes
+		get new_archiving_suggestion_path(@hidden_archiving)
+		assert_response :redirect
+		assert flash[:warning]
+		clear_flashes
+		get new_archiving_document_suggestion_path(@hidden_archiving, @hidden_archiving_document)
+		assert_response :redirect
+		assert flash[:warning]
+		clear_flashes
+		get new_archiving_document_suggestion_path(@archiving, @archiving_hidden_document)
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+		# [require_untrashed_archiving_and_document]
+		log_in_as @user
+		clear_flashes
+		get new_archiving_suggestion_path(@trashed_archiving)
+		assert_response :redirect
+		assert flash[:warning]
+		clear_flashes
+		get new_archiving_document_suggestion_path(@trashed_archiving, @trashed_archiving_document)
+		assert_response :redirect
+		assert flash[:warning]
+		clear_flashes
+		get new_archiving_document_suggestion_path(@archiving, @archiving_trashed_document)
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
+
+		## User
+		log_in_as @user
+
+		# Archiving
+		get new_archiving_suggestion_path(@archiving)
+		assert_response :success
+
+		assert_select 'form' do
+			assert_select 'input[name="suggestion[name]"][type="text"]', 1
+			assert_select 'input[name="suggestion[title]"][type="text"]', 1
+			assert_select 'textarea[name="suggestion[content]"]', 1
+			assert_select 'input[type="submit"]', 1
 		end
 
-
-		## User, Trashed
-		loop_users( user_modifiers: { 'trashed' => true } ) do |user|
-			log_in_as user
-
-			# Archivings -- Redirect
-			loop_archivings do |archiving, archiving_key|
-				get new_archiving_suggestion_path(archiving)
-				assert_response :redirect
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-						only: { archiving: archiving_key } ) do |document|
-					get new_archiving_document_suggestion_path(archiving, document)
-					assert_response :redirect
-				end
-			end
-
-			log_out
-		end
-
-
-		## User, Hidden
-		loop_users( user_modifiers: { 'hidden' => true } ) do |user|
-			log_in_as user
-
-			# Archivings -- Redirect
-			loop_archivings do |archiving, archiving_key|
-				get new_archiving_suggestion_path(archiving)
-				assert_response :redirect
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-						only: { archiving: archiving_key } ) do |document|
-					get new_archiving_document_suggestion_path(archiving, document)
-					assert_response :redirect
-				end
-			end
-
-			log_out
-		end
-
-
-		## User, Un-Trashed, Un-Hidden
-		loop_users( user_modifiers: { 'trashed' => false, 'hidden' => false } ) do |user|
-			log_in_as user
-
-			# Archivings, Un-Trashed, Un-Hidden -- Success
-			loop_archivings( archiving_modifiers: { 'trashed' => false, 'hidden' => false } ) do |archiving, archiving_key|
-
-				get new_archiving_suggestion_path(archiving)
-				assert_response :success
-
-				# Documents, Un-Trashed, Un-Hidden -- Success
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'trashed' => false, 'hidden' => false } ) do |document|
-
-					get new_archiving_document_suggestion_path(archiving, document)
-					assert_response :success
-				end
-
-				# Documents, Trashed -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'trashed' => true } ) do |document|
-
-					get new_archiving_document_suggestion_path(archiving, document)
-					assert_response :redirect
-				end
-
-				# Documents, Hidden -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => true } ) do |document|
-
-					get new_archiving_document_suggestion_path(archiving, document)
-					assert_response :redirect
-				end
-			end
-
-			# Archivings, Trashed -- Redirect
-			loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving, archiving_key|
-
-				get new_archiving_suggestion_path(archiving)
-				assert_response :redirect
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document|
-
-					get new_archiving_document_suggestion_path(archiving, document)
-					assert_response :redirect
-				end
-			end
-
-			# Archivings, Hidden -- Redirect
-			loop_archivings( archiving_modifiers: { 'hidden' => true } ) do |archiving, archiving_key|
-
-				get new_archiving_suggestion_path(archiving)
-				assert_response :redirect
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document|
-
-					get new_archiving_document_suggestion_path(archiving, document)
-					assert_response :redirect
-				end
-			end
-
-			log_out
-		end
+		log_out
 	end
 
 	test "should post create (only un-trashed, un-hidden users)" do
-		## Guest
-		# Archivings -- Redirect
-		loop_archivings do |archiving, archiving_key|
+		populate_users
+		populate_archivings
+		populate_documents
 
-			assert_no_difference 'Suggestion.count' do
-				post archiving_suggestions_path(archiving), params: { suggestion: {
-					name: "Guest's New Suggestion for #{archiving.title}",
-					content: "Sample Edit"
-				} }
-			end
-			assert_response :redirect
-
-			# Documents -- Redirect
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key } ) do |document|
-
-				assert_no_difference 'Suggestion.count' do
-					post archiving_document_suggestions_path(archiving, document), params: { suggestion: {
-						name: "Guest's New Suggestion for #{document.title}",
-						content: "Sample Edit"
-					} }
-				end
-				assert_response :redirect
-			end
+		# [require_login]
+		assert_no_difference 'Suggestion.count' do
+			post archiving_suggestions_path(@archiving), params: {
+				suggestion: { name: "New Suggestion", title: "Title Edit" }
+			}
 		end
+		assert flash[:warning]
+		assert_response :redirect
 
-
-		## User, Trashed
-		loop_users( user_modifiers: { 'trashed' => true } ) do |user|
-			log_in_as user
-
-			# Archivings -- Redirect
-			loop_archivings do |archiving, archiving_key|
-
-				assert_no_difference 'Suggestion.count' do
-					post archiving_suggestions_path(archiving), params: { suggestion: {
-						name: "#{user.name.possessive} New Suggestion for #{archiving.title}",
-						content: "Sample Edit"
-					} }
-				end
-				assert_response :redirect
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document|
-
-					assert_no_difference 'Suggestion.count' do
-						post archiving_document_suggestions_path(archiving, document), params: { suggestion: {
-							name: "#{user.name.possessive} New Suggestion for #{document.title}",
-							content: "Sample Edit"
-						} }
-					end
-					assert_response :redirect
-				end
-			end
-
-			log_out
+		# [require_untrashed_user]
+		log_in_as @trashed_user
+		clear_flashes
+		assert_no_difference 'Suggestion.count' do
+			post archiving_suggestions_path(@archiving), params: {
+				suggestion: { name: "New Suggestion", title: "Title Edit" }
+			}
 		end
+		assert flash[:warning]
+		assert_response :redirect
 
-
-		## User, Hidden
-		loop_users( user_modifiers: { 'hidden' => true } ) do |user|
-			log_in_as user
-
-			# Archivings -- Redirect
-			loop_archivings do |archiving, archiving_key|
-
-				assert_no_difference 'Suggestion.count' do
-					post archiving_suggestions_path(archiving), params: { suggestion: {
-						name: "#{user.name.possessive} New Suggestion for #{archiving.title}",
-						content: "Sample Edit"
-					} }
-				end
-				assert_response :redirect
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document|
-
-					assert_no_difference 'Suggestion.count' do
-						post archiving_document_suggestions_path(archiving, document), params: { suggestion: {
-							name: "#{user.name.possessive} New Suggestion for #{document.title}",
-							content: "Sample Edit"
-						} }
-					end
-					assert_response :redirect
-				end
-			end
-
-			log_out
+		# [require_unhidden_user]
+		log_in_as @hidden_user
+		clear_flashes
+		assert_no_difference 'Suggestion.count' do
+			post archiving_suggestions_path(@archiving), params: {
+				suggestion: { name: "New Suggestion", title: "Title Edit" }
+			}
 		end
+		assert flash[:warning]
+		assert_response :redirect
 
-
-		## User, Un-Trashed, Un-Hidden
-		loop_users( user_modifiers: { 'trashed' => false, 'hidden' => false } ) do |user|
-			log_in_as user
-
-			# Archivings, Un-Trashed, Un-Hidden -- Success
-			loop_archivings( archiving_modifiers: { 'trashed' => false, 'hidden' => false } ) do |archiving, archiving_key|
-
-				assert_difference 'Suggestion.count', 1 do
-					post archiving_suggestions_path(archiving), params: { suggestion: {
-						name: "#{user.name.possessive} New Suggestion for #{archiving.title}",
-						content: "Sample Edit"
-					} }
-				end
-				assert_response :redirect
-
-				# Documents, Un-Trashed, Un-Hidden -- Success
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'trashed' => false, 'hidden' => false } ) do |document|
-
-					assert_difference 'Suggestion.count', 1 do
-						post archiving_document_suggestions_path(archiving, document), params: { suggestion: {
-							name: "#{user.name.possessive} New Suggestion for #{document.title}",
-							content: "Sample Edit"
-						} }
-					end
-					assert_response :redirect
-				end
-
-				# Documents, Trashed -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'trashed' => true } ) do |document|
-
-					assert_no_difference 'Suggestion.count' do
-						post archiving_document_suggestions_path(archiving, document), params: { suggestion: {
-							name: "#{user.name.possessive} New Suggestion for #{document.title}",
-							content: "Sample Edit"
-						} }
-					end
-					assert_response :redirect
-				end
-
-				# Documents, Hidden -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => true } ) do |document|
-
-					assert_no_difference 'Suggestion.count' do
-						post archiving_document_suggestions_path(archiving, document), params: { suggestion: {
-							name: "#{user.name.possessive} New Suggestion for #{document.title}",
-							content: "Sample Edit"
-						} }
-					end
-					assert_response :redirect
-				end
-			end
-
-			# Archivings, Trashed -- Redirect
-			loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving, archiving_key|
-
-				assert_no_difference 'Suggestion.count' do
-					post archiving_suggestions_path(archiving), params: { suggestion: {
-						name: "#{user.name.possessive} New Suggestion for #{archiving.title}",
-						content: "Sample Edit"
-					} }
-				end
-				assert_response :redirect
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document|
-
-					assert_no_difference 'Suggestion.count' do
-						post archiving_document_suggestions_path(archiving, document), params: { suggestion: {
-							name: "#{user.name.possessive} New Suggestion for #{document.title}",
-							content: "Sample Edit"
-						} }
-					end
-					assert_response :redirect
-				end
-			end
-
-			# Archivings, Hidden -- Redirect
-			loop_archivings( archiving_modifiers: { 'hidden' => true } ) do |archiving, archiving_key|
-
-				assert_no_difference 'Suggestion.count' do
-					post archiving_suggestions_path(archiving), params: { suggestion: {
-						name: "#{user.name.possessive} New Suggestion for #{archiving.title}",
-						content: "Sample Edit"
-					} }
-				end
-				assert_response :redirect
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document|
-
-					assert_no_difference 'Suggestion.count' do
-						post archiving_document_suggestions_path(archiving, document), params: { suggestion: {
-							name: "#{user.name.possessive} New Suggestion for #{document.title}",
-							content: "Sample Edit"
-						} }
-					end
-					assert_response :redirect
-				end
-			end
-
-			log_out
+		# [require_unhidden_archiving_and_document]
+		log_in_as @user
+		clear_flashes
+		assert_no_difference 'Suggestion.count' do
+			post archiving_suggestions_path(@hidden_archiving), params: {
+				suggestion: { name: "New Suggestion", title: "Title Edit" }
+			}
 		end
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		assert_no_difference 'Suggestion.count' do
+			post archiving_document_suggestions_path(@hidden_archiving, @hidden_archiving_document), params: {
+				suggestion: { name: "New Suggestion", title: "Title Edit" }
+			}
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		assert_no_difference 'Suggestion.count' do
+			post archiving_document_suggestions_path(@archiving, @archiving_hidden_document), params: {
+				suggestion: { name: "New Suggestion", title: "Title Edit" }
+			}
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+		# [require_unhidden_archiving_and_document]
+		log_in_as @user
+		clear_flashes
+		assert_no_difference 'Suggestion.count' do
+			post archiving_suggestions_path(@trashed_archiving), params: {
+				suggestion: { name: "New Suggestion", title: "Title Edit" }
+			}
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		assert_no_difference 'Suggestion.count' do
+			post archiving_document_suggestions_path(@trashed_archiving, @trashed_archiving_document), params: {
+				suggestion: { name: "New Suggestion", title: "Title Edit" }
+			}
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		assert_no_difference 'Suggestion.count' do
+			post archiving_document_suggestions_path(@archiving, @archiving_trashed_document), params: {
+				suggestion: { name: "New Suggestion", title: "Title Edit" }
+			}
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+
+		## User
+		log_in_as @user
+		clear_flashes
+
+		# Archiving
+		assert_difference '@archiving.suggestions.count', 1 do
+			post archiving_suggestions_path(@archiving), params: { suggestion: { name: "New Suggestion", title: "Title Edit" } }
+		end
+		assert flash[:success]
+		assert_response :redirect
 	end
 
 	test "should get edit (only un-trashed authorized)" do
-		load_suggestions
+		populate_users
+		populate_archivings
+		populate_documents
+		populate_suggestions
 
-		## Guest
-		# Archivings -- Redirect
-		loop_archivings do |archiving, archiving_key|
+		# [require_login]
+		get edit_archiving_suggestion_path(@archiving, @archiving_user_suggestion)
+		assert_response :redirect
+		assert flash[:warning]
 
-			loop_suggestions( include_documents: false,
-				only: { archiving: archiving_key } ) do |suggestion|
+		# [require_untrashed_user]
+		log_in_as @trashed_user
+		clear_flashes
+		get edit_archiving_suggestion_path(@archiving, @archiving_trashed_user_suggestion)
+		assert_response :redirect
+		assert flash[:warning]
 
-				get edit_archiving_suggestion_path(archiving, suggestion)
-				assert_response :redirect
-			end
-
-			# Documents -- Redirect
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key } ) do |document, document_key|
-
-				loop_suggestions( include_archivings: false,
-					only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
-
-					get edit_archiving_document_suggestion_path(archiving, document, suggestion)
-					assert_response :redirect
-				end
-			end
-		end
-
-
-		## User, Trashed
-		loop_users( user_modifiers: { 'trashed' => true } ) do |user|
-			log_in_as user
-
-			# Archivings -- Redirect
-			loop_archivings do |archiving, archiving_key|
-
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key } ) do |suggestion|
-
-					get edit_archiving_suggestion_path(archiving, suggestion)
-					assert_response :redirect
-				end
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
-
-						get edit_archiving_document_suggestion_path(archiving, document, suggestion)
-						assert_response :redirect
-					end
-				end
-			end
-
-			log_out
-		end
+		# [require_admin_for_hidden_archiving_or_document]
+		log_in_as @user
+		clear_flashes
+		get edit_archiving_suggestion_path(@hidden_archiving, @hidden_archiving_user_suggestion)
+		assert_response :redirect
+		assert flash[:warning]
+		clear_flashes
+		get edit_archiving_document_suggestion_path(@hidden_archiving, @hidden_archiving_document, @hidden_archiving_document_user_suggestion)
+		assert_response :redirect
+		assert flash[:warning]
+		clear_flashes
+		get edit_archiving_document_suggestion_path(@archiving, @archiving_hidden_document, @archiving_hidden_document_user_suggestion)
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
 
 
-		## User, Un-Trashed, Non-Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => false } ) do |user, user_key|
-			log_in_as user
+		## User
+		log_in_as @user
 
-			# Archivings, Un-Hidden
-			loop_archivings( archiving_modifiers: { 'hidden' => false } ) do |archiving, archiving_key|
+		# Archiving
+		get new_archiving_suggestion_path(@archiving)
+		assert_response :success
 
-				# Suggestions, Owned, Un-Trashed -- Success
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key, user: user_key },
-					suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-
-					get edit_archiving_suggestion_path(archiving, suggestion)
-					assert_response :success
-				end
-
-				# Suggestions, Owned, Trashed -- Redirect
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key, user: user_key },
-					suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-
-					get edit_archiving_suggestion_path(archiving, suggestion)
-					assert_response :redirect
-				end
-
-				# Suggestions, Un-Owned -- Redirect
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					except: { user: user_key } ) do |suggestion|
-
-					get edit_archiving_suggestion_path(archiving, suggestion)
-					assert_response :redirect
-				end
-
-				# Documents, Un-Hidden
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => false } ) do |document, document_key|
-
-					# Suggestions, Owned, Un-Trashed -- Success
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key), user: user_key },
-						suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-
-						get edit_archiving_document_suggestion_path(archiving, document, suggestion)
-						assert_response :success
-					end
-
-					# Suggestions, Owned, Trashed -- Redirect
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key), user: user_key },
-						suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-
-						get edit_archiving_document_suggestion_path(archiving, document, suggestion)
-						assert_response :redirect
-					end
-
-					# Suggestions, Un-Owned -- Redirect
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						except: { user: user_key } ) do |suggestion|
-						
-						get edit_archiving_document_suggestion_path(archiving, document, suggestion)
-						assert_response :redirect
-					end
-				end
-
-				# Documents, Hidden -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => true } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
-
-						get edit_archiving_document_suggestion_path(archiving, document, suggestion)
-						assert_response :redirect
-					end
-				end
-			end
-
-			# Archivings, Hidden -- Redirect
-			loop_archivings( archiving_modifiers: { 'hidden' => true } ) do |archiving, archiving_key|
-
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key } ) do |suggestion|
-
-					get edit_archiving_suggestion_path(archiving, suggestion)
-					assert_response :redirect
-				end
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
-
-						get edit_archiving_document_suggestion_path(archiving, document, suggestion)
-						assert_response :redirect
-					end
-				end
-			end
-
-			log_out
-		end
-
-
-		## User, Un-Trashed, Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user, user_key|
-			log_in_as user
-
-			# Archivings
-			loop_archivings do |archiving, archiving_key|
-
-				# Suggestions, Un-Trashed -- Success
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-
-					get edit_archiving_suggestion_path(archiving, suggestion)
-					assert_response :success
-				end
-
-				# Suggestions, Trashed -- Redirect
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-
-					get edit_archiving_suggestion_path(archiving, suggestion)
-					assert_response :redirect
-				end
-
-				# Documents,
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					# Suggestions, Un-Trashed -- Success
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-
-						get edit_archiving_document_suggestion_path(archiving, document, suggestion)
-						assert_response :success
-					end
-
-					# Suggestions, Trashed -- Redirect
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-
-						get edit_archiving_document_suggestion_path(archiving, document, suggestion)
-						assert_response :redirect
-					end
-				end
-			end
-
-			log_out
+		assert_select 'form' do
+			assert_select 'input[name="suggestion[name]"][type="text"]', 1
+			assert_select 'input[name="suggestion[title]"][type="text"]', 1
+			assert_select 'textarea[name="suggestion[content]"]', 1
+			assert_select 'input[type="submit"]', 1
 		end
 	end
 
-	test "should patch update (only un-trashed authorized)" do
-		load_suggestions
+	test "should patch/put update (only un-trashed authorized)" do
+		populate_users
+		populate_archivings
+		populate_documents
+		populate_suggestions
 
-		## Guest
-		# Archivings -- Redirect
-		loop_archivings do |archiving, archiving_key|
-			loop_suggestions( include_documents: false,
-				only: { archiving: archiving_key } ) do |suggestion|
-
-				assert_no_changes -> { suggestion.name } do
-					patch archiving_suggestion_path(archiving, suggestion), params: { suggestion: {
-						name: "Edited Name"
-					} }
-					suggestion.reload
-				end
-				assert_response :redirect
-			end
-
-			# Documents -- Redirect
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key } ) do |document, document_key|
-
-				loop_suggestions( include_archivings: false,
-					only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.name } do
-						patch archiving_document_suggestion_path(archiving, document, suggestion), params: { suggestion: {
-							name: "Edited Name"
-						} }
-						suggestion.reload
-					end
-					assert_response :redirect
-				end
-			end
+		# [require_login]
+		assert_no_changes -> { @archiving_user_suggestion.name } do
+			patch archiving_suggestion_path(@archiving, @archiving_user_suggestion),
+				params: { suggestion: { name: "Name Update" } }
+			@archiving_user_suggestion.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
 
-
-		## User, Trashed
-		loop_users( user_modifiers: { 'trashed' => true } ) do |user|
-			log_in_as user
-
-			# Archivings -- Redirect
-			loop_archivings do |archiving, archiving_key|
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.name } do
-						patch archiving_suggestion_path(archiving, suggestion), params: { suggestion: {
-							name: "Edited Name"
-						} }
-						suggestion.reload
-					end
-					assert_response :redirect
-				end
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.name } do
-							patch archiving_document_suggestion_path(archiving, document, suggestion), params: { suggestion: {
-								name: "Edited Name"
-							} }
-							suggestion.reload
-						end
-						assert_response :redirect
-					end
-				end
-			end
-
-			log_out
+		# [require_untrashed_user]
+		log_in_as @trashed_user
+		clear_flashes
+		assert_no_changes -> { @archiving_trashed_user_suggestion.name } do
+			patch archiving_suggestion_path(@archiving, @archiving_trashed_user_suggestion),
+				params: { suggestion: { name: "Name Update" } }
+			@archiving_trashed_user_suggestion.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
 
-
-		## User, Un-Trashed, Non-Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => false } ) do |user, user_key|
-			log_in_as user
-
-			# Archivings, Un-Hidden
-			loop_archivings( archiving_modifiers: { 'hidden' => false } ) do |archiving, archiving_key|
-
-				# Suggestions, Owned, Un-Trashed -- Success
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key, user: user_key },
-					suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-
-					old_name = suggestion.name
-
-					assert_changes -> { suggestion.name } do
-						patch archiving_suggestion_path(archiving, suggestion), params: { suggestion: { 
-							name: "Edited Name"
-						} }
-						suggestion.reload
-					end
-					assert_response :redirect
-
-					suggestion.update_columns(name: old_name)
-				end
-
-				# Suggestions, Owned, Trashed -- Redirect
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key, user: user_key },
-					suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-
-					old_name = suggestion.name
-
-					assert_no_changes -> { suggestion.name } do
-						patch archiving_suggestion_path(archiving, suggestion), params: { suggestion: { 
-							name: "Edited Name"
-						} }
-						suggestion.reload
-					end
-					assert_response :redirect
-				end
-
-				# Suggestions, Un-Owned -- Redirect
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					except: { user: user_key } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.name } do
-						patch archiving_suggestion_path(archiving, suggestion), params: { suggestion: {
-							name: "Edited Name"
-						} }
-						suggestion.reload
-					end
-					assert_response :redirect
-				end
-
-				# Documents, Un-Hidden
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => false } ) do |document, document_key|
-
-					# Suggestions, Owned, Un-Trashed -- Success
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key), user: user_key },
-						suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-
-						old_name = suggestion.name
-
-						assert_changes -> { suggestion.name } do
-							patch archiving_document_suggestion_path(archiving, document, suggestion), params: { suggestion: {
-								name: "Edited Name"
-							} }
-							suggestion.reload
-						end
-						assert_response :redirect
-
-						suggestion.update_columns(name: old_name)
-					end
-
-					# Suggestions, Owned, Trashed -- Redirect
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key), user: user_key },
-						suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.name } do
-							patch archiving_document_suggestion_path(archiving, document, suggestion), params: { suggestion: {
-								name: "Edited Name"
-							} }
-							suggestion.reload
-						end
-						assert_response :redirect
-					end
-
-					# Suggestions, Un-Owned -- Redirect
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						except: { user: user_key } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.name } do
-							patch archiving_document_suggestion_path(archiving, document, suggestion), params: { suggestion: {
-								name: "Edited Name"
-							} }
-							suggestion.reload
-						end
-						assert_response :redirect
-					end
-				end
-
-				# Documents, Hidden -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => true } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.name } do
-							patch archiving_document_suggestion_path(archiving, document, suggestion), params: { suggestion: {
-								name: "Edited Name"
-							} }
-							suggestion.reload
-						end
-						assert_response :redirect
-					end
-				end
-			end
-
-			# Archivings, Hidden -- Redirect
-			loop_archivings( archiving_modifiers: { 'hidden' => true } ) do |archiving, archiving_key|
-				
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.name } do
-						patch archiving_suggestion_path(archiving, suggestion), params: { suggestion: {
-							name: "Edited Name"
-						} }
-						suggestion.reload
-					end
-					assert_response :redirect
-				end
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.name } do
-							patch archiving_document_suggestion_path(archiving, document, suggestion), params: { suggestion: {
-								name: "Edited Name"
-							} }
-							suggestion.reload
-						end
-						assert_response :redirect
-					end
-				end
-			end
-
-			log_out
+		# [require_admin_for_hidden_archiving_or_document]
+		log_in_as @user
+		clear_flashes
+		assert_no_changes -> { @hidden_archiving_user_suggestion.name } do
+			patch archiving_suggestion_path(@hidden_archiving, @hidden_archiving_user_suggestion),
+				params: { suggestion: { name: "Name Update" } }
+			@hidden_archiving_user_suggestion.reload
 		end
-
-
-		## User, Un-Trashed, Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user, user_key|
-			log_in_as user
-
-			# Archivings
-			loop_archivings do |archiving, archiving_key|
-
-				# Suggestions, Un-Trashed -- Success
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-
-					old_name = suggestion.name
-
-					assert_changes -> { suggestion.name } do
-						patch archiving_suggestion_path(archiving, suggestion), params: { suggestion: { 
-							name: "Edited Name"
-						} }
-						suggestion.reload
-					end
-					assert_response :redirect
-
-					suggestion.update_columns(name: old_name)
-				end
-
-				# Suggestions, Trashed -- Redirect
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.name } do
-						patch archiving_suggestion_path(archiving, suggestion), params: { suggestion: { 
-							name: "Edited Name"
-						} }
-						suggestion.reload
-					end
-					assert_response :redirect
-				end
-
-				# Documents
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					# Suggestions, Un-Trashed -- Success
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-
-						old_name = suggestion.name
-
-						assert_changes -> { suggestion.name } do
-							patch archiving_document_suggestion_path(archiving, document, suggestion), params: { suggestion: {
-								name: "Edited Name"
-							} }
-							suggestion.reload
-						end
-						assert_response :redirect
-
-						suggestion.update_columns(name: old_name)
-					end
-
-					# Suggestions, Trashed -- Redirect
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.name } do
-							patch archiving_document_suggestion_path(archiving, document, suggestion), params: { suggestion: {
-								name: "Edited Name"
-							} }
-							suggestion.reload
-						end
-						assert_response :redirect
-					end
-				end
-			end
-
-			log_out
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		assert_no_changes -> { @hidden_archiving_document_user_suggestion.name } do
+			patch archiving_document_suggestion_path(@hidden_archiving, @hidden_archiving_document, @hidden_archiving_document_user_suggestion),
+				params: { suggestion: { name: "Name Update" } }
+			@hidden_archiving_document_user_suggestion.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		assert_no_changes -> { @archiving_hidden_document_user_suggestion.name } do
+			patch archiving_document_suggestion_path(@archiving, @archiving_hidden_document, @archiving_hidden_document_user_suggestion),
+				params: { suggestion: { name: "Name Update" } }
+			@archiving_hidden_document_user_suggestion.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+
+		## User
+		log_in_as @user
+
+		# Archiving, failure
+		clear_flashes
+		assert_no_changes -> { @archiving_user_suggestion.name } do
+			patch archiving_suggestion_path(@archiving, @archiving_user_suggestion),
+				params: { suggestion: { name: "Bad PATCH Update", title: ("X" * 8192) } }
+			@archiving_user_suggestion.reload
+		end
+		assert flash[:failure]
+		assert_response :ok
+
+		# Archiving, PATCH success
+		old_name = @archiving_user_suggestion.name
+		clear_flashes
+		assert_changes -> { @archiving_user_suggestion.name } do
+			patch archiving_suggestion_path(@archiving, @archiving_user_suggestion),
+				params: { suggestion: { name: "PATCH Update" } }
+			@archiving_user_suggestion.reload
+		end
+		assert flash[:success]
+		assert_response :redirect
+		@archiving_user_suggestion.update_columns(name: old_name)
+
+		# Archiving, PUT success
+		clear_flashes
+		assert_changes -> { @archiving_user_suggestion.name } do
+			put archiving_suggestion_path(@archiving, @archiving_user_suggestion),
+				params: { suggestion: { name: "PUT Update" } }
+			@archiving_user_suggestion.reload
+		end
+		assert flash[:success]
+		assert_response :redirect
+		@archiving_user_suggestion.update_columns(name: old_name)
+
+		# Document, success
+		clear_flashes
+		assert_changes -> { @archiving_document_user_suggestion.name } do
+			patch archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_suggestion),
+				params: { suggestion: { name: "PATCH Update"} }
+			@archiving_document_user_suggestion.reload
+		end
+		assert flash[:success]
+		assert_response :redirect
 	end
 
-	test "should patch hide (only authorized)" do
-		load_suggestions
+	test "should patch/put hide (only authorized)" do
+		populate_users
+		populate_archivings
+		populate_documents
+		populate_suggestions
 
-		## Guest
-		# Archivings -- Redirect
-		loop_archivings do |archiving, archiving_key|
-
-			loop_suggestions( include_documents: false,
-				only: { archiving: archiving_key },
-				suggestion_modifiers: { 'hidden' => false } ) do |suggestion|
-
-				assert_no_changes -> { suggestion.updated_at } do
-					assert_no_changes -> { suggestion.hidden? }, from: false do
-						patch hide_archiving_suggestion_path(archiving, suggestion)
-						suggestion.reload
-					end
-				end
-				assert_response :redirect
-			end
-
-			# Documents -- Redirect
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key } ) do |document, document_key|
-
-				loop_suggestions( include_archivings: false,
-					only: { archiving_document: (archiving_key + '_' + document_key) },
-					suggestion_modifiers: { 'hidden' => false } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_no_changes -> { suggestion.hidden? }, from: false do
-							patch hide_archiving_document_suggestion_path(archiving, document, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-				end
-			end
+		# [require_login]
+		assert_no_changes -> { @archiving_user_suggestion.hidden }, from: false do
+			patch hide_archiving_suggestion_path(@archiving, @archiving_user_suggestion)
+			@archiving_user_suggestion.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
 
-
-		## User, Trashed
-		loop_users( user_modifiers: { 'trashed' => true } ) do |user, user_key|
-			log_in_as user
-
-			# Archivings -- Redirect
-			loop_archivings do |archiving, archiving_key|
-
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'hidden' => false } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_no_changes -> { suggestion.hidden? }, from: false do
-							patch hide_archiving_suggestion_path(archiving, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-				end
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'hidden' => false } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_no_changes -> { suggestion.hidden? }, from: false do
-								patch hide_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-					end
-				end
-			end
-
-			log_out
+		# [require_untrashed_user]
+		log_in_as @trashed_user
+		clear_flashes
+		assert_no_changes -> { @archiving_trashed_user_suggestion.hidden }, from: false do
+			patch hide_archiving_suggestion_path(@archiving, @archiving_trashed_user_suggestion)
+			@archiving_trashed_user_suggestion.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
 
-
-		## User, Un-Trashed, Non-Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => false } ) do |user, user_key|
-			log_in_as user
-
-			# Archivings, Un-Hidden
-			loop_archivings( archiving_modifiers: { 'hidden' => false } ) do |archiving, archiving_key|
-
-				# Suggestions, Owned -- Success
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key, user: user_key },
-					suggestion_modifiers: { 'hidden' => false } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_changes -> { suggestion.hidden? }, from: false, to: true do
-							patch hide_archiving_suggestion_path(archiving, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-
-					suggestion.update_columns(hidden: false)
-				end
-
-				# Suggestions, Un-Owned -- Redirect
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					except: { user: user_key },
-					suggestion_modifiers: { 'hidden' => false } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_no_changes -> { suggestion.hidden? }, from: false do
-							patch hide_archiving_suggestion_path(archiving, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-				end
-
-				# Documents, Un-Hidden
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => false } ) do |document, document_key|
-
-					# Suggestions, Owned -- Success
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key), user: user_key },
-						suggestion_modifiers: { 'hidden' => false } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_changes -> { suggestion.hidden? }, from: false, to: true do
-								patch hide_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-
-						suggestion.update_columns(hidden: true)
-					end
-
-					# Suggestions, Un-Owned -- Redirect
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						except: { user: user_key },
-						suggestion_modifiers: { 'hidden' => false } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_no_changes -> { suggestion.hidden? }, from: false do
-								patch hide_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-					end
-				end
-
-				# Documents, Hidden -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => true } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'hidden' => false } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_no_changes -> { suggestion.hidden? }, from: false do
-								patch hide_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-					end
-				end
-			end
-
-			# Archivings, Trashed -- Redirect
-			loop_archivings( archiving_modifiers: { 'hidden' => true } ) do |archiving, archiving_key|
-
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'hidden' => false } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_no_changes -> { suggestion.hidden? }, from: false do
-							patch hide_archiving_suggestion_path(archiving, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-				end
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'hidden' => false } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_no_changes -> { suggestion.hidden? }, from: false do
-								patch hide_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-					end
-				end
-			end
-
-			log_out
+		# [require_admin_for_hidden_archiving_or_document]
+		log_in_as @user
+		clear_flashes
+		assert_no_changes -> { @hidden_archiving_user_suggestion.hidden }, from: false do
+			patch hide_archiving_suggestion_path(@hidden_archiving, @hidden_archiving_user_suggestion)
+			@hidden_archiving_user_suggestion.reload
 		end
-
-
-		## User, Un-Trashed, Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user, user_key|
-			log_in_as user
-
-			# Archivings -- Success
-			loop_archivings do |archiving, archiving_key|
-
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'hidden' => false } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_changes -> { suggestion.hidden? }, from: false, to: true do
-							patch hide_archiving_suggestion_path(archiving, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-
-					suggestion.update_columns(hidden: false)
-				end
-
-				# Documents -- Success
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key), user: user_key },
-						suggestion_modifiers: { 'hidden' => false } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_changes -> { suggestion.hidden? }, from: false, to: true do
-								patch hide_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-
-						suggestion.update_columns(hidden: false)
-					end
-				end
-			end
-			log_out
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		assert_no_changes -> { @hidden_archiving_document_user_suggestion.hidden }, from: false do
+			patch hide_archiving_document_suggestion_path(@hidden_archiving, @hidden_archiving_document, @hidden_archiving_document_user_suggestion)
+			@hidden_archiving_document_user_suggestion.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		assert_no_changes -> { @archiving_hidden_document_user_suggestion.hidden }, from: false do
+			patch hide_archiving_document_suggestion_path(@archiving, @archiving_hidden_document, @archiving_hidden_document_user_suggestion)
+			@archiving_hidden_document_user_suggestion.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+
+		## User
+		log_in_as @user
+
+		# Archiving, Hidden, Failure
+		clear_flashes
+		assert_no_changes -> { @archiving_user_hidden_suggestion.hidden }, from: true do
+			patch hide_archiving_suggestion_path(@archiving, @archiving_user_hidden_suggestion)
+			@archiving_user_hidden_suggestion.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+
+		# Archiving, PATCH success
+		clear_flashes
+		assert_changes -> { @archiving_user_suggestion.hidden }, from: false, to: true do
+			patch hide_archiving_suggestion_path(@archiving, @archiving_user_suggestion)
+			@archiving_user_suggestion.reload
+		end
+		assert flash[:success]
+		assert_response :redirect
+		@archiving_user_suggestion.update_columns(hidden: false)
+
+		# Archiving, PUT success
+		clear_flashes
+		assert_changes -> { @archiving_user_suggestion.hidden }, from: false, to: true do
+			put hide_archiving_suggestion_path(@archiving, @archiving_user_suggestion)
+			@archiving_user_suggestion.reload
+		end
+		assert flash[:success]
+		assert_response :redirect
+		@archiving_user_suggestion.update_columns(hidden: false)
+ 
+		# Document, success
+		clear_flashes
+		assert_changes -> { @archiving_document_user_suggestion.hidden }, from: false, to: true do
+			patch hide_archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_suggestion)
+			@archiving_document_user_suggestion.reload
+		end
+		assert flash[:success]
+		assert_response :redirect
 	end
 
-	test "should patch unhide (only authorized)" do
-		load_suggestions
+	test "should patch/put unhide (only authorized)" do
+		populate_users
+		populate_archivings
+		populate_documents
+		populate_suggestions
 
-		## Guest
-		# Archivings -- Redirect
-		loop_archivings do |archiving, archiving_key|
-
-			loop_suggestions( include_documents: false,
-				only: { archiving: archiving_key },
-				suggestion_modifiers: { 'hidden' => true } ) do |suggestion|
-
-				assert_no_changes -> { suggestion.updated_at } do
-					assert_no_changes -> { suggestion.hidden? }, from: true do
-						patch unhide_archiving_suggestion_path(archiving, suggestion)
-						suggestion.reload
-					end
-				end
-				assert_response :redirect
-			end
-
-			# Documents -- Redirect
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key } ) do |document, document_key|
-
-				loop_suggestions( include_archivings: false,
-					only: { archiving_document: (archiving_key + '_' + document_key) },
-					suggestion_modifiers: { 'hidden' => true } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_no_changes -> { suggestion.hidden? }, from: true do
-							patch unhide_archiving_document_suggestion_path(archiving, document, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-				end
-			end
+		# [require_login]
+		assert_no_changes -> { @archiving_user_hidden_suggestion.hidden }, from: true do
+			patch unhide_archiving_suggestion_path(@archiving, @archiving_user_hidden_suggestion)
+			@archiving_user_hidden_suggestion.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
 
-
-		## User, Trashed
-		loop_users( user_modifiers: { 'trashed' => true } ) do |user, user_key|
-			log_in_as user
-
-			# Archivings -- Redirect
-			loop_archivings do |archiving, archiving_key|
-
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'hidden' => true } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_no_changes -> { suggestion.hidden? }, from: true do
-							patch unhide_archiving_suggestion_path(archiving, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-				end
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'hidden' => true } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_no_changes -> { suggestion.hidden? }, from: true do
-								patch unhide_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-					end
-				end
-			end
-			log_out
+		# [require_untrashed_user]
+		log_in_as @trashed_user
+		clear_flashes
+		assert_no_changes -> { @archiving_trashed_user_hidden_suggestion.hidden }, from: true do
+			patch unhide_archiving_suggestion_path(@archiving, @archiving_trashed_user_hidden_suggestion)
+			@archiving_trashed_user_hidden_suggestion.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
 
-
-		## User, Un-Trashed, Non-Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => false } ) do |user, user_key|
-			log_in_as user
-
-			# Archivings, Un-Hidden
-			loop_archivings( archiving_modifiers: { 'hidden' => false } ) do |archiving, archiving_key|
-
-				# Suggestions, Owned -- Success
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key, user: user_key },
-					suggestion_modifiers: { 'hidden' => true } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_changes -> { suggestion.hidden? }, from: true, to: false do
-							patch unhide_archiving_suggestion_path(archiving, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-
-					suggestion.update_columns(hidden: true)
-				end
-
-				# Suggestions, Un-Owned -- Redirect
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					except: { user: user_key },
-					suggestion_modifiers: { 'hidden' => true } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_no_changes -> { suggestion.hidden? }, from: true do
-							patch unhide_archiving_suggestion_path(archiving, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-				end
-
-				# Documents, Un-Hidden
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => false } ) do |document, document_key|
-
-					# Suggestions, Owned -- Success
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key), user: user_key },
-						suggestion_modifiers: { 'hidden' => true } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_changes -> { suggestion.hidden? }, from: true, to: false do
-								patch unhide_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-
-						suggestion.update_columns(hidden: true)
-					end
-
-					# Suggestions, Un-Owned -- Redirect
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						except: { user: user_key },
-						suggestion_modifiers: { 'hidden' => true } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_no_changes -> { suggestion.hidden? }, from: true do
-								patch unhide_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-					end
-				end
-
-				# Documents, Hidden -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => true } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'hidden' => true } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_no_changes -> { suggestion.hidden? }, from: true do
-								patch unhide_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-					end
-				end
-			end
-
-			# Archivings, Hidden -- Redirect
-			loop_archivings( archiving_modifiers: { 'hidden' => true } ) do |archiving, archiving_key|
-
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'hidden' => true } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_no_changes -> { suggestion.hidden? }, from: true do
-							patch unhide_archiving_suggestion_path(archiving, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-				end
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'hidden' => true } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_no_changes -> { suggestion.hidden? }, from: true do
-								patch unhide_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-					end
-				end
-			end
-
-			log_out
+		# [require_admin_for_hidden_archiving_or_document]
+		log_in_as @user
+		clear_flashes
+		assert_no_changes -> { @hidden_archiving_user_hidden_suggestion.hidden }, from: true do
+			patch unhide_archiving_suggestion_path(@hidden_archiving, @hidden_archiving_user_hidden_suggestion)
+			@hidden_archiving_user_hidden_suggestion.reload
 		end
-
-
-		## User, Un-Trashed, Non-Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user, user_key|
-			log_in_as user
-
-			# Archivings -- Success
-			loop_archivings do |archiving, archiving_key|
-
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'hidden' => true } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_changes -> { suggestion.hidden? }, from: true, to: false do
-							patch unhide_archiving_suggestion_path(archiving, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-
-					suggestion.update_columns(hidden: true)
-				end
-
-				# Documents -- Success
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key), user: user_key },
-						suggestion_modifiers: { 'hidden' => true } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_changes -> { suggestion.hidden? }, from: true, to: false do
-								patch unhide_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-
-						suggestion.update_columns(hidden: true)
-					end
-				end
-			end
-
-			log_out
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		assert_no_changes -> { @hidden_archiving_document_user_hidden_suggestion.hidden }, from: true do
+			patch unhide_archiving_document_suggestion_path(@hidden_archiving, @hidden_archiving_document, @hidden_archiving_document_user_hidden_suggestion)
+			@hidden_archiving_document_user_hidden_suggestion.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		assert_no_changes -> { @archiving_hidden_document_user_hidden_suggestion.hidden }, from: true do
+			patch unhide_archiving_document_suggestion_path(@archiving, @archiving_hidden_document, @archiving_hidden_document_user_hidden_suggestion)
+			@archiving_hidden_document_user_hidden_suggestion.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+
+		## User
+		log_in_as @user
+
+		# Archiving, Non-Hidden, Failure
+		clear_flashes
+		assert_no_changes -> { @archiving_user_suggestion.hidden }, from: true do
+			patch unhide_archiving_suggestion_path(@archiving, @archiving_user_suggestion)
+			@archiving_user_suggestion.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+
+		# Archiving, PATCH success
+		clear_flashes
+		assert_changes -> { @archiving_user_hidden_suggestion.hidden }, from: true, to: false do
+			patch unhide_archiving_suggestion_path(@archiving, @archiving_user_hidden_suggestion)
+			@archiving_user_hidden_suggestion.reload
+		end
+		assert flash[:success]
+		assert_response :redirect
+		@archiving_user_hidden_suggestion.update_columns(hidden: true)
+
+		# Archiving, PUT success
+		clear_flashes
+		assert_changes -> { @archiving_user_hidden_suggestion.hidden }, from: true, to: false do
+			put unhide_archiving_suggestion_path(@archiving, @archiving_user_hidden_suggestion)
+			@archiving_user_hidden_suggestion.reload
+		end
+		assert flash[:success]
+		assert_response :redirect
+		@archiving_user_hidden_suggestion.update_columns(hidden: true)
+
+		# Document, success
+		clear_flashes
+		assert_changes -> { @archiving_document_user_hidden_suggestion.hidden }, from: true, to: false do
+			patch unhide_archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_hidden_suggestion)
+			@archiving_document_user_hidden_suggestion.reload
+		end
+		assert flash[:success]
+		assert_response :redirect
 	end
 
-	test "should patch trash (only authorized)" do
-		load_suggestions
+	test "should patch/put trash (only authorized)" do
+		populate_users
+		populate_archivings
+		populate_documents
+		populate_suggestions
 
-		## Guest
-		# Archivings -- Redirect
-		loop_archivings do |archiving, archiving_key|
-
-			loop_suggestions( include_documents: false,
-				only: { archiving: archiving_key },
-				suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-
-				assert_no_changes -> { suggestion.updated_at } do
-					assert_no_changes -> { suggestion.trashed? }, from: false do
-						patch trash_archiving_suggestion_path(archiving, suggestion)
-						suggestion.reload
-					end
-				end
-				assert_response :redirect
-			end
-
-			# Documents -- Redirect
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key } ) do |document, document_key|
-
-				loop_suggestions( include_archivings: false,
-					only: { archiving_document: (archiving_key + '_' + document_key) },
-					suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_no_changes -> { suggestion.trashed? }, from: false do
-							patch trash_archiving_document_suggestion_path(archiving, document, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-				end
-			end
+		# [require_login]
+		assert_no_changes -> { @archiving_user_suggestion.trashed }, from: false do
+			patch trash_archiving_suggestion_path(@archiving, @archiving_user_suggestion)
+			@archiving_user_suggestion.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
 
-
-		## User, Trashed
-		loop_users( user_modifiers: { 'trashed' => true, 'admin' => nil } ) do |user, user_key|
-			log_in_as user
-
-			# Archivings -- Redirect
-			loop_archivings do |archiving, archiving_key|
-
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_no_changes -> { suggestion.trashed? }, from: false do
-							patch trash_archiving_suggestion_path(archiving, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-				end
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_no_changes -> { suggestion.trashed? }, from: false do
-								patch trash_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-					end
-				end
-			end
-			log_out
+		# [require_untrashed_user]
+		log_in_as @trashed_user
+		clear_flashes
+		assert_no_changes -> { @archiving_trashed_user_suggestion.trashed }, from: false do
+			patch trash_archiving_suggestion_path(@archiving, @archiving_trashed_user_suggestion)
+			@archiving_trashed_user_suggestion.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
 
-
-		## User, Un-Trashed, Non-Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => false } ) do |user, user_key|
-			log_in_as user
-
-			# Archivings, Un-Hidden
-			loop_archivings( archiving_modifiers: { 'hidden' => false } ) do |archiving, archiving_key|
-
-				# Suggestions, Owned -- Success
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key, user: user_key },
-					suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_changes -> { suggestion.trashed? }, from: false, to: true do
-							patch trash_archiving_suggestion_path(archiving, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-
-					suggestion.update_columns(trashed: false)
-				end
-
-				# Suggestions, Un-Owned -- Redirect
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					except: { user: user_key },
-					suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_no_changes -> { suggestion.trashed? }, from: false do
-							patch trash_archiving_suggestion_path(archiving, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-				end
-
-				# Documents, Un-Hidden
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => false } ) do |document, document_key|
-
-					# Suggestions, Owned -- Success
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key), user: user_key },
-						suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_changes -> { suggestion.trashed? }, from: false, to: true do
-								patch trash_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-
-						suggestion.update_columns(trashed: true)
-					end
-
-					# Suggestions, Un-Owned -- Redirect
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						except: { user: user_key },
-						suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_no_changes -> { suggestion.trashed? }, from: false do
-								patch trash_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-					end
-				end
-
-				# Documents, Hidden -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => true } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_no_changes -> { suggestion.trashed? }, from: false do
-								patch trash_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-					end
-				end
-			end
-
-			# Archivings, Hidden -- Redirect
-			loop_archivings( archiving_modifiers: { 'hidden' => true } ) do |archiving, archiving_key|
-
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_no_changes -> { suggestion.trashed? }, from: false do
-							patch trash_archiving_suggestion_path(archiving, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-				end
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_no_changes -> { suggestion.trashed? }, from: false do
-								patch trash_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-					end
-				end
-			end
-
-			log_out
+		# [require_admin_for_hidden_archiving_or_document]
+		log_in_as @user
+		clear_flashes
+		assert_no_changes -> { @hidden_archiving_user_suggestion.trashed }, from: false do
+			patch trash_archiving_suggestion_path(@hidden_archiving, @hidden_archiving_user_suggestion)
+			@hidden_archiving_user_suggestion.reload
 		end
-
-
-		## User, Un-Trashed, Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user, user_key|
-			log_in_as user
-
-			# Archivings -- Success
-			loop_archivings do |archiving, archiving_key|
-
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_changes -> { suggestion.trashed? }, from: false, to: true do
-							patch trash_archiving_suggestion_path(archiving, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-
-					suggestion.update_columns(trashed: false)
-				end
-
-				# Documents -- Success
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key), user: user_key },
-						suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_changes -> { suggestion.trashed? }, from: false, to: true do
-								patch trash_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-
-						suggestion.update_columns(trashed: false)
-					end
-				end
-			end
-			log_out
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		assert_no_changes -> { @hidden_archiving_document_user_suggestion.trashed }, from: false do
+			patch trash_archiving_document_suggestion_path(@hidden_archiving, @hidden_archiving_document, @hidden_archiving_document_user_suggestion)
+			@hidden_archiving_document_user_suggestion.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		assert_no_changes -> { @archiving_hidden_document_user_suggestion.trashed }, from: false do
+			patch trash_archiving_document_suggestion_path(@archiving, @archiving_hidden_document, @archiving_hidden_document_user_suggestion)
+			@archiving_hidden_document_user_suggestion.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+
+		## User
+		log_in_as @user
+
+		# Archiving, Trashed, Failure
+		clear_flashes
+		assert_no_changes -> { @archiving_user_trashed_suggestion.trashed }, from: true do
+			patch trash_archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion)
+			@archiving_user_trashed_suggestion.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+
+		# Archiving, PATCH success
+		clear_flashes
+		assert_changes -> { @archiving_user_suggestion.trashed }, from: false, to: true do
+			patch trash_archiving_suggestion_path(@archiving, @archiving_user_suggestion)
+			@archiving_user_suggestion.reload
+		end
+		assert flash[:success]
+		assert_response :redirect
+		@archiving_user_suggestion.update_columns(trashed: false)
+
+		# Archiving, PUT success
+		clear_flashes
+		assert_changes -> { @archiving_user_suggestion.trashed }, from: false, to: true do
+			put trash_archiving_suggestion_path(@archiving, @archiving_user_suggestion)
+			@archiving_user_suggestion.reload
+		end
+		assert flash[:success]
+		assert_response :redirect
+		@archiving_user_suggestion.update_columns(trashed: false)
+ 
+		# Document, success
+		clear_flashes
+		assert_changes -> { @archiving_document_user_suggestion.trashed }, from: false, to: true do
+			patch trash_archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_suggestion)
+			@archiving_document_user_suggestion.reload
+		end
+		assert flash[:success]
+		assert_response :redirect
 	end
 
-	test "should patch untrash (only authorized)" do
-		load_suggestions
+	test "should patch/put untrash (only authorized)" do
+		populate_users
+		populate_archivings
+		populate_documents
+		populate_suggestions
 
-		## Guest
-		# Archivings -- Redirect
-		loop_archivings do |archiving, archiving_key|
-
-			loop_suggestions( include_documents: false,
-				only: { archiving: archiving_key },
-				suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-
-				assert_no_changes -> { suggestion.updated_at } do
-					assert_no_changes -> { suggestion.trashed? }, from: true do
-						patch untrash_archiving_suggestion_path(archiving, suggestion)
-						suggestion.reload
-					end
-				end
-				assert_response :redirect
-			end
-
-			# Documents -- Redirect
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key } ) do |document, document_key|
-
-				loop_suggestions( include_archivings: false,
-					only: { archiving_document: (archiving_key + '_' + document_key) },
-					suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_no_changes -> { suggestion.trashed? }, from: true do
-							patch untrash_archiving_document_suggestion_path(archiving, document, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-				end
-			end
+		# [require_login]
+		assert_no_changes -> { @archiving_user_trashed_suggestion.trashed }, from: true do
+			patch untrash_archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion)
+			@archiving_user_trashed_suggestion.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
 
-
-		## User, Trashed
-		loop_users( user_modifiers: { 'trashed' => true, 'admin' => nil } ) do |user, user_key|
-			log_in_as user
-
-			# Archivings -- Redirect
-			loop_archivings do |archiving, archiving_key|
-
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_no_changes -> { suggestion.trashed? }, from: true do
-							patch untrash_archiving_suggestion_path(archiving, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-				end
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_no_changes -> { suggestion.trashed? }, from: true do
-								patch untrash_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-					end
-				end
-			end
-			log_out
+		# [require_untrashed_user]
+		log_in_as @trashed_user
+		clear_flashes
+		assert_no_changes -> { @archiving_trashed_user_trashed_suggestion.trashed }, from: true do
+			patch untrash_archiving_suggestion_path(@archiving, @archiving_trashed_user_trashed_suggestion)
+			@archiving_trashed_user_trashed_suggestion.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
 
-
-		## User, Un-Trashed, Non-Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => false } ) do |user, user_key|
-			log_in_as user
-
-			# Archivings, Un-Hidden
-			loop_archivings( archiving_modifiers: { 'hidden' => false } ) do |archiving, archiving_key|
-
-				# Suggestions, Owned -- Success
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key, user: user_key },
-					suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_changes -> { suggestion.trashed? }, from: true, to: false do
-							patch untrash_archiving_suggestion_path(archiving, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-
-					suggestion.update_columns(trashed: true)
-				end
-
-				# Suggestions, Un-Owned -- Redirect
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					except: { user: user_key },
-					suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_no_changes -> { suggestion.trashed? }, from: true do
-							patch untrash_archiving_suggestion_path(archiving, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-				end
-
-				# Documents, Un-Hidden
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => false } ) do |document, document_key|
-
-					# Suggestions, Owned -- Success
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key), user: user_key },
-						suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_changes -> { suggestion.trashed? }, from: true, to: false do
-								patch untrash_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-
-						suggestion.update_columns(trashed: true)
-					end
-
-					# Suggestions, Un-Owned -- Redirect
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						except: { user: user_key },
-						suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_no_changes -> { suggestion.trashed? }, from: true do
-								patch untrash_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-					end
-				end
-
-				# Documents, Hidden -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => true } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_no_changes -> { suggestion.trashed? }, from: true do
-								patch untrash_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-					end
-				end
-			end
-
-			# Archivings, Hidden -- Redirect
-			loop_archivings( archiving_modifiers: { 'hidden' => true } ) do |archiving, archiving_key|
-
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_no_changes -> { suggestion.trashed? }, from: true do
-							patch untrash_archiving_suggestion_path(archiving, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-				end
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_no_changes -> { suggestion.trashed? }, from: true do
-								patch untrash_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-					end
-				end
-			end
-
-			log_out
+		# [require_admin_for_hidden_archiving_or_document]
+		log_in_as @user
+		clear_flashes
+		assert_no_changes -> { @hidden_archiving_user_trashed_suggestion.trashed }, from: true do
+			patch untrash_archiving_suggestion_path(@hidden_archiving, @hidden_archiving_user_trashed_suggestion)
+			@hidden_archiving_user_trashed_suggestion.reload
 		end
-
-
-		## User, Un-Trashed, Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user, user_key|
-			log_in_as user
-
-			# Archivings -- Success
-			loop_archivings do |archiving, archiving_key|
-
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-
-					assert_no_changes -> { suggestion.updated_at } do
-						assert_changes -> { suggestion.trashed? }, from: true, to: false do
-							patch untrash_archiving_suggestion_path(archiving, suggestion)
-							suggestion.reload
-						end
-					end
-					assert_response :redirect
-
-					suggestion.update_columns(trashed: true)
-				end
-
-				# Documents -- Success
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key), user: user_key },
-						suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-
-						assert_no_changes -> { suggestion.updated_at } do
-							assert_changes -> { suggestion.trashed? }, from: true, to: false do
-								patch untrash_archiving_document_suggestion_path(archiving, document, suggestion)
-								suggestion.reload
-							end
-						end
-						assert_response :redirect
-
-						suggestion.update_columns(trashed: true)
-					end
-				end
-			end
-			log_out
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		assert_no_changes -> { @hidden_archiving_document_user_trashed_suggestion.trashed }, from: true do
+			patch untrash_archiving_document_suggestion_path(@hidden_archiving, @hidden_archiving_document, @hidden_archiving_document_user_trashed_suggestion)
+			@hidden_archiving_document_user_trashed_suggestion.reload
 		end
+		assert flash[:warning]
+		assert_response :redirect
+		clear_flashes
+		assert_no_changes -> { @archiving_hidden_document_user_trashed_suggestion.trashed }, from: true do
+			patch untrash_archiving_document_suggestion_path(@archiving, @archiving_hidden_document, @archiving_hidden_document_user_trashed_suggestion)
+			@archiving_hidden_document_user_trashed_suggestion.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+
+		## User
+		log_in_as @user
+
+		# Archiving, Non-Trashed, Failure
+		clear_flashes
+		assert_no_changes -> { @archiving_user_suggestion.trashed }, from: true do
+			patch untrash_archiving_suggestion_path(@archiving, @archiving_user_suggestion)
+			@archiving_user_suggestion.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+
+		# Archiving, PATCH success
+		clear_flashes
+		assert_changes -> { @archiving_user_trashed_suggestion.trashed }, from: true, to: false do
+			patch untrash_archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion)
+			@archiving_user_trashed_suggestion.reload
+		end
+		assert flash[:success]
+		assert_response :redirect
+		@archiving_user_trashed_suggestion.update_columns(trashed: true)
+
+		# Archiving, PUT success
+		clear_flashes
+		assert_changes -> { @archiving_user_trashed_suggestion.trashed }, from: true, to: false do
+			put untrash_archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion)
+			@archiving_user_trashed_suggestion.reload
+		end
+		assert flash[:success]
+		assert_response :redirect
+		@archiving_user_trashed_suggestion.update_columns(trashed: true)
+
+		# Document, success
+		clear_flashes
+		assert_changes -> { @archiving_document_user_trashed_suggestion.trashed }, from: true, to: false do
+			patch untrash_archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_trashed_suggestion)
+			@archiving_document_user_trashed_suggestion.reload
+		end
+		assert flash[:success]
+		assert_response :redirect
 	end
 
-	test "should patch merge (only untrashed admin)" do
-		load_suggestions
+	# Needs recheck?
+	test "should patch/put merge (only untrashed admin)" do
+		populate_users
+		populate_archivings
+		populate_documents
+		populate_suggestions
 
-		## Guest
-		# Archiving -- Redirect
-		loop_archivings do |archiving, archiving_key|
-
-			loop_suggestions( include_documents: false,
-				only: { archiving: archiving_key } ) do |suggestion|
-
-				assert_no_difference 'Suggestion.count' do
-					assert_no_changes -> { archiving.title }, -> { archiving.content } do
-						patch merge_archiving_suggestion_path(archiving, suggestion)
-						archiving.reload
-					end
-				end
-
-				assert_nothing_raised { suggestion.reload }
-			end
-
-			# Documents -- Redirect
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key } ) do |document, document_key|
-				
-				loop_suggestions( include_archivings: false,
-					only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
-
-					assert_no_difference 'Suggestion.count' do
-						assert_no_changes -> { document.title }, -> { document.content } do
-							patch merge_archiving_document_suggestion_path(archiving, document, suggestion)
-							document.reload
-						end
-					end
-
-					assert_nothing_raised { suggestion.reload }
-				end
+		# [require_login]
+		assert_no_difference 'Suggestion.count' do
+			assert_no_changes -> { @archiving.title } do
+				patch merge_archiving_suggestion_path(@archiving, @archiving_user_suggestion)
+				@archiving.reload
 			end
 		end
+		assert flash[:warning]
+		assert_response :redirect
 
-
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			# Archiving -- Redirect
-			loop_archivings do |archiving, archiving_key|
-
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key } ) do |suggestion|
-
-					assert_no_difference 'Suggestion.count' do
-						assert_no_changes -> { archiving.title }, -> { archiving.content } do
-							patch merge_archiving_suggestion_path(archiving, suggestion)
-							archiving.reload
-						end
-					end
-
-					assert_nothing_raised { suggestion.reload }
-				end
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-					
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
-
-						assert_no_difference 'Suggestion.count' do
-							assert_no_changes -> { document.title }, -> { document.content } do
-								patch merge_archiving_document_suggestion_path(archiving, document, suggestion)
-								document.reload
-							end
-						end
-
-						assert_nothing_raised { suggestion.reload }
-					end
-				end
+		# [require_admin]
+		log_in_as @user
+		clear_flashes
+		assert_no_difference 'Suggestion.count' do
+			assert_no_changes -> { @archiving.title } do
+				patch merge_archiving_suggestion_path(@archiving, @archiving_user_suggestion)
+				@archiving.reload
 			end
-
-			log_out
 		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
 
-
-		## User, Admin, Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user|
-			log_in_as user
-
-			# Archiving -- Redirect
-			loop_archivings do |archiving, archiving_key|
-
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key } ) do |suggestion|
-
-					assert_no_difference 'Suggestion.count' do
-						assert_no_changes -> { archiving.title }, -> { archiving.content } do
-							patch merge_archiving_suggestion_path(archiving, suggestion)
-							archiving.reload
-						end
-					end
-
-					assert_nothing_raised { suggestion.reload }
-				end
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-					
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
-
-						assert_no_difference 'Suggestion.count' do
-							assert_no_changes -> { document.title }, -> { document.content } do
-								patch merge_archiving_document_suggestion_path(archiving, document, suggestion)
-								document.reload
-							end
-						end
-
-						assert_nothing_raised { suggestion.reload }
-					end
-				end
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		clear_flashes
+		assert_no_difference 'Suggestion.count' do
+			assert_no_changes -> { @archiving.title } do
+				patch merge_archiving_suggestion_path(@archiving, @archiving_user_suggestion)
+				@archiving.reload
 			end
-
-			log_out
 		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
 
-
-		# User, Admin, Un-Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |user, user_key|
-			log_in_as user
-
-			# Archiving, Un-Trashed
-			loop_archivings( archiving_modifiers: { 'trashed' => false } ) do |archiving, archiving_key|
-
-				# Suggestions, Un-Trashed -- Success
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'hidden' => user.hidden?, 'trashed' => false } ) do |suggestion|
-
-					old_title = archiving.title
-
-					assert_difference 'Suggestion.count', -1 do
-						assert_changes -> { archiving.title }, to: suggestion.title do
-							patch merge_archiving_suggestion_path(archiving, suggestion)
-							archiving.reload
-						end
-					end
-
-					assert_raise(ActiveRecord::RecordNotFound) { suggestion.reload }
-
-					archiving.update_columns(title: old_title)
-				end
-
-				# Suggestions, Trashed -- Redirect
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'hidden' => user.hidden?, 'trashed' => true } ) do |suggestion|
-
-					assert_no_difference 'Suggestion.count' do
-						assert_no_changes -> { archiving.title } do
-							patch merge_archiving_suggestion_path(archiving, suggestion)
-							archiving.reload
-						end
-					end
-
-					assert_nothing_raised { suggestion.reload }
-				end
-
-				# Documents, Un-Trashed
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'trashed' => false } ) do |document, document_key|
-
-					# Suggestions, Un-Trashed -- Success
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'hidden' => user.hidden?, 'trashed' => false } ) do |suggestion|
-
-						old_title = document.title
-
-						assert_difference 'Suggestion.count', -1 do
-							assert_changes -> { document.title }, to: suggestion.title do
-								patch merge_archiving_document_suggestion_path(archiving, document, suggestion)
-								document.reload
-							end
-						end
-
-						assert_raise(ActiveRecord::RecordNotFound) { suggestion.reload }
-
-						archiving.update_columns(title: old_title)
-					end
-
-					# Suggestions, Trashed -- Redirect
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'hidden' => user.hidden?, 'trashed' => true } ) do |suggestion|
-
-						assert_no_difference 'Suggestion.count' do
-							assert_no_changes -> { document.title } do
-								patch merge_archiving_document_suggestion_path(archiving, document, suggestion)
-								document.reload
-							end
-						end
-
-						assert_nothing_raised { suggestion.reload }
-					end
-				end
-
-				# Documents, Trashed -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'trashed' => true } ) do |document, document_key|
-
-					# Suggestions
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
-
-						assert_no_difference 'Suggestion.count' do
-							assert_no_changes -> { document.title } do
-								patch merge_archiving_document_suggestion_path(archiving, document, suggestion)
-								document.reload
-							end
-						end
-
-						assert_nothing_raised { suggestion.reload }
-					end
-				end
+		# [require_untrashed_citation]
+		log_in_as @admin_user
+		clear_flashes
+		assert_no_difference 'Suggestion.count' do
+			assert_no_changes -> { @trashed_archiving.title } do
+				patch merge_archiving_suggestion_path(@trashed_archiving, @trashed_archiving_user_suggestion)
+				@trashed_archiving.reload
 			end
-
-			# Archiving, Trashed
-			loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving, archiving_key|
-
-				# Suggestions -- Redirect
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key } ) do |suggestion|
-
-					assert_no_difference 'Suggestion.count' do
-						assert_no_changes -> { archiving.title } do
-							patch merge_archiving_suggestion_path(archiving, suggestion)
-							archiving.reload
-						end
-					end
-
-					assert_nothing_raised { suggestion.reload }
-				end
-
-				# Documents, Un-Trashed
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'trashed' => false } ) do |document, document_key|
-
-					# Suggestions, Un-Trashed -- Success
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'hidden' => user.hidden?, 'trashed' => false } ) do |suggestion|
-
-						assert_difference 'Suggestion.count', -1 do
-							assert_changes -> { document.title }, to: suggestion.title do
-								patch merge_archiving_document_suggestion_path(archiving, document, suggestion)
-								document.reload
-							end
-						end
-
-						assert_raise(ActiveRecord::RecordNotFound) { suggestion.reload }
-					end
-
-					# Suggestions, Trashed -- Redirect
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'hidden' => user.hidden?, 'trashed' => true } ) do |suggestion|
-
-						assert_no_difference 'Suggestion.count' do
-							assert_no_changes -> { document.title } do
-								patch merge_archiving_document_suggestion_path(archiving, document, suggestion)
-								document.reload
-							end
-						end
-
-						assert_nothing_raised { suggestion.reload }
-					end
-				end
-
-				# Documents, Trashed -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'trashed' => true } ) do |document, document_key|
-
-					# Suggestions
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
-
-						assert_no_difference 'Suggestion.count' do
-							assert_no_changes -> { document.title } do
-								patch merge_archiving_document_suggestion_path(archiving, document, suggestion)
-								document.reload
-							end
-						end
-
-						assert_nothing_raised { suggestion.reload }
-					end
-				end
-			end
-
-			log_out
 		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+
+		## Admin
+		log_in_as @admin_user
+
+		# Archiving, Failure
+		clear_flashes
+		old_title = @archiving.title
+		old_content = @archiving.content
+		@archiving.update_columns( title: @archiving_user_suggestion.title, content: @archiving_user_suggestion.content )
+		assert_no_difference 'Suggestion.count' do
+			assert_no_changes -> { @archiving.title } do
+				patch merge_archiving_suggestion_path(@archiving, @archiving_user_suggestion)
+				@archiving.reload
+			end
+		end
+		assert flash[:failure]
+		assert_response :redirect
+		@archiving.update_columns( title: old_title, content: old_content )
+
+		# Archiving, PATCH success
+		clear_flashes
+		assert_difference '@archiving.suggestions.count', -1 do
+			assert_changes -> { @archiving.title } do
+				patch merge_archiving_suggestion_path(@archiving, @archiving_user_suggestion)
+				@archiving.reload
+			end
+		end
+		assert flash[:success]
+		assert_response :redirect
+		assert_raise(ActiveRecord::RecordNotFound) { @archiving_user_suggestion.reload }
+		@archiving.update_columns( title: old_title )
+
+		# Archiving, PUT success
+		clear_flashes
+		assert_difference '@archiving.suggestions.count', -1 do
+			assert_changes -> { @archiving.title } do
+				patch merge_archiving_suggestion_path(@archiving, @archiving_other_user_suggestion)
+				@archiving.reload
+			end
+		end
+		assert flash[:success]
+		assert_response :redirect
+		assert_raise(ActiveRecord::RecordNotFound) { @archiving_other_user_suggestion.reload }
+		@archiving.update_columns(title: old_title)
+
+		# Document, success
+		clear_flashes
+		assert_difference '@archiving_document.suggestions.count', -1 do
+			assert_changes -> { @archiving_document.title } do
+				patch merge_archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_suggestion)
+				@archiving_document.reload
+			end
+		end
+		assert flash[:success]
+		assert_response :redirect
+		assert_raise(ActiveRecord::RecordNotFound) { @archiving_document_user_suggestion.reload }
 	end
 
+	# When does a failure occur?
 	test "should delete destroy (only un-trashed admin)" do
-		load_suggestions
+		populate_users
+		populate_archivings
+		populate_documents
+		populate_suggestions
 
-		## Guests
-		# Archivings -- Redirect
-		loop_archivings do |archiving, archiving_key|
-
-			loop_suggestions( include_documents: false,
-				only: { archiving: archiving_key } ) do |suggestion|
-
-				assert_no_difference 'Suggestion.count' do
-					delete archiving_suggestion_path(archiving, suggestion)
-				end
-				assert_nothing_raised { suggestion.reload }
-				assert_response :redirect
-			end
-
-			# Documents -- Redirect
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key } ) do |document, document_key|
-
-				loop_suggestions( include_archivings: false,
-					only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
-
-					assert_no_difference 'Suggestion.count' do
-						delete archiving_document_suggestion_path(archiving, document, suggestion)
-					end
-					assert_nothing_raised { suggestion.reload }
-					assert_response :redirect
-				end
-			end
+		# [require_login]
+		assert_no_difference 'Suggestion.count' do
+			delete archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion)
 		end
+		assert flash[:warning]
+		assert_response :redirect
 
-
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			# Archivings -- Redirect
-			loop_archivings do |archiving, archiving_key|
-
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key } ) do |suggestion|
-
-					assert_no_difference 'Suggestion.count' do
-						delete archiving_suggestion_path(archiving, suggestion)
-					end
-					assert_nothing_raised { suggestion.reload }
-					assert_response :redirect
-				end
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
-
-						assert_no_difference 'Suggestion.count' do
-							delete archiving_document_suggestion_path(archiving, document, suggestion)
-						end
-						assert_nothing_raised { suggestion.reload }
-						assert_response :redirect
-					end
-				end
-			end
-
-			log_out
+		# [require_admin]
+		log_in_as @user
+		clear_flashes
+		assert_no_difference 'Suggestion.count' do
+			delete archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion)
 		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
 
-
-		## User, Admin, Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user|
-			log_in_as user
-
-			# Archivings -- Redirect
-			loop_archivings do |archiving, archiving_key|
-
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key } ) do |suggestion|
-
-					assert_no_difference 'Suggestion.count' do
-						delete archiving_suggestion_path(archiving, suggestion)
-					end
-					assert_nothing_raised { suggestion.reload }
-					assert_response :redirect
-				end
-
-				# Documents -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
-
-						assert_no_difference 'Suggestion.count' do
-							delete archiving_document_suggestion_path(archiving, document, suggestion)
-						end
-						assert_nothing_raised { suggestion.reload }
-						assert_response :redirect
-					end
-				end
-			end
-
-			log_out
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		clear_flashes
+		assert_no_difference 'Suggestion.count' do
+			delete archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion)
 		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
 
-
-		##  User, Admin, Un-Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |user, user_key|
-			log_in_as user
-
-			# Archivings
-			loop_archivings do |archiving, archiving_key|
-
-				# Suggestion, Trashed -- Success
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'hidden' => user.hidden?, 'trashed' => true } ) do |suggestion|
-
-					assert_difference 'Suggestion.count', -1 do
-						delete archiving_suggestion_path(archiving, suggestion)
-					end
-					assert_raise(ActiveRecord::RecordNotFound) { suggestion.reload }
-					assert_response :redirect
-				end
-
-				# Suggestion, Un-Trashed -- Redirect
-				loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'hidden' => user.hidden?, 'trashed' => false } ) do |suggestion|
-
-					assert_no_difference 'Suggestion.count'  do
-						delete archiving_suggestion_path(archiving, suggestion)
-					end
-					assert_nothing_raised { suggestion.reload }
-					assert_response :redirect
-				end
-
-				# Documents -- Success
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document, document_key|
-
-					# Suggestions, Trashed -- Success
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'hidden' => user.hidden?, 'trashed' => true } ) do |suggestion|
-
-						assert_difference 'Suggestion.count', -1 do
-							delete archiving_document_suggestion_path(archiving, document, suggestion)
-						end
-						assert_raise(ActiveRecord::RecordNotFound) { suggestion.reload }
-						assert_response :redirect
-					end
-
-					# Suggestions, Un-Trashed -- Redirect
-					loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'hidden' => user.hidden?, 'trashed' => false } ) do |suggestion|
-
-						assert_no_difference 'Suggestion.count' do
-							delete archiving_document_suggestion_path(archiving, document, suggestion)
-						end
-						assert_nothing_raised { suggestion.reload }
-						assert_response :redirect
-					end
-				end
-			end
-
-			log_out
+		# [require_trashed_suggestion]
+		log_in_as @admin_user
+		clear_flashes
+		assert_no_difference 'Suggestion.count' do
+			delete archiving_suggestion_path(@archiving, @archiving_user_suggestion)
 		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+
+		## Admin
+		log_in_as @admin_user
+
+		# Archiving, success
+		clear_flashes
+		assert_difference '@archiving.suggestions.count', -1 do
+			delete archiving_suggestion_path(@archiving, @archiving_user_trashed_suggestion)
+		end
+		assert flash[:success]
+		assert_response :redirect
+		assert_raise(ActiveRecord::RecordNotFound) { @archiving_user_trashed_suggestion.reload }
+
+		# Document, success
+		clear_flashes
+		assert_difference '@archiving_document.suggestions.count', -1 do
+			delete archiving_document_suggestion_path(@archiving, @archiving_document, @archiving_document_user_trashed_suggestion)
+		end
+		assert flash[:success]
+		assert_response :redirect
+		assert_raise(ActiveRecord::RecordNotFound) { @archiving_document_user_trashed_suggestion.reload }
 	end
 
 end

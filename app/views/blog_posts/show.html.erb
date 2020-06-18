@@ -13,12 +13,12 @@
 		<% unless @blog_post.trashed? %>
 
 			<%= link_to "Edit Post", edit_blog_post_path( @blog_post ) %>
-			
-			<%= link_to "Hide Post", hide_blog_post_path( @blog_post ), method: :patch unless @blog_post.hidden? %>
-			
-			<%= link_to "Show Post", unhide_blog_post_path( @blog_post ), method: :patch if @blog_post.hidden? %>
 
 		<% end %>
+
+		<%= link_to "Hide Post", hide_blog_post_path( @blog_post ), method: :patch unless @blog_post.hidden? %>
+		
+		<%= link_to "Show Post", unhide_blog_post_path( @blog_post ), method: :patch if @blog_post.hidden? %>
 		
 		<%= link_to "Trash Post", trash_blog_post_path( @blog_post ), method: :patch unless @blog_post.trashed? %>
 		

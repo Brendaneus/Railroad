@@ -2,490 +2,451 @@ require 'test_helper'
 
 class SuggestionTest < ActiveSupport::TestCase
 
-	fixtures :suggestions, :archivings, :documents, :users, :comments
-
 	def setup
-		load_suggestions
 	end
 
-	test "should associate with citations (Archivings, Documents) (required)" do
-		load_archivings
-		load_documents
-
-		loop_suggestions( include_documents: false ) do |suggestion, suggestion_key, user_key, archiving_key|
-			assert suggestion.citation == @archivings[archiving_key]
-
-			suggestion.citation = nil
-			assert_not suggestion.valid?
-		end
-
-		loop_suggestions( include_archivings: false ) do |suggestion, suggestion_key, user_key, document_key, archiving_key|
-			assert suggestion.citation == @documents[archiving_key][document_key]
-
-			suggestion.citation = nil
-			assert_not suggestion.valid?
-		end
+	def populate_suggestions
+		@user = create(:user)
+		@archiving = create(:archiving)
+		@hidden_suggestion = create(:suggestion, citation: @archiving, user: @user, name: "Hidden Suggestion", title: "Hidden Suggestion's Title Edit", hidden: true)
+		@unhidden_suggestion = create(:suggestion, citation: @archiving, user: @user, name: "Unhidden Suggestion", title: "Un-Hidden Suggestion's Title Edit", hidden: false)
+		@trashed_suggestion = create(:suggestion, citation: @archiving, user: @user, name: "Trashed Suggestion", title: "Trashed Suggestion's Title Edit", trashed: true)
+		@untrashed_suggestion = create(:suggestion, citation: @archiving, user: @user, name: "Untrashed Suggestion", title: "Un-Trashed Suggestion's Title Edit", trashed: false)
 	end
 
-	test "should associate with Users (required)" do
-		load_users
+	# What are these tests?!
+	test "should associate with Citation (Archivings, Documents) (required)" do
+		@user = create(:user)
+		@archiving = create(:archiving)
+		@document = create(:document, article: @archiving)
+		@archiving_suggestion = create(:suggestion, user: @user, citation: @archiving)
+		@document_suggestion = create(:suggestion, user: @user, citation: @document)
 
-		loop_suggestions do |suggestion, suggestion_key, user_key|
-			assert (suggestion.user == @users[user_key])
+		assert @archiving_suggestion.citation == @archiving
 
-			suggestion.user = nil
-			assert_not suggestion.valid?
-		end
+		# @archiving_suggestion.citation = nil
+		# assert_not @archiving_suggestion.valid?
+
+		assert @document_suggestion.citation == @document
+
+		# @document_suggestion.citation = nil
+		# assert_not @document_suggestion.valid?
+	end
+
+	test "should associate with User (required)" do
+		@user = create(:user)
+		@suggestion = create(:archiving_suggestion, user: @user)
+
+		assert @suggestion.user == @user
+
+		@suggestion.user = nil
+		assert_not @suggestion.valid?
 	end
 
 	test "should associate with Comments" do
-		loop_suggestions( include_documents: false ) do |suggestion, suggestion_key, user_key, archiving_key|
-			assert suggestion.comments ==
-				load_comments( flat_array: true, include_documents: false, include_blogs: false, include_forums: false,
-					only: { archiving: archiving_key, suggester_suggestion: (user_key + '_' + suggestion_key) } )
-		end
+		@user = create(:user)
+		@suggestion = create(:archiving_suggestion, user: @user)
+		@comment = create(:comment, post: @suggestion, user: @user)
 
-		loop_suggestions( include_archivings: false ) do |suggestion, suggestion_key, user_key, document_key, archiving_key|
-			assert suggestion.comments ==
-				load_comments( flat_array: true, include_archivings: false, include_blogs: false, include_forums: false,
-					only: { archiving_document: (archiving_key + '_' + document_key), suggester_suggestion: (user_key + '_' + suggestion_key) } )
-		end
+		assert @suggestion.comments == [@comment]
 	end
 
 	test "should dependent destroy Comments" do
-		load_comments( include_blogs: false, include_forums: false )
+		@user = create(:user)
+		@suggestion = create(:archiving_suggestion, user: @user)
+		@comment = create(:comment, post: @suggestion, user: @user)
 
-		loop_suggestions( include_documents: false ) do |suggestion, suggestion_key, user_key, archiving_key|
-			suggestion.destroy
+		@suggestion.destroy
 
-			assert_raise(ActiveRecord::RecordNotFound) { suggestion.reload }
-
-			loop_comments( include_blogs: false, include_forums: false, include_documents: false,
-					only: { archiving: archiving_key, suggester_suggestion: (user_key + '_' + suggestion_key) } ) do |comment|
-
-				assert_raise(ActiveRecord::RecordNotFound) { comment.reload }
-			end
-		end
-
-		loop_suggestions( include_archivings: false ) do |suggestion, suggestion_key, user_key, document_key, archiving_key|
-			suggestion.destroy
-
-			assert_raise(ActiveRecord::RecordNotFound) { suggestion.reload }
-
-			loop_comments( include_blogs: false, include_forums: false, include_archivings: false,
-					only: { archiving_document: (archiving_key + '_' + document_key), suggester_suggestion: (user_key + '_' + suggestion_key) } ) do |comment|
-
-				assert_raise(ActiveRecord::RecordNotFound) { comment.reload }
-			end
-		end
+		assert_raise(ActiveRecord::RecordNotFound) { @comment.reload }
 	end
 
 	test "should validate presence of name" do
-		loop_suggestions do |suggestion|
-			suggestion.name = ""
-			assert_not suggestion.valid?
+		@suggestion = create(:archiving_suggestion)
 
-			suggestion.name = "    "
-			assert_not suggestion.valid?
-		end
+		@suggestion.name = ""
+		assert_not @suggestion.valid?
+
+		@suggestion.name = "    "
+		assert_not @suggestion.valid?
 	end
 
-	test "should validate local uniqueness of name [when present]" do
-		load_archivings
-		load_documents
+	test "should validate local uniqueness of name [when present, case-sensitive]" do
+		@user = create(:user)
+		@archiving = create(:archiving)
+		@other_archiving = create(:archiving, title: "Other Archiving")
+		@archiving_suggestion = create( :suggestion,
+			citation: @archiving, user: @user,
+			name: "Archiving Suggestion",
+			title: "Suggestion's Title Edit for Archiving" )
+		@archiving_other_suggestion = create( :suggestion,
+			citation: @archiving, user: @user,
+			name: "Other Suggestion for Archiving",
+			title: "Other Suggestion's Title Edit for Archiving" )
+		@other_archiving_suggestion = create( :suggestion,
+			citation: @other_archiving, user: @user,
+			name: "Suggestion for Other Archiving",
+			title: "Suggestion's Title Edit for Other Archiving" )
 
-		loop_archivings do |archiving, archiving_key|
-			loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key } ) do |suggestion, suggestion_key, user_key|
-				loop_suggestions( include_documents: false,
-						only: { archiving: archiving_key },
-						except: { user_suggestion: (user_key + '_' + suggestion_key) } ) do |other_suggestion|
-					suggestion.name = other_suggestion.name
-					assert_not suggestion.valid?
+		@archiving_suggestion.name = @archiving_other_suggestion.name.upcase
+		assert_not @archiving_suggestion.valid?
 
-					suggestion.reload
-				end
-			end
+		@archiving_suggestion.name = @archiving_other_suggestion.name.downcase
+		assert_not @archiving_suggestion.valid?
 
-			loop_documents( include_blogs: false, only: { archiving: archiving_key } ) do |document, document_key|
-				loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion, suggestion_key, user_key|
-					loop_suggestions( include_archivings: false,
-							only: { archiving_document: (archiving_key + '_' + document_key) },
-							except: { user_suggestion: (user_key + '_' + suggestion_key) } ) do |other_suggestion|
-						suggestion.name = other_suggestion.name
-						assert_not suggestion.valid?
+		@archiving_suggestion.name = @other_archiving_suggestion.name.upcase
+		assert @archiving_suggestion.valid?
 
-						suggestion.reload
-					end
-				end
-			end
-		end
+		@archiving_suggestion.name = @other_archiving_suggestion.name.downcase
+		assert @archiving_suggestion.valid?
 	end
 
 	test "should validate length of name (maximum: 128)" do
-		loop_suggestions do |suggestion|
-			suggestion.name = "X"
-			assert suggestion.valid?
+		@suggestion = create(:archiving_suggestion)
 
-			suggestion.name = "X" * 128
-			assert suggestion.valid?
+		@suggestion.name = "X"
+		assert @suggestion.valid?
 
-			suggestion.name = "X" * 129
-			assert_not suggestion.valid?
-		end
+		@suggestion.name = "X" * 128
+		assert @suggestion.valid?
+
+		@suggestion.name = "X" * 129
+		assert_not @suggestion.valid?
 	end
 
 	test "should validate presence of either title or content" do
-		loop_suggestions do |suggestion|
-			last_title = suggestion.title
+		@suggestion = create(:archiving_suggestion)
 
-			suggestion.title = ""
-			assert suggestion.valid?
+		last_title = @suggestion.title
 
-			suggestion.content = ""
-			assert_not suggestion.valid?
+		@suggestion.title = ""
+		assert @suggestion.valid?
 
-			suggestion.title = last_title
-			assert suggestion.valid?
+		@suggestion.content = ""
+		assert_not @suggestion.valid?
 
-			suggestion.reload
-		end
+		@suggestion.title = last_title
+		assert @suggestion.valid?
 	end
 
 	test "should validate length of title (maximum: 64)" do
-		loop_suggestions do |suggestion|
-			suggestion.title = "X"
-			assert suggestion.valid?
+		@suggestion = create(:archiving_suggestion)
 
-			suggestion.title = "X" * 64
-			assert suggestion.valid?
+		@suggestion.title = "X"
+		assert @suggestion.valid?
 
-			suggestion.title = "X" * 65
-			assert_not suggestion.valid?
-		end
+		@suggestion.title = "X" * 64
+		assert @suggestion.valid?
+
+		@suggestion.title = "X" * 65
+		assert_not @suggestion.valid?
 	end
 
 	test "should validate uniqueness of title when citing Archiving [when present]" do
-		load_archivings
+		@user = create(:user)
+		@archiving = create(:archiving)
+		@other_archiving = create(:archiving, title: "Other Archiving")
+		@suggestion = create(:suggestion, user: @user, citation: @archiving)
 
-		loop_suggestions( include_documents: false ) do |suggestion, suggestion_key, user_key, archiving_key|
-			
-			loop_archivings( except: { archiving: archiving_key } ) do |archiving|
-				suggestion.title = archiving.title
-				assert_not suggestion.valid?
+		@suggestion.title = @other_archiving.title.upcase
+		assert_not @suggestion.valid?
 
-				suggestion.reload
-			end
-
-			suggestion.reload
-		end
+		@suggestion.title = @other_archiving.title.downcase
+		assert_not @suggestion.valid?
 	end
 
 	test "should validate local uniqueness of title if citing Document [when present]" do
-		load_documents
+		@user = create(:user)
+		@archiving = create(:archiving)
+		@document = create(:document, article: @archiving)
+		@other_document = create(:document, article: @archiving, title: "Other Document")
+		@suggestion = create(:suggestion, user: @user, citation: @document)
 
-		loop_suggestions( include_archivings: false ) do |suggestion, suggestion_key, user_key, document_key, archiving_key|
-			loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					except: { archiving_document: (archiving_key + '_' + document_key) } ) do |document|
-				suggestion.title = document.title
-				assert_not suggestion.valid?
+		@suggestion.title = @other_document.title.upcase
+		assert_not @suggestion.valid?
 
-				suggestion.reload
-			end
-		end
+		@suggestion.title = @other_document.title.downcase
+		assert_not @suggestion.valid?
 	end
 
-	test "should not validate content presence" do
-		loop_suggestions do |suggestion|
-			suggestion.content = ""
-			assert suggestion.valid?
+	test "should validate uniqueness of edits" do
+		@user = create(:user)
 
-			suggestion.content = "    "
-			assert suggestion.valid?			
-		end
+		# Archiving, must be unique to citation & siblings
+		@archiving = create(:archiving, title: "Archiving", content: "Archiving Content")
+		@archiving_suggestion = create(:suggestion, citation: @archiving, user: @user, name: "Suggestion for Archiving", title: "Title Edit for Archiving", content: "Content Edit for Archiving")
+		@archiving_other_suggestion = create(:suggestion, citation: @archiving, user: @user, name: "Other Suggestion for Archiving", title: "Other Title Edit for Archiving", content: "Content Edit for Archiving")
+		@archiving.reload
+		@archiving_suggestion.title = @archiving_other_suggestion.title
+		assert_not @archiving_suggestion.valid?
+		@archiving_suggestion.content = "Different Content Edit"
+		assert @archiving_suggestion.valid?
+
+		# Archiving, does not need to be unique to citation's siblings' suggestions
+		@other_archiving = create(:archiving, title: "Other Archiving", content: "Other Archiving Content")
+		@other_archiving_suggestion = create(:suggestion, citation: @other_archiving, user: @user, name: "Suggestion for Other Archiving", title: "Title Edit for Other Archiving", content: "Content Edit for Other Archiving")
+		@other_archiving.reload
+		@archiving_suggestion.assign_attributes(title: @other_archiving_suggestion.title, content: @other_archiving_suggestion.content)
+		assert @archiving_suggestion.valid?
+
+		# Archiving, must be unique to citation's documents
+		@archiving_document = create(:document, article: @archiving, title: "Archiving's Document", content: "Archiving's Document Content")
+		@archiving.reload
+		@archiving_suggestion.assign_attributes(title: @archiving_document.title, content: @archiving_document.content)
+		assert_not @archiving_suggestion.valid?
+		@archiving_suggestion.content = "Different Content Edit"
+		assert @archiving_suggestion.valid?
+
+		# Archiving, does not need to be unique to citation's documents' suggestions
+		@archiving_document_suggestion = create(:suggestion, citation: @archiving_document, user: @user, name: "Suggestion for Archiving's Document", title: "Title Edit for Archiving's Document", content: "Content Edit for Archiving's Document")
+		@archiving_document.reload
+		@archiving_suggestion.assign_attributes(title: @archiving_document_suggestion.title, content: @archiving_document_suggestion.content)
+		assert @archiving_suggestion.valid?
+		@archiving_suggestion.reload
+
+		# Document, must be unique to citation & siblings
+		@archiving_document_other_suggestion = create(:suggestion, citation: @archiving_document, user: @user, name: "Other Suggestion for Archiving's Document", title: "Other Title Edit for Archiving's Document", content: "Content Edit for Archiving's Document")
+		@archiving_document.reload
+		@archiving_document_suggestion.title = @archiving_document_other_suggestion.title
+		assert_not @archiving_document_suggestion.valid?
+		@archiving_document_suggestion.content = "Different Content Edit"
+		assert @archiving_document_suggestion.valid?
+
+		# Document, does not need to be unique to citation's siblings' suggestions
+		@archiving_other_document = create(:document, article: @archiving, title: "Archiving's Other Document", content: "Archiving's Other Document Content")
+		@archiving.reload
+		@archiving_other_document_suggestion = create(:suggestion, citation: @archiving_other_document, user: @user, name: "Suggestion for Archiving's Other Document", title: "Title Edit for Archiving's Other Document", content: "Content Edit for Archiving's Other Document")
+		@archiving_document_suggestion.assign_attributes(title: @archiving_other_document_suggestion.title, content: @archiving_other_document_suggestion.content)
+		assert @archiving_document_suggestion.valid?
+
+		# Document, must be unique to citation's article
+		@archiving_document_suggestion.assign_attributes(title: @archiving.title, content: @archiving.content)
+		assert_not @archiving_document_suggestion.valid?
+		@archiving_document_suggestion.content = "Different Content"
+		assert @archiving_document_suggestion.valid?
+
+		# Document, does not need to be unique to citation's article's suggestion's
+		@archiving_document_suggestion.assign_attributes(title: @archiving_suggestion.title, content: @archiving_suggestion.content)
+		assert @archiving_document_suggestion.valid?
 	end
 
-	# Reducable - replace with factory_bot
 	test "should validate length of content (maximum: 4096)" do
-		loop_suggestions do |suggestion|
-			suggestion.content = "X"
-			assert suggestion.valid?
+		@suggestion = create(:archiving_suggestion)
 
-			suggestion.content = "X" * 4096
-			assert suggestion.valid?
+		@suggestion.content = "X"
+		assert @suggestion.valid?
 
-			suggestion.content = "X" * 4097
-			assert_not suggestion.valid?
-		end
+		@suggestion.content = "X" * 4096
+		assert @suggestion.valid?
+
+		@suggestion.content = "X" * 4097
+		assert_not @suggestion.valid?
 	end
 
 	test "should default hidden as false" do
-		new_archiving_document = create(:archiving_document, hidden: nil)
-		assert_not new_archiving_document.hidden?
+		@archiving_document = create(:archiving_document, hidden: nil)
+		assert_not @archiving_document.hidden?
 
-		new_blog_post_document = create(:blog_post_document, hidden: nil)
-		assert_not new_blog_post_document.hidden?
+		@blog_post_document = create(:blog_post_document, hidden: nil)
+		assert_not @blog_post_document.hidden?
 	end
 
 	test "should default trashed as false" do
-		new_archiving_document = create(:archiving_document, trashed: nil)
-		assert_not new_archiving_document.trashed?
+		@archiving_document = create(:archiving_document, trashed: nil)
+		assert_not @archiving_document.trashed?
 
-		new_blog_post_document = create(:blog_post_document, trashed: nil)
-		assert_not new_blog_post_document.trashed?
+		@blog_post_document = create(:blog_post_document, trashed: nil)
+		assert_not @blog_post_document.trashed?
 	end
 
 	test "should scope hidden" do
+		populate_suggestions
+
 		assert Suggestion.hidden == Suggestion.where(hidden: true)
 	end
 
 	test "should scope non-hidden" do
+		populate_suggestions
+
 		assert Suggestion.non_hidden == Suggestion.where(hidden: false)
 	end
 
 	test "should scope non-hidden or owned by user" do
-		loop_users(reload: true) do |user|
-			assert Suggestion.non_hidden_or_owned_by(user) ==
-				Suggestion.where(hidden: false).or( Suggestion.where(user: user) )
-		end		
+		populate_suggestions
+		@other_user = create(:user, name: "Other User", email: "other_user@example.com")
+
+		assert Suggestion.non_hidden_or_owned_by(@other_user) ==
+			Suggestion.where(hidden: false).or( Suggestion.where(user: @other_user) )
 	end
 
 	test "should scope trashed" do
+		populate_suggestions
+
 		assert Suggestion.trashed == Suggestion.where(trashed: true)
 	end
 
 	test "should scope non-trashed" do
+		populate_suggestions
+
 		assert Suggestion.non_trashed == Suggestion.where(trashed: false)
 	end
 
-	# Reducable
 	test "should check for edits" do
-		loop_suggestions do |suggestion|
-			suggestion.updated_at += 5
-			assert suggestion.edited?
-		end
+		@suggestion = create(:archiving_suggestion)
+
+		@suggestion.updated_at += 5
+		assert @suggestion.edited?
 	end
 
 	test "should check if owned [by user]" do
-		load_users
+		@user = create(:user)
+		@other_user = create(:user, name: "Other User", email: "other_user@example.com")
+		@suggestion = create(:archiving_suggestion, user: @user)
 
-		loop_suggestions do |suggestion, suggestion_key, user_key|
-			assert suggestion.owned?
-
-			loop_users( only: { user: user_key } ) do |user|
-				assert suggestion.owned? by: user
-			end
-
-			loop_users( except: { user: user_key } ) do |user|
-				assert_not suggestion.owned? by: user
-			end
-		end
+		assert @suggestion.owned?
+		assert @suggestion.owned? by: @user
+		assert_not @suggestion.owned? by: @other_user
+		assert_not @suggestion.owned? by: nil
 	end
 
 	test "should check if owner is admin" do
-		loop_suggestions( user_modifiers: { 'admin' => true } ) do |suggestion|
-			assert suggestion.owner_admin?
-		end
+		@user = create(:user)
+		@forum_post = create(:forum_post, user: @user)
 
-		loop_suggestions( user_modifiers: { 'admin' => false } ) do |suggestion|
-			assert_not suggestion.owner_admin?
-		end
+		assert_not @forum_post.owner_admin?
+
+		@user.admin = true
+		assert @forum_post.owner_admin?
 	end
 
 	test "should check if owner is hidden" do
-		loop_suggestions( user_modifiers: { 'hidden' => true } ) do |suggestion|
-			assert suggestion.owner_hidden?
-		end
+		@user = create(:user)
+		@forum_post = create(:forum_post, user: @user)
 
-		loop_suggestions( user_modifiers: { 'hidden' => false } ) do |suggestion|
-			assert_not suggestion.owner_hidden?
-		end
+		assert_not @forum_post.owner_hidden?
+
+		@user.hidden = true
+		assert @forum_post.owner_hidden?
 	end
 
 	test "should check if owner is trashed" do
-		loop_suggestions( user_modifiers: { 'trashed' => true } ) do |suggestion|
-			assert suggestion.owner_trashed?
-		end
+		@user = create(:user)
+		@forum_post = create(:forum_post, user: @user)
 
-		loop_suggestions( user_modifiers: { 'trashed' => false } ) do |suggestion|
-			assert_not suggestion.owner_trashed?
-		end
+		assert_not @forum_post.owner_trashed?
+
+		@user.trashed = true
+		assert @forum_post.owner_trashed?
 	end
 
 	test "should check if citation or citation article trashed" do
-		load_archivings
-		load_documents
+		@user = create(:user)
+		@trashed_archiving = create(:archiving, title: "Trashed Archiving", trashed: true)
+		@untrashed_archiving = create(:archiving, title: "Untrashed Archiving", trashed: false)
+		@trashed_archiving_document = create(:document, article: @trashed_archiving, title: "Trashed Archiving Document")
+		@untrashed_archiving_trashed_document = create(:document, article: @untrashed_archiving, title: "Untrashed Archiving Trashed Document", trashed: true)
+		@untrashed_archiving_untrashed_document = create(:document, article: @untrashed_archiving, title: "Untrashed Archiving Untrashed Document", trashed: false)
 
-		loop_archivings( archiving_modifiers: { 'trashed' => false } ) do |archiving, archiving_key|
-			loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key } ) do |suggestion|
-				assert_not suggestion.citation_or_article_trashed?
-			end
+		# Trashed Archiving
+		@trashed_archiving_suggestion = create(:suggestion, user: @user, citation: @trashed_archiving, name: "Trashed Archiving Suggestion")
+		assert @trashed_archiving_suggestion.citation_or_article_trashed?
 
-			loop_documents( only: { archiving: archiving_key },
-					document_modifiers: { 'trashed' => false } ) do |document, document_key|
-				loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
-					assert_not suggestion.citation_or_article_trashed?
-				end
-			end
+		# Untrashed Archiving
+		@untrashed_archiving_suggestion = create(:suggestion, user: @user, citation: @untrashed_archiving, name: "Untrashed Archiving Suggestion")
+		assert_not @untrashed_archiving_suggestion.citation_or_article_trashed?
 
-			loop_documents( only: { archiving: archiving_key },
-					document_modifiers: { 'trashed' => true } ) do |document, document_key|
-				loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
-					assert suggestion.citation_or_article_trashed?
-				end
-			end
-		end
+		# Trashed Archiving, Document
+		@trashed_archiving_document_suggestion = create(:suggestion, user: @user, citation: @trashed_archiving_document, name: "Trashed Archiving Document Suggestion")
+		assert @trashed_archiving_document_suggestion.citation_or_article_trashed?
 
-		loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving, archiving_key|
-			loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key } ) do |suggestion|
-				assert suggestion.citation_or_article_trashed?
-			end
+		# Untrashed Archiving, Trashed Document
+		@untrashed_archiving_trashed_document_suggestion = create(:suggestion, user: @user, citation: @untrashed_archiving_trashed_document, name: "Untrashed Archiving Trashed Document Suggestion")
+		assert @untrashed_archiving_trashed_document_suggestion.citation_or_article_trashed?
 
-			loop_documents( only: { archiving: archiving_key } ) do |document, document_key|
-				loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
-					assert suggestion.citation_or_article_trashed?
-				end
-			end
-		end
+		# Untrashed Archiving, Untrashed Document
+		@untrashed_archiving_untrashed_document_suggestion = create(:suggestion, user: @user, citation: @untrashed_archiving_untrashed_document, name: "Untrashed Archiving Untrashed Document Suggestion")
+		assert_not @untrashed_archiving_untrashed_document_suggestion.citation_or_article_trashed?
 	end
 
 	test "should check if citing record" do
-		## Archivings
-		loop_archivings( reload: true ) do |archiving, archiving_key|
-			# Archiving Suggestions, Associated
-			loop_suggestions( include_documents: false,
-				only: { archiving: archiving_key } ) do |suggestion|
-				
-				assert suggestion.citing? archiving
-			end
+		@archiving = create(:archiving)
+		@other_archiving = create(:archiving, title: "Other Archiving")
+		@suggestion = create(:suggestion, citation: @archiving)
 
-			# Archiving Suggestions, Unassociated
-			loop_suggestions( include_documents: false,
-				except: { archiving: archiving_key } ) do |suggestion|
-				
-				assert_not suggestion.citing? archiving
-			end
-
-			# Document Suggestions
-			loop_suggestions( include_archivings: false ) do |suggestion|
-				assert_not suggestion.citing? archiving
-			end
-		end
-
-		## Documents
-		loop_documents( reload: true, include_blogs: false ) do |document, document_key, archiving_key|
-			# Document Suggestions, Associated
-			loop_suggestions( include_archivings: false,
-				only: { archiving_document: (archiving_key + "_" + document_key) } ) do |suggestion|
-
-				assert suggestion.citing? document
-			end
-
-			# Document Suggestions, Unassociated
-			loop_suggestions( include_archivings: false,
-				except: { archiving_document: (archiving_key + "_" + document_key) } ) do |suggestion|
-
-				assert_not suggestion.citing? document
-			end
-
-			# Archiving Suggestions
-			loop_suggestions( include_documents: false ) do |suggestion|
-				assert_not suggestion.citing? document
-			end
-		end
+		assert @suggestion.citing? @archiving
+		assert_not @suggestion.citing? @other_archiving
 	end
 
 	test "should set title or content to nil when matching citation" do
-		loop_suggestions do |suggestion|
-			old_title = suggestion.title
-			suggestion.update(title: suggestion.citation.title)
-			assert suggestion.title.nil?
-			
-			old_content = suggestion.content
-			suggestion.update(title: old_title, content: suggestion.citation.content)
-			assert suggestion.content.nil?
+		@suggestion = create(:archiving_suggestion)
 
-			suggestion.update(content: old_content)
-		end
+		old_title = @suggestion.title
+		@suggestion.update(title: @suggestion.citation.title)
+		assert @suggestion.title.nil?
+		@suggestion.update_columns(title: old_title)
+		
+		old_content = @suggestion.content
+		@suggestion.update(content: @suggestion.citation.content)
+		assert @suggestion.content.nil?
+		@suggestion.update_columns(content: old_content)
 	end
 
 	test "should check if trash-canned" do
-		load_archivings
-		load_documents
+		@user = create(:user)
+		@trashed_archiving = create(:archiving, title: "Trashed Archiving", trashed: true)
+		@archiving = create(:archiving, title: " Archiving", trashed: false)
+		@trashed_archiving_document = create(:document, article: @trashed_archiving, title: "Trashed Archiving's Document")
+		@archiving_trashed_document = create(:document, article: @archiving, title: " Archiving's Trashed Document", trashed: true)
+		@archiving_document = create(:document, article: @archiving, title: " Archiving's Un-Trashed Document", trashed: false)
 
-		# Archivings, Un-Trashed
-		loop_archivings( archiving_modifiers: { 'trashed' => false } ) do |archiving, archiving_key|
+		# Un-Trashed Archiving, Un-Trashed Suggestion
+		@archiving_suggestion = create( :suggestion,
+			user: @user, citation: @archiving, trashed: false,
+			name: "Suggestion for Archiving",
+			title: "Suggestion's Title Edit for Archiving" )
+		assert_not @archiving_suggestion.trash_canned?
 
-			# Suggestions, Un-Trashed -- FALSE
-			loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-				assert_not suggestion.trash_canned?
-			end
+		# Trashed Archiving, Un-Trashed Suggestion
+		@trashed_archiving_suggestion = create( :suggestion,
+			citation: @trashed_archiving, user: @user,
+			name: "Suggestion for Trashed Archiving",
+			title: "Suggestion's Title Edit for Trashed Archiving" )
+		assert @trashed_archiving_suggestion.trash_canned?
 
-			# Suggestions, Trashed -- TRUE
-			loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key },
-					suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-				assert suggestion.trash_canned?
-			end
+		# Un-Trashed Archiving, Trashed Suggestion
+		@archiving_trashed_suggestion = create( :suggestion,
+			citation: @archiving, user: @user, trashed: true,
+			name: "Trashed Suggestion for Archiving",
+			title: "Trashed Suggestion's Title Edit for Archiving" )
+		assert @archiving_trashed_suggestion.trash_canned?
 
-			# Documents, Un-Trashed
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key },
-				document_modifiers: { 'trashed' => false } ) do |document, document_key|
+		# Un-Trashed Archiving, Un-Trashed Document, Un-Trashed Suggestion
+		@archiving_document_suggestion = create( :suggestion,
+			citation: @archiving_document, user: @user, trashed: false,
+			name: "Suggestion for Archiving's Document",
+			title: "Suggestion's Title Edit for Archiving's Document" )
+		assert_not @archiving_document_suggestion.trash_canned?
 
-				# Suggestions, Un-Trashed -- FALSE
-				loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'trashed' => false } ) do |suggestion|
-					assert_not suggestion.trash_canned?
-				end
+		# Trashed Archiving, Un-Trashed Document, Un-Trashed Suggestion
+		@trashed_archiving_document_suggestion = create( :suggestion,
+			citation: @trashed_archiving_document, user: @user,
+			name: "Suggestion for Trashed Archiving's Document",
+			title: "Suggestion's Title Edit for Trashed Archiving's Document" )
+		assert @trashed_archiving_document_suggestion.trash_canned?
 
-				# Suggestions, Trashed -- TRUE
-				loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) },
-						suggestion_modifiers: { 'trashed' => true } ) do |suggestion|
-					assert suggestion.trash_canned?
-				end
-			end
+		# Un-Trashed Archiving, Trashed Document, Un-Trashed Suggestion
+		@archiving_trashed_document_suggestion = create( :suggestion,
+			citation: @archiving_trashed_document, user: @user,
+			name: "Suggestion for Archiving's Trashed Document",
+			title: "Suggestion's Title Edit for Archiving's Trashed Document" )
+		assert @archiving_trashed_document_suggestion.trash_canned?
 
-			# Documents, Trashed -- TRUE
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key },
-				document_modifiers: { 'trashed' => true } ) do |document, document_key|
-
-				loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
-					assert suggestion.trash_canned?
-				end
-			end
-		end
-
-		# Archivings, Trashed -- TRUE
-		loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving, archiving_key|
-
-			loop_suggestions( include_documents: false,
-					only: { archiving: archiving_key } ) do |suggestion|
-				assert suggestion.trash_canned?
-			end
-
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key } ) do |document, document_key|
-
-				loop_suggestions( include_archivings: false,
-						only: { archiving_document: (archiving_key + '_' + document_key) } ) do |suggestion|
-					assert suggestion.trash_canned?
-				end
-			end
-		end
+		# Un-Trashed Archiving, Un-Trashed Document, Trashed Suggestion
+		@archiving_document_trashed_suggestion = create( :suggestion,
+			citation: @archiving_document, user: @user, trashed: true,
+			name: "Trashed Suggestion for Archiving's Document",
+			title: "Trashed Suggestion's Title Edit for Archiving's Document" )
+		assert @archiving_document_trashed_suggestion.trash_canned?
 	end
 
 end

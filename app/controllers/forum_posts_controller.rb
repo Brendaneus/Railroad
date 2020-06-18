@@ -1,13 +1,13 @@
 class ForumPostsController < ApplicationController
 
 	before_action :require_login, except: [:index, :trashed, :show]
+	before_action :require_admin, only: [:destroy]
 	before_action :require_untrashed_user, except: [:index, :trashed, :show]
 	before_action :require_unhidden_user, only: [:new, :create]
 	before_action :set_forum_post, except: [:index, :trashed, :new, :create]
 	before_action :require_authorize_or_admin_for_hidden_forum_post, only: [:show]
 	before_action :require_authorize, only: [:edit, :update, :hide, :unhide, :trash, :untrash]
 	before_action :require_untrashed_forum_post, only: [:edit, :update]
-	before_action :require_admin, only: [:destroy]
 	before_action :require_trashed_forum_post, only: [:destroy]
 
 	before_action :set_avatar_bucket, unless: -> { Rails.env.test? }
@@ -67,7 +67,7 @@ class ForumPostsController < ApplicationController
 			flash[:success] = "The forum post was successfully created."
 			redirect_to forum_post_path(@forum_post)
 		else
-			flash.now[:error] = "There was a problem creating this post."
+			flash.now[:failure] = "There was a problem creating this post."
 			render :new
 		end
 	end
@@ -89,42 +89,62 @@ class ForumPostsController < ApplicationController
 	end
 
 	def hide
-		if @forum_post.update_columns(hidden: true)
-			flash[:success] = "The forum post has been successfully hidden."
-			redirect_to @forum_post
+		if @forum_post.hidden?
+			flash[:warning] = "The forum post is already hidden."
+			redirect_back fallback_location: @forum_post
 		else
-			flash[:failure] = "There was a problem hiding the forum post."
-			redirect_back fallback_url: @forum_post
+			if @forum_post.update_columns(hidden: true)
+				flash[:success] = "The forum post has been successfully hidden."
+				redirect_to @forum_post
+			else
+				flash[:failure] = "There was a problem hiding the forum post."
+				redirect_back fallback_location: @forum_post
+			end
 		end
 	end
 
 	def unhide
-		if @forum_post.update_columns(hidden: false)
-			flash[:success] = "The forum post has been successfully unhidden."
-			redirect_to @forum_post
+		unless @forum_post.hidden?
+			flash[:warning] = "The forum post is already visible."
+			redirect_back fallback_location: @forum_post
 		else
-			flash[:failure] = "There was a problem unhiding the forum post."
-			redirect_back fallback_url: @forum_post
+			if @forum_post.update_columns(hidden: false)
+				flash[:success] = "The forum post has been successfully unhidden."
+				redirect_to @forum_post
+			else
+				flash[:failure] = "There was a problem unhiding the forum post."
+				redirect_back fallback_location: @forum_post
+			end
 		end
 	end
 
 	def trash
-		if @forum_post.update_columns(trashed: true)
-			flash[:success] = "The forum post has been successfully trashed."
-			redirect_to @forum_post
+		if @forum_post.trashed?
+			flash[:warning] = "The forum post is already in the trash can."
+			redirect_back fallback_location: @forum_post
 		else
-			flash[:failure] = "There was a problem trashing the forum post."
-			redirect_back fallback_url: @forum_post
+			if @forum_post.update_columns(trashed: true)
+				flash[:success] = "The forum post has been successfully trashed."
+				redirect_to @forum_post
+			else
+				flash[:failure] = "There was a problem trashing the forum post."
+				redirect_back fallback_location: @forum_post
+			end
 		end
 	end
 
 	def untrash
-		if @forum_post.update_columns(trashed: false)
-			flash[:success] = "The forum post has been successfully restored."
-			redirect_to @forum_post
+		unless @forum_post.trashed?
+			flash[:warning] = "The forum post is already out of the trash can."
+			redirect_back fallback_location: @forum_post
 		else
-			flash[:failure] = "There was a problem restoring the forum post."
-			redirect_back fallback_url: @forum_post
+			if @forum_post.update_columns(trashed: false)
+				flash[:success] = "The forum post has been successfully restored."
+				redirect_to @forum_post
+			else
+				flash[:failure] = "There was a problem restoring the forum post."
+				redirect_back fallback_location: @forum_post
+			end
 		end
 	end
 

@@ -7,16 +7,17 @@ class CommentsController < ApplicationController
 	before_action :require_authorize_or_admin_for_hidden_post_or_dependencies, only: [:trashed]
 	before_action :require_post_not_trash_canned, only: [:create]
 	before_action :require_unhidden_post_and_dependencies, only: [:create]
-	before_action :require_authorize, except: [:trashed, :create]
+	before_action :require_authorize, except: [:trashed, :create, :destroy]
+	before_action :require_admin, only: [:destroy]
 	before_action :require_untrashed_user, except: [:trashed]
 	before_action :require_unhidden_user, only: [:create]
 	before_action :require_untrashed_comment, only: [:update]
-	before_action :require_admin, only: [:destroy]
+	before_action :require_trashed_comment, only: [:destroy]
 
 	after_action :mark_activity, if: :logged_in?
 
 	def trashed
-		@comments = @post.comments.trashed
+		@comments = @post.comments.trashed.order(updated_at: :desc)
 		unless admin_user?
 			if logged_in?
 				@comments = @comments.non_hidden_or_owned_by(current_user)
@@ -49,42 +50,62 @@ class CommentsController < ApplicationController
 	end
 
 	def hide
-		if @comment.update_columns(hidden: true)
-			flash[:success] = "The comment has been successfully hidden."
-			redirect_to post_path(@post)
+		if @comment.hidden?
+			flash[:warning] = "The comment is already hidden."
+			redirect_back fallback_location: post_path(@post)
 		else
-			flash[:failure] = "There was a problem hiding the comment."
-			redirect_back fallback_url: post_path(@post)
+			if @comment.update_columns(hidden: true)
+				flash[:success] = "The comment has been successfully hidden."
+				redirect_to post_path(@post)
+			else
+				flash[:failure] = "There was a problem hiding the comment."
+				redirect_back fallback_location: post_path(@post)
+			end
 		end
 	end
 
 	def unhide
-		if @comment.update_columns(hidden: false)
-			flash[:success] = "The comment has been successfully unhidden."
-			redirect_to post_path(@post)
+		unless @comment.hidden?
+			flash[:warning] = "The comment is already visible."
+			redirect_back fallback_location: post_path(@post)
 		else
-			flash[:failure] = "There was a problem unhiding the comment."
-			redirect_back fallback_url: post_path(@post)
+			if @comment.update_columns(hidden: false)
+				flash[:success] = "The comment has been successfully unhidden."
+				redirect_to post_path(@post)
+			else
+				flash[:failure] = "There was a problem unhiding the comment."
+				redirect_back fallback_location: post_path(@post)
+			end
 		end
 	end
 
 	def trash
-		if @comment.update_columns(trashed: true)
-			flash[:success] = "The comment has been successfully trashed."
-			redirect_to post_path(@post)
+		if @comment.trashed?
+			flash[:warning] = "The comment has already been sent to trash."
+			redirect_back fallback_location: post_path(@post)
 		else
-			flash[:failure] = "There was a problem trashing the comment."
-			redirect_back fallback_url: post_path(@post)
+			if @comment.update_columns(trashed: true)
+				flash[:success] = "The comment has been successfully trashed."
+				redirect_to post_path(@post)
+			else
+				flash[:failure] = "There was a problem trashing the comment."
+				redirect_back fallback_location: post_path(@post)
+			end
 		end
 	end
 
 	def untrash
-		if @comment.update_columns(trashed: false)
-			flash[:success] = "The comment has been successfully restored."
-			redirect_to post_path(@post)
+		unless @comment.trashed?
+			flash[:warning] = "The comment has already been restored."
+			redirect_back fallback_location: post_path(@post)
 		else
-			flash[:failure] = "There was a problem restoring the comment."
-			redirect_back fallback_url: post_path(@post)
+			if @comment.update_columns(trashed: false)
+				flash[:success] = "The comment has been successfully restored."
+				redirect_to post_path(@post)
+			else
+				flash[:failure] = "There was a problem restoring the comment."
+				redirect_back fallback_location: post_path(@post)
+			end
 		end
 	end
 
@@ -123,6 +144,13 @@ class CommentsController < ApplicationController
 		def require_untrashed_comment
 			if @comment.trashed?
 				flash[:warning] = "This comment must be restored from trash before proceeding."
+				redirect_back fallback_location: root_path
+			end
+		end
+
+		def require_trashed_comment
+			unless @comment.trashed?
+				flash[:warning] = "This comment must be sent to trash before proceeding."
 				redirect_back fallback_location: root_path
 			end
 		end

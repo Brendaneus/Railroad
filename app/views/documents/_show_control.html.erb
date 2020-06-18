@@ -8,11 +8,11 @@
 
 				<%= link_to "Edit Document", edit_article_document_path( @article, @document ) %>
 
-				<%= link_to "Hide Document", hide_article_document_path( @article, @document ), method: :patch unless @document.hidden? %>
-
-				<%= link_to "Show Document", unhide_article_document_path( @article, @document ), method: :patch if @document.hidden? %>
-
 			<% end %>
+
+			<%= link_to "Hide Document", hide_article_document_path( @article, @document ), method: :patch unless @document.hidden? %>
+
+			<%= link_to "Show Document", unhide_article_document_path( @article, @document ), method: :patch if @document.hidden? %>
 
 			<%= link_to "Trash Document", trash_article_document_path( @article, @document ), method: :patch unless @document.trashed? %>
 

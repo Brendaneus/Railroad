@@ -13,10 +13,7 @@ class BlogPost < ApplicationRecord
 	scope :motds, -> { where(motd: true) }
 
 	validates :title, presence: true,
-					  uniqueness: { case_sensitive: false },
-					  length: { maximum: 64 }
-	validates :subtitle, length: { maximum: 64 }
-	validates :content, presence: true,
-						length: { maximum: 4096 }
+					  uniqueness: { case_sensitive: false }
+	validates :content, presence: true
 
 end

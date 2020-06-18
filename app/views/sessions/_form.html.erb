@@ -38,7 +38,7 @@
 			<div class="check_box">
 				<%= label_tag :remove_ip, "Remove IP Address?" %>
 				<%= check_box_tag :remove_ip %>
-				<h4>Your IP: <%= request.remote_ip %></h4>
+				<h4>Saved IP: <%= @session.ip %></h4>
 			</div>
 
 		<% end %>

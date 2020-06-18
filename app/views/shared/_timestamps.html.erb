@@ -5,10 +5,14 @@
 
 	<% else %>
 			
-		<%= ( (create_alias ||= nil) || "Posted" ) + ( (owner ||= nil) ? " by #{owner}" : "" ) %>
-		on
+		<% if object.created_at ||= nil %>
 
-		<%= (date_time ||= nil) ? object.created_at.to_datetime.to_formatted_s(:long_ordinal) : object.created_at.to_date %>.
+			<%= ( (create_alias ||= nil) || "Posted" ) + ( (owner ||= nil) ? " by #{owner}" : "" ) %>
+			on
+
+			<%= (date_time ||= nil) ? object.created_at.to_datetime.to_formatted_s(:long_ordinal) : object.created_at.to_date %>.
+
+		<% end %>
 
 		<% if object.respond_to?(:edited?) && object.edited? %>
 

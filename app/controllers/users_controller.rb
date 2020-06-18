@@ -1,13 +1,14 @@
 class UsersController < ApplicationController
 	include SessionsHelper # :create, :destroy
 
-	before_action :require_login, only: [:trashed, :edit, :update, :hide, :unhide, :trash, :untrash]
-	before_action :require_admin, only: [:trashed, :destroy]
+	before_action :require_login, only: [:edit, :update, :hide, :unhide, :trash, :untrash]
+	before_action :require_admin, only: [:destroy]
 	before_action :set_user, except: [:index, :trashed, :new, :create]
 	before_action :require_authorize, only: [:edit, :update, :hide, :unhide, :trash, :untrash]
 	before_action :require_untrashed_user, only: [:edit, :update, :destroy]
-	before_action :require_authorize_or_admin_for_hidden_or_trashed, only: [:show]
+	before_action :require_authorize_or_admin_for_hidden, only: [:show]
 	before_action :require_trashed_target_user, only: [:destroy]
+	before_action :require_untrashed_target_user, only: [:edit, :update]
 
 	before_action :set_avatar_bucket, unless: -> { Rails.env.test? }
 	after_action :mark_activity, only: [:create, :update, :trash, :untrash, :destroy], if: :logged_in?
@@ -23,7 +24,13 @@ class UsersController < ApplicationController
 	end
 
 	def trashed
-		@users = User.trashed.order( admin: :desc )
+		if admin_user?
+			@users = User.trashed.order( admin: :desc )
+		elsif logged_in?
+			@users = User.trashed.non_hidden_or_same(current_user)
+		else
+			@users = User.trashed.non_hidden
+		end
 	end
 
 	def show
@@ -150,8 +157,8 @@ class UsersController < ApplicationController
 			end
 		end
 
-		def require_authorize_or_admin_for_hidden_or_trashed
-			unless (!@user.trashed? && !@user.hidden?) || authorized_for?( @user ) || admin_user?
+		def require_authorize_or_admin_for_hidden
+			if @user.hidden? && !( authorized_for?( @user ) || admin_user? )
 				flash[:warning] = "This user has been trashed and cannot be viewed."
 				redirect_back fallback_location: users_path
 			end
@@ -159,7 +166,14 @@ class UsersController < ApplicationController
 
 		def require_trashed_target_user
 			unless @user.trashed?
-				flash[:warning] = "This user must be sent to trash before deletion."
+				flash[:warning] = "This user must be sent to trash before proceeding."
+				redirect_back fallback_location: users_path
+			end
+		end
+
+		def require_untrashed_target_user
+			if @user.trashed?
+				flash[:warning] = "This user must be restored from trash before proceeding."
 				redirect_back fallback_location: users_path
 			end
 		end

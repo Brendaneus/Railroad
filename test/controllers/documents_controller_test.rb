@@ -2,1320 +2,1031 @@ require 'test_helper'
 
 class DocumentsControllerTest < ActionDispatch::IntegrationTest
 
-	fixtures :users, :archivings, :blog_posts, :documents, :suggestions, :versions
-
 	def setup
-		load_users
+		populate_users
+	end
+
+	def populate_users
+		@user = create(:user)
+		# @other_user = create(:user, name: "Other User", email: "other_user@example.com")
+		# @hidden_user = create(:user, name: "Hidden User", email: "hidden_user@example.com", hidden: true)
+		# @trashed_user = create(:user, name: "Trashed User", email: "trashed_user@example.com", trashed: true)
+		@admin_user = create(:user, name: "Admin User", email: "admin_user@example.com", admin: true)
+		# @hidden_admin_user = create(:user, name: "Hidden Admin User", email: "hidden_admin_user@example.com", admin: true, hidden: true)
+		@trashed_admin_user = create(:user, name: "Trashed Admin User", email: "trashed_admin_user@example.com", admin: true, trashed: true)
+		# @hidden_trashed_user = create(:user, name: "Hidden Trashed User", email: "hidden_trashed_user@example.com", hidden: true, trashed: true)
+	end
+
+	def populate_archivings
+		@archiving = create(:archiving)
+		@hidden_archiving = create(:archiving, title: "Hidden Archiving", hidden: true)
+		@trashed_archiving = create(:archiving, title: "Trashed Archiving", trashed: true)
+		@hidden_trashed_archiving = create(:archiving, title: "Hidden Trashed Archiving", hidden: true, trashed: true)
+	end
+
+	def populate_blog_posts
+		@blog_post = create(:blog_post)
+		@hidden_blog_post = create(:blog_post, title: "Hidden Blog Post", hidden: true)
+		@trashed_blog_post = create(:blog_post, title: "Trashed Blog Post", trashed: true)
+		@hidden_trashed_blog_post = create(:blog_post, title: "Hidden Trashed Blog Post", hidden: true, trashed: true)
+	end
+
+	def populate_documents
+		@archiving_document = create(:document, article: @archiving, title: "Document")
+		@archiving_hidden_document = create(:document, article: @archiving, title: "Hidden Document", hidden: true)
+		@archiving_trashed_document = create(:document, article: @archiving, title: "Trashed Document", trashed: true)
+		@archiving_hidden_trashed_document = create(:document, article: @archiving, title: "Hidden Trashed Document", hidden: true, trashed: true)
+		@hidden_archiving_document = create(:document, article: @hidden_archiving, title: "Document")
+		@trashed_archiving_document = create(:document, article: @trashed_archiving, title: "Document")
+		@blog_post_document = create(:document, article: @blog_post, title: "Document")
+		@blog_post_hidden_document = create(:document, article: @blog_post, title: "Hidden Document", hidden: true)
+		@blog_post_trashed_document = create(:document, article: @blog_post, title: "Trashed Document", trashed: true)
+		@blog_post_hidden_trashed_document = create(:document, article: @blog_post, title: "Hidden Trashed Document", hidden: true, trashed: true)
+		@hidden_blog_post_document = create(:document, article: @hidden_blog_post, title: "Document")
+		@trashed_blog_post_document = create(:document, article: @trashed_blog_post, title: "Document")
 	end
 
 	test "should get trashed" do
-		load_archivings
-		load_blog_posts
-		load_documents
+		populate_archivings
+		populate_blog_posts
+		populate_documents
+
+		# [require_admin_for_hidden_article]
+		[ @hidden_archiving,
+			@hidden_blog_post ].each do |article|
+			clear_flashes
+			get trashed_article_documents_path(article)
+			assert_response :redirect
+			assert flash[:warning]
+		end
+
+		# [require_admin_for_hidden_article]
+		log_in_as @user
+		[ @hidden_archiving,
+			@hidden_blog_post ].each do |article|
+			clear_flashes
+			get trashed_article_documents_path(article)
+			assert_response :redirect
+			assert flash[:warning]
+		end
+		log_out
+
 
 		## Guest
-		# Archivings, Un-Hidden -- Success
-		loop_archivings( archiving_modifiers: { 'hidden' => false } ) do |archiving, archiving_key|
-			get trashed_archiving_documents_path(archiving)
-			assert_response :success
+		get trashed_archiving_documents_path(@archiving)
+		assert_response :success
 
-			# trashed, un-hidden document links
-			loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'trashed' => true, 'hidden' => false } ) do |document|
-				assert_select 'main a[href=?]', archiving_document_path(archiving, document), 1
-			end
-			loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'trashed' => false } ) do |document|
-				assert_select 'main a[href=?]', archiving_document_path(archiving, document), 0
-			end
-			loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => true } ) do |document|
-				assert_select 'main a[href=?]', archiving_document_path(archiving, document), 0
-			end
-		end
-
-		# Archivings, Hidden -- Redirect
-		loop_archivings( archiving_modifiers: { 'hidden' => true } ) do |archiving|
-			get trashed_archiving_documents_path(archiving)
-			assert_response :redirect
-		end
-
-		# Blog Posts, Un-Hidden -- Success
-		loop_blog_posts( blog_modifiers: { 'hidden' => false } ) do |blog_post, blog_post_key|
-			get trashed_blog_post_documents_path(blog_post)
-			assert_response :success
-
-			# trashed, un-hidden document links
-			loop_documents( include_archivings: false,
-					only: { blog_post: blog_post_key },
-					document_modifiers: { 'trashed' => true, 'hidden' => false } ) do |document|
-				assert_select 'main a[href=?]', blog_post_document_path(blog_post, document), 1
-			end
-			loop_documents( include_archivings: false,
-					only: { blog_post: blog_post_key },
-					document_modifiers: { 'trashed' => false } ) do |document|
-				assert_select 'main a[href=?]', blog_post_document_path(blog_post, document), 0
-			end
-			loop_documents( include_archivings: false,
-					only: { blog_post: blog_post_key },
-					document_modifiers: { 'hidden' => true } ) do |document|
-				assert_select 'main a[href=?]', blog_post_document_path(blog_post, document), 0
-			end
-		end
-
-		# Blog Posts, Hidden -- Redirect
-		loop_blog_posts( blog_modifiers: { 'hidden' => true } ) do |blog_post|
-			get trashed_blog_post_documents_path(blog_post)
-			assert_response :redirect
+		# un-hidden, trashed document links
+		assert_select 'main a[href=?]', archiving_document_path(@archiving, @archiving_trashed_document), 1
+		[ @archiving_document,
+			@archiving_hidden_document,
+			@archiving_hidden_trashed_document ].each do |document|
+			assert_select 'main a[href=?]', archiving_document_path(@archiving, document), 0
 		end
 
 
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
+		## Admin
+		log_in_as @admin_user
 
-			# Archivings, Un-Hidden -- Success
-			loop_archivings( archiving_modifiers: { 'hidden' => false } ) do |archiving, archiving_key|
-				get trashed_archiving_documents_path(archiving)
-				assert_response :success
+		get trashed_archiving_documents_path(@archiving)
+		assert_response :success
 
-				# trashed, un-hidden document links
-				loop_documents( include_blogs: false,
-						only: { archiving: archiving_key },
-						document_modifiers: { 'trashed' => true, 'hidden' => false } ) do |document|
-					assert_select 'main a[href=?]', archiving_document_path(archiving, document), 1
-				end
-				loop_documents( include_blogs: false,
-						only: { archiving: archiving_key },
-						document_modifiers: { 'trashed' => false } ) do |document|
-					assert_select 'main a[href=?]', archiving_document_path(archiving, document), 0
-				end
-				loop_documents( include_blogs: false,
-						only: { archiving: archiving_key },
-						document_modifiers: { 'hidden' => true } ) do |document|
-					assert_select 'main a[href=?]', archiving_document_path(archiving, document), 0
-				end
-			end
-
-			# Archivings, Hidden -- Redirect
-			loop_archivings( archiving_modifiers: { 'hidden' => true } ) do |archiving|
-				get trashed_archiving_documents_path(archiving)
-				assert_response :redirect
-			end
-
-			# Blog Posts, Un-Hidden -- Success
-			loop_blog_posts( blog_modifiers: { 'hidden' => false } ) do |blog_post, blog_post_key|
-				get trashed_blog_post_documents_path(blog_post)
-				assert_response :success
-
-				# trashed, un-hidden document links
-				loop_documents( include_archivings: false,
-						only: { blog_post: blog_post_key },
-						document_modifiers: { 'trashed' => true, 'hidden' => false } ) do |document|
-					assert_select 'main a[href=?]', blog_post_document_path(blog_post, document), 1
-				end
-				loop_documents( include_archivings: false,
-						only: { blog_post: blog_post_key },
-						document_modifiers: { 'trashed' => false } ) do |document|
-					assert_select 'main a[href=?]', blog_post_document_path(blog_post, document), 0
-				end
-				loop_documents( include_archivings: false,
-						only: { blog_post: blog_post_key },
-						document_modifiers: { 'hidden' => true } ) do |document|
-					assert_select 'main a[href=?]', blog_post_document_path(blog_post, document), 0
-				end
-			end
-
-			# Blog Posts, Hidden -- Redirect
-			loop_blog_posts( blog_modifiers: { 'hidden' => true } ) do |blog_post|
-				get trashed_blog_post_documents_path(blog_post)
-				assert_response :redirect
-			end
-
-			log_out
+		# un-hidden, trashed document links
+		[ @archiving_trashed_document,
+			@archiving_hidden_trashed_document ].each do |document|
+			assert_select 'main a[href=?]', archiving_document_path(@archiving, document), 1
 		end
-
-
-		## Admin User
-		loop_users( user_modifiers: { 'admin' => true } ) do |user|
-			log_in_as user
-
-			# Archivings -- Success
-			loop_archivings do |archiving, archiving_key|
-
-				get trashed_archiving_documents_path(archiving)
-				assert_response :success
-
-				# trashed document links
-				loop_documents( include_blogs: false,
-						only: { archiving: archiving_key },
-						document_modifiers: { 'trashed' => true } ) do |document|
-					assert_select 'main a[href=?]', archiving_document_path(archiving, document), 1
-				end
-				loop_documents( include_blogs: false,
-						only: { archiving: archiving_key },
-						document_modifiers: { 'trashed' => false } ) do |document|
-					assert_select 'main a[href=?]', archiving_document_path(archiving, document), 0
-				end
-			end
-
-			# Blog Posts -- Success
-			loop_blog_posts do |blog_post, blog_post_key|
-
-				get trashed_blog_post_documents_path(blog_post)
-				assert_response :success
-
-				# trashed, document links
-				loop_documents( include_archivings: false,
-						only: { blog_post: blog_post_key },
-						document_modifiers: { 'trashed' => true } ) do |document|
-					assert_select 'main a[href=?]', blog_post_document_path(blog_post, document), 1
-				end
-				loop_documents( include_archivings: false,
-						only: { blog_post: blog_post_key },
-						document_modifiers: { 'trashed' => false } ) do |document|
-					assert_select 'main a[href=?]', blog_post_document_path(blog_post, document), 0
-				end
-			end
-
-			log_out
+		[ @archiving_document,
+			@archiving_hidden_document ].each do |document|
+			assert_select 'main a[href=?]', archiving_document_path(@archiving, document), 0
 		end
 	end
 
 	test "should get show" do
-		load_archivings
-		load_blog_posts
-		load_documents
+		populate_archivings
+		populate_blog_posts
+		populate_documents
+
+		# [require_admin_for_hidden_article]
+		[ [@hidden_archiving, @hidden_archiving_document],
+			[@hidden_blog_post, @hidden_blog_post_document] ].each do |pair|
+			clear_flashes
+			get article_document_path(pair[0], pair[1])
+			assert_response :redirect
+			assert flash[:warning]
+		end
+
+		# [require_admin_for_hidden_article]
+		log_in_as @user
+		[ [@hidden_archiving, @hidden_archiving_document],
+			[@hidden_blog_post, @hidden_blog_post_document] ].each do |pair|
+			clear_flashes
+			get article_document_path(pair[0], pair[1])
+			assert_response :redirect
+			assert flash[:warning]
+		end
+		log_out
+
+		# [require_admin_for_hidden_document]
+		[ [@archiving, @archiving_hidden_document],
+			[@blog_post, @blog_post_hidden_document] ].each do |pair|
+			clear_flashes
+			get article_document_path(pair[0], pair[1])
+			assert_response :redirect
+			assert flash[:warning]
+		end
+
+		# [require_admin_for_hidden_document]
+		log_in_as @user
+		[ [@archiving, @archiving_hidden_document],
+			[@blog_post, @blog_post_hidden_document] ].each do |pair|
+			clear_flashes
+			get article_document_path(pair[0], pair[1])
+			assert_response :redirect
+			assert flash[:warning]
+		end
+		log_out
+
 
 		## Guest
-		# Archivings, Un-Hidden
-		loop_archivings( archiving_modifiers: { 'hidden' => false } ) do |archiving, archiving_key|
+		get archiving_document_path(@archiving, @archiving_document)
+		assert_response :success
 
-			# Documents, Un-Hidden -- Success
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key },
-				document_modifiers: { 'hidden' => false } ) do |document|
+		# control panel
+		assert_select 'div.admin.control', 0
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', archiving_document_suggestions_path(@archiving, @archiving_document), 1
+			assert_select 'a[href=?]', archiving_document_versions_path(@archiving, @archiving_document), 1
+		end
+		assert_select 'a[href=?]', edit_archiving_document_path(@archiving, @archiving_document), 0
+		assert_select 'a[href=?][data-method=patch]', hide_archiving_document_path(@archiving, @archiving_document), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_archiving_document_path(@archiving, @archiving_document), 0
+		assert_select 'a[href=?][data-method=patch]', trash_archiving_document_path(@archiving, @archiving_document), 0
+		assert_select 'a[href=?][data-method=patch]', untrash_archiving_document_path(@archiving, @archiving_document), 0
+		assert_select 'a[href=?][data-method=delete]', archiving_document_path(@archiving, @archiving_document), 0
 
-				get archiving_document_path(archiving, document)
-				assert_response :success
+		get blog_post_document_path(@blog_post, @blog_post_document)
+		assert_response :success
 
-				# control panel
-				assert_select 'div.control' do
-					assert_select 'a[href=?]', archiving_document_suggestions_path(archiving, document), 1
-					assert_select 'a[href=?]', archiving_document_versions_path(archiving, document), 1
-				end
-				assert_select 'div.admin.control', 0
-				assert_select 'a[href=?]', edit_archiving_document_path(archiving, document), 0
-				assert_select 'a[href=?][data-method=patch]', hide_archiving_document_path(archiving, document), 0
-				assert_select 'a[href=?][data-method=patch]', unhide_archiving_document_path(archiving, document), 0
-				assert_select 'a[href=?][data-method=patch]', trash_archiving_document_path(archiving, document), 0
-				assert_select 'a[href=?][data-method=patch]', untrash_archiving_document_path(archiving, document), 0
-				assert_select 'a[href=?][data-method=delete]', archiving_document_path(archiving, document), 0
-			end
+		# no control panel
+		assert_select 'div.control', 0
+		assert_select 'a[href=?]', edit_blog_post_document_path(@blog_post, @blog_post_document), 0
+		assert_select 'a[href=?][data-method=patch]', hide_blog_post_document_path(@blog_post, @blog_post_document), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_blog_post_document_path(@blog_post, @blog_post_document), 0
+		assert_select 'a[href=?][data-method=patch]', trash_blog_post_document_path(@blog_post, @blog_post_document), 0
+		assert_select 'a[href=?][data-method=patch]', untrash_blog_post_document_path(@blog_post, @blog_post_document), 0
+		assert_select 'a[href=?][data-method=delete]', blog_post_document_path(@blog_post, @blog_post_document), 0
 
-			# Documents, Hidden -- Redirect
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key },
-				document_modifiers: { 'hidden' => true } ) do |document|
 
-				get archiving_document_path(archiving, document)
-				assert_response :redirect
-			end
+		# User, Admin
+		log_in_as @admin_user
+
+		get archiving_document_path(@archiving, @archiving_document)
+		assert_response :success
+
+		# admin control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', archiving_document_suggestions_path(@archiving, @archiving_document), 1
+			assert_select 'a[href=?]', archiving_document_versions_path(@archiving, @archiving_document), 1
+			assert_select 'a[href=?]', edit_archiving_document_path(@archiving, @archiving_document), 1
+			assert_select 'a[href=?][data-method=patch]', hide_archiving_document_path(@archiving, @archiving_document), 1
+			assert_select 'a[href=?][data-method=patch]', unhide_archiving_document_path(@archiving, @archiving_document), 0
+			assert_select 'a[href=?][data-method=patch]', trash_archiving_document_path(@archiving, @archiving_document), 1
+			assert_select 'a[href=?][data-method=patch]', untrash_archiving_document_path(@archiving, @archiving_document), 0
+			assert_select 'a[href=?][data-method=delete]', archiving_document_path(@archiving, @archiving_document), 0
 		end
 
-		# Archivings, Hidden -- Redirect
-		loop_archivings( archiving_modifiers: { 'hidden' => true } ) do |archiving, archiving_key|
+		get archiving_document_path(@archiving, @archiving_hidden_document)
+		assert_response :success
 
-			loop_documents( include_blogs: false,
-				only: { archiving: archiving_key } ) do |document|
-
-				get archiving_document_path(archiving, document)
-				assert_response :redirect
-			end
+		# admin control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', archiving_document_suggestions_path(@archiving, @archiving_hidden_document), 1
+			assert_select 'a[href=?]', archiving_document_versions_path(@archiving, @archiving_hidden_document), 1
+			assert_select 'a[href=?]', edit_archiving_document_path(@archiving, @archiving_hidden_document), 1
+			assert_select 'a[href=?][data-method=patch]', hide_archiving_document_path(@archiving, @archiving_hidden_document), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_archiving_document_path(@archiving, @archiving_hidden_document), 1
+			assert_select 'a[href=?][data-method=patch]', trash_archiving_document_path(@archiving, @archiving_hidden_document), 1
+			assert_select 'a[href=?][data-method=patch]', untrash_archiving_document_path(@archiving, @archiving_hidden_document), 0
+			assert_select 'a[href=?][data-method=delete]', archiving_document_path(@archiving, @archiving_hidden_document), 0
 		end
 
-		# Blog Posts, Un-Hidden
-		loop_blog_posts( blog_modifiers: { 'hidden' => false } ) do |blog_post, blog_post_key|
+		get archiving_document_path(@archiving, @archiving_trashed_document)
+		assert_response :success
 
-			# Documents, Un-Hidden -- Success
-			loop_documents( include_archivings: false,
-				only: { blog_post: blog_post_key },
-				document_modifiers: { 'hidden' => false } ) do |document|
-
-				get blog_post_document_path(blog_post, document)
-				assert_response :success
-
-				# control panel
-				assert_select 'div.control', 0
-				assert_select 'a[href=?]', archiving_document_suggestions_path(blog_post, document), 0
-				assert_select 'a[href=?]', archiving_document_versions_path(blog_post, document), 0
-				assert_select 'a[href=?]', edit_blog_post_document_path(blog_post, document), 0
-				assert_select 'a[href=?][data-method=patch]', hide_blog_post_document_path(blog_post, document), 0
-				assert_select 'a[href=?][data-method=patch]', unhide_blog_post_document_path(blog_post, document), 0
-				assert_select 'a[href=?][data-method=patch]', trash_blog_post_document_path(blog_post, document), 0
-				assert_select 'a[href=?][data-method=patch]', untrash_blog_post_document_path(blog_post, document), 0
-				assert_select 'a[href=?][data-method=delete]', blog_post_document_path(blog_post, document), 0
-			end
-
-			# Documents, Hidden -- Redirect
-			loop_documents( include_archivings: false,
-				only: { blog_post: blog_post_key },
-				document_modifiers: { 'hidden' => true } ) do |document|
-
-				get blog_post_document_path(blog_post, document)
-				assert_response :redirect
-			end
+		# admin control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', archiving_document_suggestions_path(@archiving, @archiving_trashed_document), 1
+			assert_select 'a[href=?]', archiving_document_versions_path(@archiving, @archiving_trashed_document), 1
+			assert_select 'a[href=?]', edit_archiving_document_path(@archiving, @archiving_trashed_document), 0
+			assert_select 'a[href=?][data-method=patch]', hide_archiving_document_path(@archiving, @archiving_trashed_document), 1
+			assert_select 'a[href=?][data-method=patch]', unhide_archiving_document_path(@archiving, @archiving_trashed_document), 0
+			assert_select 'a[href=?][data-method=patch]', trash_archiving_document_path(@archiving, @archiving_trashed_document), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_archiving_document_path(@archiving, @archiving_trashed_document), 1
+			assert_select 'a[href=?][data-method=delete]', archiving_document_path(@archiving, @archiving_trashed_document), 1
 		end
 
-		# Blog Posts, Hidden -- Redirect
-		loop_blog_posts( blog_modifiers: { 'hidden' => true } ) do |blog_post, blog_post_key|
+		get blog_post_document_path(@blog_post, @blog_post_document)
+		assert_response :success
 
-			loop_documents( include_archivings: false,
-				only: { blog_post: blog_post_key } ) do |document|
-
-				get blog_post_document_path(blog_post, document)
-				assert_response :redirect
-			end
+		# admin control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', edit_blog_post_document_path(@blog_post, @blog_post_document), 1
+			assert_select 'a[href=?][data-method=patch]', hide_blog_post_document_path(@blog_post, @blog_post_document), 1
+			assert_select 'a[href=?][data-method=patch]', unhide_blog_post_document_path(@blog_post, @blog_post_document), 0
+			assert_select 'a[href=?][data-method=patch]', trash_blog_post_document_path(@blog_post, @blog_post_document), 1
+			assert_select 'a[href=?][data-method=patch]', untrash_blog_post_document_path(@blog_post, @blog_post_document), 0
+			assert_select 'a[href=?][data-method=delete]', blog_post_document_path(@blog_post, @blog_post_document), 0
 		end
 
+		get blog_post_document_path(@blog_post, @blog_post_hidden_document)
+		assert_response :success
 
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			# Archivings, Un-Hidden
-			loop_archivings( archiving_modifiers: { 'hidden' => false } ) do |archiving, archiving_key|
-
-				# Documents, Un-Hidden -- Success
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => false } ) do |document|
-
-					get archiving_document_path(archiving, document)
-					assert_response :success
-
-					# control panel
-					assert_select 'div.control' do
-						assert_select 'a[href=?]', archiving_document_suggestions_path(archiving, document), 1
-						assert_select 'a[href=?]', archiving_document_versions_path(archiving, document), 1
-					end
-					assert_select 'div.admin.control', 0
-					assert_select 'a[href=?]', edit_archiving_document_path(archiving, document), 0
-					assert_select 'a[href=?][data-method=patch]', hide_archiving_document_path(archiving, document), 0
-					assert_select 'a[href=?][data-method=patch]', unhide_archiving_document_path(archiving, document), 0
-					assert_select 'a[href=?][data-method=patch]', trash_archiving_document_path(archiving, document), 0
-					assert_select 'a[href=?][data-method=patch]', untrash_archiving_document_path(archiving, document), 0
-					assert_select 'a[href=?][data-method=delete]', archiving_document_path(archiving, document), 0
-				end
-
-				# Documents, Hidden -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => true } ) do |document|
-
-					get archiving_document_path(archiving, document)
-					assert_response :redirect
-				end
-			end
-
-			# Archivings, Hidden -- Redirect
-			loop_archivings( archiving_modifiers: { 'hidden' => true } ) do |archiving, archiving_key|
-
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document|
-
-					get archiving_document_path(archiving, document)
-					assert_response :redirect
-				end
-			end
-
-			# Blog Posts, Un-Hidden
-			loop_blog_posts( blog_modifiers: { 'hidden' => false } ) do |blog_post, blog_post_key|
-
-				# Documents, Un-Hidden -- Success
-				loop_documents( include_archivings: false,
-					only: { blog_post: blog_post_key },
-					document_modifiers: { 'hidden' => false } ) do |document|
-
-					get blog_post_document_path(blog_post, document)
-					assert_response :success
-
-					# no control panel
-					assert_select 'div.control', 0
-					assert_select 'a[href=?]', archiving_document_suggestions_path(blog_post, document), 0
-					assert_select 'a[href=?]', archiving_document_versions_path(blog_post, document), 0
-					assert_select 'a[href=?]', edit_blog_post_document_path(blog_post, document), 0
-					assert_select 'a[href=?][data-method=patch]', hide_blog_post_document_path(blog_post, document), 0
-					assert_select 'a[href=?][data-method=patch]', unhide_blog_post_document_path(blog_post, document), 0
-					assert_select 'a[href=?][data-method=patch]', trash_blog_post_document_path(blog_post, document), 0
-					assert_select 'a[href=?][data-method=patch]', untrash_blog_post_document_path(blog_post, document), 0
-					assert_select 'a[href=?][data-method=delete]', blog_post_document_path(blog_post, document), 0
-				end
-
-				# Documents, Hidden -- Redirect
-				loop_documents( include_archivings: false,
-					only: { blog_post: blog_post_key },
-					document_modifiers: { 'hidden' => true } ) do |document|
-
-					get blog_post_document_path(blog_post, document)
-					assert_response :redirect
-				end
-			end
-
-			# Blog Posts, Hidden -- Redirect
-			loop_blog_posts( blog_modifiers: { 'hidden' => true } ) do |blog_post, blog_post_key|
-
-				loop_documents( include_archivings: false,
-					only: { blog_post: blog_post_key } ) do |document|
-
-					get blog_post_document_path(blog_post, document)
-					assert_response :redirect
-				end
-			end
-
-			log_out
+		# admin control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', edit_blog_post_document_path(@blog_post, @blog_post_hidden_document), 1
+			assert_select 'a[href=?][data-method=patch]', hide_blog_post_document_path(@blog_post, @blog_post_hidden_document), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_blog_post_document_path(@blog_post, @blog_post_hidden_document), 1
+			assert_select 'a[href=?][data-method=patch]', trash_blog_post_document_path(@blog_post, @blog_post_hidden_document), 1
+			assert_select 'a[href=?][data-method=patch]', untrash_blog_post_document_path(@blog_post, @blog_post_hidden_document), 0
+			assert_select 'a[href=?][data-method=delete]', blog_post_document_path(@blog_post, @blog_post_hidden_document), 0
 		end
 
+		get blog_post_document_path(@blog_post, @blog_post_trashed_document)
+		assert_response :success
 
-		## User, Admin, Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user|
-			log_in_as user
-
-			# Archiving Documents -- Success
-			loop_documents( include_blogs: false ) do |document|
-
-				get archiving_document_path(document.article, document)
-				assert_response :success
-
-				# control panel
-				assert_select 'div.admin.control' do
-					assert_select 'a[href=?]', archiving_document_suggestions_path(document.article, document), 1
-					assert_select 'a[href=?]', archiving_document_versions_path(document.article, document), 1
-				end
-				assert_select 'a[href=?]', edit_archiving_document_path(document.article, document), 0
-				assert_select 'a[href=?][data-method=patch]', hide_archiving_document_path(document.article, document), 0
-				assert_select 'a[href=?][data-method=patch]', unhide_archiving_document_path(document.article, document), 0
-				assert_select 'a[href=?][data-method=patch]', trash_archiving_document_path(document.article, document), 0
-				assert_select 'a[href=?][data-method=patch]', untrash_archiving_document_path(document.article, document), 0
-				assert_select 'a[href=?][data-method=delete]', archiving_document_path(document.article, document), 0
-			end
-
-			# Blog Post Documents -- Success
-			loop_documents( include_archivings: false ) do |document|
-
-				get blog_post_document_path(document.article, document)
-				assert_response :success
-
-				# no control panel
-				assert_select 'div.control', 0
-				assert_select 'a[href=?]', archiving_document_suggestions_path(document.article, document), 0
-				assert_select 'a[href=?]', archiving_document_versions_path(document.article, document), 0
-				assert_select 'a[href=?]', edit_blog_post_document_path(document.article, document), 0
-				assert_select 'a[href=?][data-method=patch]', hide_blog_post_document_path(document.article, document), 0
-				assert_select 'a[href=?][data-method=patch]', unhide_blog_post_document_path(document.article, document), 0
-				assert_select 'a[href=?][data-method=patch]', trash_blog_post_document_path(document.article, document), 0
-				assert_select 'a[href=?][data-method=patch]', untrash_blog_post_document_path(document.article, document), 0
-			end
+		# admin control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', edit_blog_post_document_path(@blog_post, @blog_post_trashed_document), 0
+			assert_select 'a[href=?][data-method=patch]', hide_blog_post_document_path(@blog_post, @blog_post_trashed_document), 1
+			assert_select 'a[href=?][data-method=patch]', unhide_blog_post_document_path(@blog_post, @blog_post_trashed_document), 0
+			assert_select 'a[href=?][data-method=patch]', trash_blog_post_document_path(@blog_post, @blog_post_trashed_document), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_blog_post_document_path(@blog_post, @blog_post_trashed_document), 1
+			assert_select 'a[href=?][data-method=delete]', blog_post_document_path(@blog_post, @blog_post_trashed_document), 1
 		end
 
+		log_out
 
-		## User, Admin, Un-Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |user|
-			log_in_as user
 
-			# Archiving Documents -- Success
-			loop_documents( include_blogs: false ) do |document|
+		# User, Admin, Trashed
+		log_in_as @trashed_admin_user
 
-				get archiving_document_path(document.article, document)
-				assert_response :success
+		get archiving_document_path(@archiving, @archiving_document)
+		assert_response :success
 
-				# admin control panel
-				assert_select 'div.admin.control' do
-					assert_select 'a[href=?]', archiving_document_suggestions_path(document.article, document), 1
-					assert_select 'a[href=?]', archiving_document_versions_path(document.article, document), 1
-					assert_select 'a[href=?]', edit_archiving_document_path(document.article, document), !document.trashed? && !user.trashed?
-					assert_select 'a[href=?][data-method=patch]', hide_archiving_document_path(document.article, document), !document.trashed? && !document.hidden? && !user.trashed?
-					assert_select 'a[href=?][data-method=patch]', unhide_archiving_document_path(document.article, document), !document.trashed? && document.hidden? && !user.trashed?
-					assert_select 'a[href=?][data-method=patch]', trash_archiving_document_path(document.article, document), !document.trashed? && !user.trashed?
-					assert_select 'a[href=?][data-method=patch]', untrash_archiving_document_path(document.article, document), document.trashed? && !user.trashed?
-					assert_select 'a[href=?][data-method=delete]', archiving_document_path(document.article, document), document.trashed? && !user.trashed?
-				end
-			end
-
-			# Blog Post Documents -- Success
-			loop_documents( include_archivings: false ) do |document|
-
-				get blog_post_document_path(document.article, document)
-				assert_response :success
-
-				# admin control panel
-				assert_select 'div.admin.control' do
-					assert_select 'a[href=?]', edit_blog_post_document_path(document.article, document), !document.trashed? && !user.trashed?
-					assert_select 'a[href=?][data-method=patch]', hide_blog_post_document_path(document.article, document), !document.trashed? && !document.hidden? && !user.trashed?
-					assert_select 'a[href=?][data-method=patch]', unhide_blog_post_document_path(document.article, document), !document.trashed? && document.hidden? && !user.trashed?
-					assert_select 'a[href=?][data-method=patch]', trash_blog_post_document_path(document.article, document), !document.trashed? && !user.trashed?
-					assert_select 'a[href=?][data-method=patch]', untrash_blog_post_document_path(document.article, document), document.trashed? && !user.trashed?
-					assert_select 'a[href=?][data-method=delete]', blog_post_document_path(document.article, document), document.trashed? && !user.trashed?
-				end
-				assert_select 'a[href=?]', archiving_document_suggestions_path(document.article, document), 0
-				assert_select 'a[href=?]', archiving_document_versions_path(document.article, document), 0
-			end
+		# admin control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', archiving_document_suggestions_path(@archiving, @archiving_document), 1
+			assert_select 'a[href=?]', archiving_document_versions_path(@archiving, @archiving_document), 1
 		end
+		assert_select 'a[href=?]', edit_archiving_document_path(@archiving, @archiving_document), 0
+		assert_select 'a[href=?][data-method=patch]', hide_archiving_document_path(@archiving, @archiving_document), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_archiving_document_path(@archiving, @archiving_document), 0
+		assert_select 'a[href=?][data-method=patch]', trash_archiving_document_path(@archiving, @archiving_document), 0
+		assert_select 'a[href=?][data-method=patch]', untrash_archiving_document_path(@archiving, @archiving_document), 0
+		assert_select 'a[href=?][data-method=delete]', archiving_document_path(@archiving, @archiving_document), 0
+
+		get archiving_document_path(@archiving, @archiving_hidden_document)
+		assert_response :success
+
+		# admin control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', archiving_document_suggestions_path(@archiving, @archiving_hidden_document), 1
+			assert_select 'a[href=?]', archiving_document_versions_path(@archiving, @archiving_hidden_document), 1
+		end
+		assert_select 'a[href=?]', edit_archiving_document_path(@archiving, @archiving_hidden_document), 0
+		assert_select 'a[href=?][data-method=patch]', hide_archiving_document_path(@archiving, @archiving_hidden_document), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_archiving_document_path(@archiving, @archiving_hidden_document), 0
+		assert_select 'a[href=?][data-method=patch]', trash_archiving_document_path(@archiving, @archiving_hidden_document), 0
+		assert_select 'a[href=?][data-method=patch]', untrash_archiving_document_path(@archiving, @archiving_hidden_document), 0
+		assert_select 'a[href=?][data-method=delete]', archiving_document_path(@archiving, @archiving_hidden_document), 0
+
+		get archiving_document_path(@archiving, @archiving_trashed_document)
+		assert_response :success
+
+		# admin control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', archiving_document_suggestions_path(@archiving, @archiving_trashed_document), 1
+			assert_select 'a[href=?]', archiving_document_versions_path(@archiving, @archiving_trashed_document), 1
+		end
+		assert_select 'a[href=?]', edit_archiving_document_path(@archiving, @archiving_trashed_document), 0
+		assert_select 'a[href=?][data-method=patch]', hide_archiving_document_path(@archiving, @archiving_trashed_document), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_archiving_document_path(@archiving, @archiving_trashed_document), 0
+		assert_select 'a[href=?][data-method=patch]', trash_archiving_document_path(@archiving, @archiving_trashed_document), 0
+		assert_select 'a[href=?][data-method=patch]', untrash_archiving_document_path(@archiving, @archiving_trashed_document), 0
+		assert_select 'a[href=?][data-method=delete]', archiving_document_path(@archiving, @archiving_trashed_document), 0
+
+		get blog_post_document_path(@blog_post, @blog_post_document)
+		assert_response :success
+
+		# no control panel
+		assert_select 'div.control', 0
+		assert_select 'a[href=?]', edit_blog_post_document_path(@blog_post, @blog_post_document), 0
+		assert_select 'a[href=?][data-method=patch]', hide_blog_post_document_path(@blog_post, @blog_post_document), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_blog_post_document_path(@blog_post, @blog_post_document), 0
+		assert_select 'a[href=?][data-method=patch]', trash_blog_post_document_path(@blog_post, @blog_post_document), 0
+		assert_select 'a[href=?][data-method=patch]', untrash_blog_post_document_path(@blog_post, @blog_post_document), 0
+		assert_select 'a[href=?][data-method=delete]', blog_post_document_path(@blog_post, @blog_post_document), 0
+
+		get blog_post_document_path(@blog_post, @blog_post_hidden_document)
+		assert_response :success
+
+		# no control panel
+		assert_select 'div.control', 0
+		assert_select 'a[href=?]', edit_blog_post_document_path(@blog_post, @blog_post_document), 0
+		assert_select 'a[href=?][data-method=patch]', hide_blog_post_document_path(@blog_post, @blog_post_document), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_blog_post_document_path(@blog_post, @blog_post_document), 0
+		assert_select 'a[href=?][data-method=patch]', trash_blog_post_document_path(@blog_post, @blog_post_document), 0
+		assert_select 'a[href=?][data-method=patch]', untrash_blog_post_document_path(@blog_post, @blog_post_document), 0
+		assert_select 'a[href=?][data-method=delete]', blog_post_document_path(@blog_post, @blog_post_document), 0
+
+		get blog_post_document_path(@blog_post, @blog_post_trashed_document)
+		assert_response :success
+
+		# no control panel
+		assert_select 'div.control', 0
+		assert_select 'a[href=?]', edit_blog_post_document_path(@blog_post, @blog_post_document), 0
+		assert_select 'a[href=?][data-method=patch]', hide_blog_post_document_path(@blog_post, @blog_post_document), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_blog_post_document_path(@blog_post, @blog_post_document), 0
+		assert_select 'a[href=?][data-method=patch]', trash_blog_post_document_path(@blog_post, @blog_post_document), 0
+		assert_select 'a[href=?][data-method=patch]', untrash_blog_post_document_path(@blog_post, @blog_post_document), 0
+		assert_select 'a[href=?][data-method=delete]', blog_post_document_path(@blog_post, @blog_post_document), 0
 	end
 
 	test "should get new (only un-trashed admins)" do
-		load_archivings
-		load_blog_posts
+		populate_archivings
+		populate_blog_posts
 
-		## Guest
-		# Archivings -- Redirect
-		loop_archivings do |archiving|
-			get new_archiving_document_path(archiving)
+		# [require_admin]
+		[ @archiving,
+			@blog_post ].each do |article|
+			clear_flashes
+			get new_article_document_path(article)
 			assert_response :redirect
+			assert flash[:warning]
 		end
 
-		# Blog Posts -- Redirect
-		loop_blog_posts do |blog_post|
-			get new_blog_post_document_path(blog_post)
+		# [require_admin]
+		log_in_as @user
+		[ @archiving,
+			@blog_post ].each do |article|
+			clear_flashes
+			get new_article_document_path(article)
 			assert_response :redirect
+			assert flash[:warning]
+		end
+		log_out
+
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		[ @archiving,
+			@blog_post ].each do |article|
+			clear_flashes
+			get new_article_document_path(article)
+			assert_response :redirect
+			assert flash[:warning]
+		end
+		log_out
+
+		# [require_untrashed_article]
+		log_in_as @admin_user
+		[ @trashed_archiving,
+			@trashed_blog_post ].each do |article|
+			clear_flashes
+			get new_article_document_path(article)
+			assert_response :redirect
+			assert flash[:warning]
+		end
+		log_out
+
+
+		## User, Admin
+		log_in_as @admin_user
+
+		# Archiving Document
+		clear_flashes
+		get new_archiving_document_path(@archiving)
+		assert_response :success
+
+		assert_select 'form' do
+			assert_select 'input[name="document[title]"][type="text"]', 1
+			assert_select 'textarea[name="document[content]"]', 1
 		end
 
+		# Blog Post Document
+		clear_flashes
+		get new_blog_post_document_path(@blog_post)
+		assert_response :success
 
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			# Archivings -- Redirect
-			loop_archivings do |archiving|
-				get new_archiving_document_path(archiving)
-				assert_response :redirect
-			end
-
-			# Blog Posts -- Redirect
-			loop_blog_posts do |blog_post|
-				get new_blog_post_document_path(blog_post)
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-
-		## User, Admin, Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user|
-			log_in_as user
-
-			# Archivings -- Redirect
-			loop_archivings do |archiving|
-				get new_archiving_document_path(archiving)
-				assert_response :redirect
-			end
-
-			# Blog Posts -- Redirect
-			loop_blog_posts do |blog_post|
-				get new_blog_post_document_path(blog_post)
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-		## User, Admin, Un-Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |user|
-			log_in_as user
-
-			# Archivings, Un-Trashed -- Success
-			loop_archivings( archiving_modifiers: { 'trashed' => false } ) do |archiving|
-				get new_archiving_document_path(archiving)
-				assert_response :success
-			end
-
-			# Archivings, Trashed -- Redirect
-			loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving|
-				get new_archiving_document_path(archiving)
-				assert_response :redirect
-			end
-
-			# Blog Posts, Un-Trashed -- Success
-			loop_blog_posts( blog_modifiers: { 'trashed' => false } ) do |blog_post|
-				get new_blog_post_document_path(blog_post)
-				assert_response :success
-			end
-
-			# Blog Posts, Trashed -- Redirect
-			loop_blog_posts( blog_modifiers: { 'trashed' => true } ) do |blog_post|
-				get new_blog_post_document_path(blog_post)
-				assert_response :redirect
-			end
-
-			log_out
+		assert_select 'form' do
+			assert_select 'input[name="document[title]"][type="text"]', 1
+			assert_select 'textarea[name="document[content]"]', 1
 		end
 	end
 
 	test "should post create (only un-trashed admins)" do
-		load_archivings
-		load_blog_posts
+		populate_archivings
+		populate_blog_posts
+		populate_documents
 
-		## Guest
-		# Archivings -- Redirect
-		loop_archivings do |archiving|
+		# [require_admin]
+		[ @archiving,
+			@blog_post ].each do |article|
+			clear_flashes
 			assert_no_difference 'Document.count' do
-				post archiving_documents_path(archiving), params: { document: {
-					title: "Guest's New Archiving Document",
-					content: "Sample Text"
-				} }
+				post article_documents_path(article), params: { document: { title: "New Document" } }
 			end
+			assert flash[:warning]
+			assert_response :redirect
 		end
 
-		# Blog Posts -- Redirect
-		loop_blog_posts do |blog_post|
+		# [require_admin]
+		log_in_as @user
+		[ @archiving,
+			@blog_post ].each do |article|
+			clear_flashes
 			assert_no_difference 'Document.count' do
-				post blog_post_documents_path(blog_post), params: { document: {
-					title: "Guest's New Blog Post Document",
-					content: "Sample Text"
-				} }
+				post article_documents_path(article), params: { document: { title: "New Document" } }
 			end
+			assert flash[:warning]
+			assert_response :redirect
+		end
+		log_out
+
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		[ @archiving,
+			@blog_post ].each do |article|
+			clear_flashes
+			assert_no_difference 'Document.count' do
+				post article_documents_path(article), params: { document: { title: "New Document" } }
+			end
+			assert flash[:warning]
+			assert_response :redirect
+		end
+		log_out
+
+		# [require_untrashed_article]
+		log_in_as @admin_user
+		[ @trashed_archiving,
+			@trashed_blog_post ].each do |article|
+			clear_flashes
+			assert_no_difference 'Document.count' do
+				post article_documents_path(article), params: { document: { title: "New Document" } }
+			end
+			assert flash[:warning]
+			assert_response :redirect
+		end
+		log_out
+
+
+		## User, Admin
+		log_in_as @admin_user
+
+		# Failure
+		clear_flashes
+		assert_no_difference 'Document.count' do
+			post archiving_documents_path(@archiving), params: { document: { title: @archiving_document.title } }
+		end
+		assert flash[:failure]
+		assert_response :ok
+
+		assert_select 'form' do
+			assert_select 'input[name="document[title]"][type="text"]', 1
+			assert_select 'textarea[name="document[content]"]', 1
 		end
 
-
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			# Archivings -- Redirect
-			loop_archivings do |archiving|
-				assert_no_difference 'Document.count' do
-					post archiving_documents_path(archiving), params: { document: {
-						title: user.name.possessive + " New Archiving Document",
-						content: "Sample Text"
-					} }
-				end
-				assert_response :redirect
-			end
-
-			# Blog Posts -- Redirect
-			loop_blog_posts do |blog_post|
-				assert_no_difference 'Document.count' do
-					post blog_post_documents_path(blog_post), params: { document: {
-						title: user.name.possessive + " New Blog Post Document",
-						content: "Sample Text"
-					} }
-				end
-				assert_response :redirect
-			end
-
-			log_out
+		# Archiving Document, Success
+		clear_flashes
+		assert_difference 'Document.count', 1 do
+			post archiving_documents_path(@archiving), params: { document: { title: "Archiving New Document" } }
 		end
+		assert flash[:success]
+		assert_response :redirect
 
-
-		## User, Admin, Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user|
-			log_in_as user
-
-			# Archivings -- Redirect
-			loop_archivings do |archiving|
-				assert_no_difference 'Document.count' do
-					post archiving_documents_path(archiving), params: { document: {
-						title: user.name.possessive + " New Archiving Document",
-						content: "Sample Text"
-					} }
-				end
-				assert_response :redirect
-			end
-
-			# Blog Posts -- Redirect
-			loop_blog_posts do |blog_post|
-				assert_no_difference 'Document.count' do
-					post blog_post_documents_path(blog_post), params: { document: {
-						title: user.name.possessive + " New Blog Post Document",
-						content: "Sample Text"
-					} }
-				end
-				assert_response :redirect
-			end
-
-			log_out
+		# Blog Post Document, Success
+		clear_flashes
+		assert_difference 'Document.count', 1 do
+			post blog_post_documents_path(@blog_post), params: { document: { title: "Blog Post New Document" } }
 		end
-
-
-		## User, Admin, Un-Trashed
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user|
-			log_in_as user
-
-			# Archivings, Un-Trashed -- Success
-			loop_archivings( archiving_modifiers: { 'trashed' => false } ) do |archiving|
-				assert_difference 'Document.count', 1 do
-					post archiving_documents_path(archiving), params: { document: {
-						title: user.name.possessive + " New Archiving Document",
-						content: "Sample Text"
-					} }
-				end
-			end
-
-			# Archivings, Trashed -- Redirect
-			loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving|
-				assert_no_difference 'Document.count' do
-					post archiving_documents_path(archiving), params: { document: {
-						title: user.name.possessive + " New Archiving Document",
-						content: "Sample Text"
-					} }
-				end
-			end
-
-			# Blog Posts, Un-Trashed -- Success
-			loop_blog_posts( blog_modifiers: { 'trashed' => false } ) do |blog_post|
-				assert_difference 'Document.count', 1 do
-					post blog_post_documents_path(blog_post), params: { document: {
-						title: user.name.possessive + " New Blog Post Document",
-						content: "Sample Text"
-					} }
-				end
-			end
-
-			# Blog Posts, Trashed -- Redirect
-			loop_blog_posts( blog_modifiers: { 'trashed' => true } ) do |blog_post|
-				assert_no_difference 'Document.count' do
-					post blog_post_documents_path(blog_post), params: { document: {
-						title: user.name.possessive + " New Blog Post Document",
-						content: "Sample Text"
-					} }
-				end
-			end
-
-			log_out
-		end
+		assert flash[:success]
+		assert_response :redirect
 	end
 
 	test "should get edit (only un-trashed admins)" do
-		load_archivings
-		load_blog_posts
-		load_documents
+		populate_archivings
+		populate_blog_posts
+		populate_documents
 
-		## Guest
-		# Documents -- Redirect
-		loop_documents do |document|
-			get edit_article_document_path(document.article, document)
+		# [require_admin]
+		[ [@archiving, @archiving_document],
+			[@blog_post, @blog_post_document] ].each do |pair|
+			clear_flashes
+			get edit_article_document_path(pair[0], pair[1])
+			assert flash[:warning]
 			assert_response :redirect
 		end
 
-
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			# Documents -- Redirect
-			loop_documents do |document|
-				get edit_article_document_path(document.article, document)
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-
-		## User, Admin, Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user|
-			log_in_as user
-
-			# Documents -- Redirect
-			loop_documents do |document|
-				get edit_article_document_path(document.article, document)
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-
-		## Admin User, Un-Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |user|
-			log_in_as user
-
-			# Archivings, Un-Trashed
-			loop_archivings( archiving_modifiers: { 'trashed' => false } ) do |archiving, archiving_key|
-
-				# Documents, Un-Trashed -- Success
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'trashed' => false } ) do |document|
-
-					get edit_archiving_document_path(archiving, document)
-					assert_response :success
-				end
-
-				# Documents, Trashed -- Redirect
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key },
-					document_modifiers: { 'trashed' => true } ) do |document|
-
-					get edit_archiving_document_path(archiving, document)
-					assert_response :redirect
-				end
-			end
-
-			# Archivings, Trashed -- Redirect
-			loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving, archiving_key|
-
-				loop_documents( include_blogs: false,
-					only: { archiving: archiving_key } ) do |document|
-
-					get edit_archiving_document_path(archiving, document)
-					assert_response :redirect
-				end
-			end
-
-			# Blog Post, Un-Trashed
-			loop_blog_posts( blog_modifiers: { 'trashed' => false } ) do |blog_post, blog_post_key|
-
-				# Documents, Un-Trashed -- Success
-				loop_documents( include_archivings: false,
-					only: { blog_post: blog_post_key },
-					document_modifiers: { 'trashed' => false } ) do |document|
-
-					get edit_blog_post_document_path(blog_post, document)
-					assert_response :success
-				end
-
-				# Documents, Trashed -- Redirect
-				loop_documents( include_archivings: false,
-					only: { blog_post: blog_post_key },
-					document_modifiers: { 'trashed' => true } ) do |document|
-
-					get edit_blog_post_document_path(blog_post, document)
-					assert_response :redirect
-				end
-			end
-
-			# Blog Post, Trashed -- Redirect
-			loop_blog_posts( blog_modifiers: { 'trashed' => true } ) do |blog_post, blog_post_key|
-
-				loop_documents( include_archivings: false,
-					only: { blog_post: blog_post_key } ) do |document|
-
-					get edit_blog_post_document_path(blog_post, document)
-					assert_response :redirect
-				end
-			end
-
-			log_out
-		end
-	end
-
-	test "should patch update (only un-trashed admins)" do
-		load_archivings
-		load_blog_posts
-		load_documents
-
-		## Guest
-		# Documents -- Redirect
-		loop_documents do |document|
-			assert_no_changes -> { document.title } do
-				patch article_document_path(document.article, document), params: { document: {
-					title: "Guest's Edited Blog Post"
-				} }
-				document.reload
-			end
+		# [require_admin]
+		log_in_as @user
+		[ [@archiving, @archiving_document],
+			[@blog_post, @blog_post_document] ].each do |pair|
+			clear_flashes
+			get edit_article_document_path(pair[0], pair[1])
+			assert flash[:warning]
 			assert_response :redirect
 		end
+		log_out
 
-
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			# Documents -- Redirect
-			loop_documents do |document, document_key|
-				assert_no_changes -> { document.title } do
-					patch article_document_path(document.article, document), params: { document: {
-						title: user.name.possessive + " Edited " + document_key.split('_').map(&:capitalize).join(' ')
-					} }
-					document.reload
-				end
-				assert_response :redirect
-			end
-
-			log_out
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		[ [@archiving, @archiving_document],
+			[@blog_post, @blog_post_document] ].each do |pair|
+			clear_flashes
+			get edit_article_document_path(pair[0], pair[1])
+			assert flash[:warning]
+			assert_response :redirect
 		end
+		log_out
 
-
-		## User, Admin, Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user|
-			log_in_as user
-
-			# Documents -- Redirect
-			loop_documents do |document, document_key|
-				assert_no_changes -> { document.title } do
-					patch article_document_path(document.article, document), params: { document: {
-						title: user.name.possessive + " Edited " + document_key.split('_').map(&:capitalize).join(' ')
-					} }
-					document.reload
-				end
-				assert_response :redirect
-			end
-
-			log_out
+		# [require_untrashed_article]
+		log_in_as @admin_user
+		[ [@trashed_archiving, @trashed_archiving_document],
+			[@trashed_blog_post, @trashed_blog_post_document] ].each do |pair|
+			clear_flashes
+			get edit_article_document_path(pair[0], pair[1])
+			assert flash[:warning]
+			assert_response :redirect
 		end
+		log_out
+
+		# [require_untrashed_document]
+		log_in_as @admin_user
+		[ [@archiving, @archiving_trashed_document],
+			[@blog_post, @blog_post_trashed_document] ].each do |pair|
+			clear_flashes
+			get edit_article_document_path(pair[0], pair[1])
+			assert flash[:warning]
+			assert_response :redirect
+		end
+		log_out
 
 
 		## User, Admin, Un-Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |user|
-			log_in_as user
+		log_in_as @admin_user
 
-			# Archivings, Un-Trashed
-			loop_archivings( archiving_modifiers: { 'trashed' => false } ) do |archiving, archiving_key|
+		get edit_article_document_path(@blog_post, @blog_post_document)
+		assert_response :success
 
-				# Documents, Un-Trashed -- Success
-				loop_documents( only: { archiving: archiving_key },
-					document_modifiers: { 'trashed' => false } ) do |document, document_key|
-
-					old_title = document.title
-
-					assert_changes -> { document.title } do
-						patch archiving_document_path(archiving, document), params: { document: {
-							title: user.name.possessive + " Edited " + document_key.split('_').map(&:capitalize).join(' ')
-						} }
-						document.reload
-					end
-					assert_response :redirect
-
-					document.update_columns(title: old_title)
-				end
-
-				# Documents, Trashed -- Redirect
-				loop_documents( only: { archiving: archiving_key },
-					document_modifiers: { 'trashed' => true } ) do |document, document_key|
-
-					assert_no_changes -> { document.title } do
-						patch archiving_document_path(archiving, document), params: { document: {
-							title: user.name.possessive + " Edited " + document_key.split('_').map(&:capitalize).join(' ')
-						} }
-						document.reload
-					end
-					assert_response :redirect
-				end
-			end
-
-			# Archivings, Trashed -- Redirect
-			loop_archivings( archiving_modifiers: { 'trashed' => true } ) do |archiving, archiving_key|
-
-				loop_documents( only: { archiving: archiving_key } ) do |document, document_key|
-
-					assert_no_changes -> { document.title } do
-						patch archiving_document_path(archiving, document), params: { document: {
-							title: user.name.possessive + " Edited " + document_key.split('_').map(&:capitalize).join(' ')
-						} }
-						document.reload
-					end
-					assert_response :redirect
-				end
-			end
-
-			log_out
+		# form
+		assert_select 'form' do
+			assert_select 'input[name="document[title]"][type="text"]', 1
+			assert_select 'textarea[name="document[content]"]', 1
 		end
+
+		log_out
 	end
 
-	test "should patch hide (only un-trashed admins)" do
-		load_archivings
-		load_blog_posts
-		load_documents
+	test "should patch/put update (only un-trashed admins)" do
+		populate_archivings
+		populate_blog_posts
+		populate_documents
 
-		## Guest
-		# Documents -- Redirect
-		loop_documents( document_modifiers: { 'hidden' => false } ) do |document|
-			assert_no_changes -> { document.updated_at } do
-				assert_no_changes -> { document.hidden? }, from: false do
-					patch hide_article_document_path(document.article, document)
-					document.reload
-				end
+		# [require_admin]
+		[ [@archiving, @archiving_document],
+			[@blog_post, @blog_post_document] ].each do |pair|
+			clear_flashes
+			assert_no_changes -> { pair[1].title } do
+				patch article_document_path(pair[0], pair[1]), params: { document: { title: "Updated Title" } }
+				pair[1].reload
 			end
+			assert flash[:warning]
 			assert_response :redirect
 		end
 
-
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			# Documents -- Redirect
-			loop_documents( document_modifiers: { 'hidden' => false } ) do |document|
-				assert_no_changes -> { document.updated_at } do
-					assert_no_changes -> { document.hidden? }, from: false do
-						patch hide_article_document_path(document.article, document)
-						document.reload
-					end
-				end
-				assert_response :redirect
+		# [require_admin]
+		log_in_as @user
+		[ [@archiving, @archiving_document],
+			[@blog_post, @blog_post_document] ].each do |pair|
+			clear_flashes
+			assert_no_changes -> { pair[1].title } do
+				patch article_document_path(pair[0], pair[1]), params: { document: { title: "Updated Title" } }
+				pair[1].reload
 			end
-
-			log_out
+			assert flash[:warning]
+			assert_response :redirect
 		end
+		log_out
 
-
-		## User, Admin, Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user|
-			log_in_as user
-
-			# Documents -- Redirect
-			loop_documents( document_modifiers: { 'hidden' => false } ) do |document|
-				assert_no_changes -> { document.updated_at } do
-					assert_no_changes -> { document.hidden? }, from: false do
-						patch hide_article_document_path(document.article, document)
-						document.reload
-					end
-				end
-				assert_response :redirect
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		[ [@archiving, @archiving_document],
+			[@blog_post, @blog_post_document] ].each do |pair|
+			clear_flashes
+			assert_no_changes -> { pair[1].title } do
+				patch article_document_path(pair[0], pair[1]), params: { document: { title: "Updated Title" } }
+				pair[1].reload
 			end
-
-			log_out
+			assert flash[:warning]
+			assert_response :redirect
 		end
+		log_out
 
+		# [require_untrashed_article]
+		log_in_as @admin_user
+		[ [@trashed_archiving, @trashed_archiving_document],
+			[@trashed_blog_post, @trashed_blog_post_document] ].each do |pair|
+			clear_flashes
+			assert_no_changes -> { pair[1].title } do
+				patch article_document_path(pair[0], pair[1]), params: { document: { title: "Updated Title" } }
+				pair[1].reload
+			end
+			assert flash[:warning]
+			assert_response :redirect
+		end
+		log_out
+
+		# [require_untrashed_document]
+		log_in_as @admin_user
+		[ [@archiving, @archiving_trashed_document],
+			[@blog_post, @blog_post_trashed_document] ].each do |pair|
+			clear_flashes
+			assert_no_changes -> { pair[1].title } do
+				patch article_document_path(pair[0], pair[1]), params: { document: { title: "Updated Title" } }
+				pair[1].reload
+			end
+			assert flash[:warning]
+			assert_response :redirect
+		end
+		log_out
 
 		## User, Admin, Un-Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |user|
-			log_in_as user
+		log_in_as @admin_user
 
-			# Archivings -- Success
-			loop_archivings do |archiving, archiving_key|
-
-				loop_documents( only: { archiving: archiving_key },
-					document_modifiers: { 'hidden' => false } ) do |document|
-
-					assert_no_changes -> { document.updated_at } do
-						assert_changes -> { document.hidden? }, from: false, to: true do
-							patch hide_archiving_document_path(archiving, document)
-							document.reload
-						end
-					end
-					assert_response :redirect
-
-					document.update_columns(hidden: false)
-				end
+		# Failure
+		[ [@archiving, @archiving_document, @archiving_hidden_document],
+			[@blog_post, @blog_post_document, @blog_post_hidden_document] ].each do |set|
+			clear_flashes
+			assert_no_changes -> { set[1].title } do
+				patch article_document_path(set[0], set[1]), params: { document: { title: set[2].title } }
+				set[1].reload
 			end
-
-			# Blog Post -- Success
-			loop_blog_posts do |blog_post, blog_post_key|
-
-				loop_documents( only: { blog_post: blog_post_key },
-					document_modifiers: { 'hidden' => false } ) do |document|
-
-					assert_no_changes -> { document.updated_at } do
-						assert_changes -> { document.hidden? }, from: false, to: true do
-							patch hide_blog_post_document_path(blog_post, document)
-							document.reload
-						end
-					end
-					assert_response :redirect
-
-					document.update_columns(hidden: false)
-				end
-			end
-
-			log_out
+			assert flash[:failure]
+			assert_response :ok
 		end
+
+		# Success, PATCH
+		[ [@archiving, @archiving_document],
+			[@blog_post, @blog_post_document] ].each do |pair|
+			old_title = pair[1].title
+			clear_flashes
+			assert_changes -> { pair[1].title } do
+				patch article_document_path(pair[0], pair[1]), params: { document: { title: "PATCH Update" } }
+				pair[1].reload
+			end
+			assert flash[:success]
+			assert_response :redirect
+			pair[1].update_columns(title: old_title)
+		end
+
+		# Success, PUT
+		[ [@archiving, @archiving_document],
+			[@blog_post, @blog_post_document] ].each do |pair|
+			old_title = pair[1].title
+			clear_flashes
+			assert_changes -> { pair[1].title } do
+				put article_document_path(pair[0], pair[1]), params: { document: { title: "PUT Update" } }
+				pair[1].reload
+			end
+			assert flash[:success]
+			assert_response :redirect
+			pair[1].update_columns(title: old_title)
+		end
+
+		log_out
 	end
 
-	test "should patch unhide (only un-trashed admins)" do
-		load_archivings
-		load_blog_posts
-		load_documents
+	# Needs PUT test
+	test "should patch/put hide (only un-trashed admins)" do
+		populate_archivings
+		populate_blog_posts
+		populate_documents
 
-		## Guest
-		loop_documents( document_modifiers: { 'hidden' => true } ) do |document|
-			assert_no_changes -> { document.updated_at } do
-				assert_no_changes -> { document.hidden? }, from: true do
-					patch unhide_article_document_path(document.article, document)
-					document.reload
-				end
+		# [require_admin]
+		[ [@archiving, @archiving_document],
+			[@blog_post, @blog_post_document] ].each do |pair|
+			clear_flashes
+			assert_no_changes -> { pair[1].hidden }, from: false do
+				patch hide_article_document_path(pair[0], pair[1])
+				pair[1].reload
 			end
 			assert_response :redirect
+			assert flash[:warning]
 		end
 
-
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			loop_documents( document_modifiers: { 'hidden' => true } ) do |document|
-				assert_no_changes -> { document.updated_at } do
-					assert_no_changes -> { document.hidden? }, from: true do
-						patch unhide_article_document_path(document.article, document)
-						document.reload
-					end
-				end
-				assert_response :redirect
+		# [require_admin]
+		log_in_as @user
+		[ [@archiving, @archiving_document],
+			[@blog_post, @blog_post_document] ].each do |pair|
+			clear_flashes
+			assert_no_changes -> { pair[1].hidden }, from: false do
+				patch hide_article_document_path(pair[0], pair[1])
+				pair[1].reload
 			end
-
-			log_out
+			assert_response :redirect
+			assert flash[:warning]
 		end
+		log_out
 
-
-		## User, Admin, Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user|
-			log_in_as user
-
-			loop_documents( document_modifiers: { 'hidden' => true } ) do |document|
-				assert_no_changes -> { document.updated_at } do
-					assert_no_changes -> { document.hidden? }, from: true do
-						patch unhide_article_document_path(document.article, document)
-						document.reload
-					end
-				end
-				assert_response :redirect
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		[ [@archiving, @archiving_document],
+			[@blog_post, @blog_post_document] ].each do |pair|
+			clear_flashes
+			assert_no_changes -> { pair[1].hidden }, from: false do
+				patch hide_article_document_path(pair[0], pair[1])
+				pair[1].reload
 			end
-
-			log_out
+			assert_response :redirect
+			assert flash[:warning]
 		end
-
+		log_out
 
 		## User, Admin, Un-Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |user|
-			log_in_as user
-
-			# Archivings -- Success
-			loop_archivings do |archiving, archiving_key|
-
-				loop_documents( document_modifiers: { 'hidden' => true } ) do |document|
-					assert_no_changes -> { document.updated_at } do
-						assert_changes -> { document.hidden? }, from: true, to: false do
-							patch unhide_archiving_document_path(archiving, document)
-							document.reload
-						end
-					end
-					assert_response :redirect
-
-					document.update_columns(hidden: true)
-				end
-			end
-
-			# Blog Post -- Success
-			loop_blog_posts do |blog_post, blog_post_key|
-
-				loop_documents( document_modifiers: { 'hidden' => true } ) do |document|
-					assert_no_changes -> { document.updated_at } do
-						assert_changes -> { document.hidden? }, from: true, to: false do
-							patch unhide_blog_post_document_path(blog_post, document)
-							document.reload
-						end
-					end
-					assert_response :redirect
-
-					document.update_columns(hidden: true)
-				end
-			end
-
-			log_out
-		end
-	end
-
-	test "should patch trash (only un-trashed admins)" do
-		load_archivings
-		load_documents
-		load_documents
-
-		## Guest
-		# Documents -- Redirect
-		loop_documents( document_modifiers: { 'trashed' => false } ) do |document|
-			assert_no_changes -> { document.updated_at } do
-				assert_no_changes -> { document.trashed? }, from: false do
-					patch trash_article_document_path(document.article, document)
-					document.reload
-				end
+		log_in_as @admin_user
+		[ [@archiving, @archiving_document],
+			[@blog_post, @blog_post_document] ].each do |pair|
+			clear_flashes
+			assert_changes -> { pair[1].hidden }, from: false, to: true do
+				patch hide_article_document_path(pair[0], pair[1])
+				pair[1].reload
 			end
 			assert_response :redirect
+			assert flash[:success]
+			pair[1].update_columns(hidden: false)
 		end
+		log_out
+	end
 
+	# Needs PUT test
+	test "should patch/put unhide (only un-trashed admins)" do
+		populate_archivings
+		populate_blog_posts
+		populate_documents
 
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			# Documents -- Redirect
-			loop_documents( document_modifiers: { 'trashed' => false } ) do |document|
-				assert_no_changes -> { document.updated_at } do
-					assert_no_changes -> { document.trashed? }, from: false do
-						patch trash_article_document_path(document.article, document)
-						document.reload
-					end
-				end
-				assert_response :redirect
+		# [require_admin]
+		[ [@archiving, @archiving_hidden_document],
+			[@blog_post, @blog_post_hidden_document] ].each do |pair|
+			clear_flashes
+			assert_no_changes -> { pair[1].hidden }, from: true do
+				patch unhide_article_document_path(pair[0], pair[1])
+				pair[1].reload
 			end
-
-			log_out
+			assert_response :redirect
+			assert flash[:warning]
 		end
 
-
-		## User, Admin, Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user|
-			log_in_as user
-
-			# Documents -- Redirect
-			loop_documents( document_modifiers: { 'trashed' => false } ) do |document|
-				assert_no_changes -> { document.updated_at } do
-					assert_no_changes -> { document.trashed? }, from: false do
-						patch trash_article_document_path(document.article, document)
-						document.reload
-					end
-				end
-				assert_response :redirect
+		# [require_admin]
+		log_in_as @user
+		[ [@archiving, @archiving_hidden_document],
+			[@blog_post, @blog_post_hidden_document] ].each do |pair|
+			clear_flashes
+			assert_no_changes -> { pair[1].hidden }, from: true do
+				patch unhide_article_document_path(pair[0], pair[1])
+				pair[1].reload
 			end
-
-			log_out
+			assert_response :redirect
+			assert flash[:warning]
 		end
+		log_out
 
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		[ [@archiving, @archiving_hidden_document],
+			[@blog_post, @blog_post_hidden_document] ].each do |pair|
+			clear_flashes
+			assert_no_changes -> { pair[1].hidden }, from: true do
+				patch unhide_article_document_path(pair[0], pair[1])
+				pair[1].reload
+			end
+			assert_response :redirect
+			assert flash[:warning]
+		end
+		log_out
 
 		## User, Admin, Un-Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |user|
-			log_in_as user
-
-			# Documents -- Redirect
-			loop_documents( document_modifiers: { 'trashed' => false } ) do |document|
-				assert_no_changes -> { document.updated_at } do
-					assert_changes -> { document.trashed? }, from: false, to: true do
-						patch trash_article_document_path(document.article, document)
-						document.reload
-					end
-				end
-				assert_response :redirect
-
-				document.update_columns(trashed: false)
-			end
-
-			log_out
-		end
-	end
-
-	test "should patch untrash (only un-trashed admins)" do
-		load_documents
-
-		## Guest
-		loop_documents( document_modifiers: { 'trashed' => true } ) do |document|
-			assert_no_changes -> { document.updated_at } do
-				assert_no_changes -> { document.trashed? }, from: true do
-					patch untrash_article_document_path(document.article, document)
-					document.reload
-				end
+		log_in_as @admin_user
+		[ [@archiving, @archiving_hidden_document],
+			[@blog_post, @blog_post_hidden_document] ].each do |pair|
+			clear_flashes
+			assert_changes -> { pair[1].hidden }, from: true, to: false do
+				patch unhide_article_document_path(pair[0], pair[1])
+				pair[1].reload
 			end
 			assert_response :redirect
+			assert flash[:success]
+			pair[1].update_columns(hidden: false)
 		end
-
-		## Non-Admin User
-		loop_users( user_modifiers: { 'trashed' => nil, 'admin' => false } ) do |user|
-			log_in_as user
-
-			loop_documents( document_modifiers: { 'trashed' => true } ) do |document|
-				assert_no_changes -> { document.updated_at } do
-					assert_no_changes -> { document.trashed? }, from: true do
-						patch untrash_article_document_path(document.article, document)
-						document.reload
-					end
-				end
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-		## Admin User, Trashed
-		loop_users( user_modifiers: { 'trashed' => true, 'admin' => true } ) do |user|
-			log_in_as user
-
-			loop_documents( document_modifiers: { 'trashed' => true } ) do |document|
-				assert_no_changes -> { document.updated_at } do
-					assert_no_changes -> { document.trashed? }, from: true do
-						patch untrash_article_document_path(document.article, document)
-						document.reload
-					end
-				end
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-		## Admin User, UnTrashed
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user|
-			log_in_as user
-
-			loop_documents( document_modifiers: { 'trashed' => true } ) do |document|
-				assert_no_changes -> { document.updated_at } do
-					assert_changes -> { document.trashed? }, from: true, to: false do
-						patch untrash_article_document_path(document.article, document)
-						document.reload
-					end
-				end
-				assert_response :redirect
-
-				document.update_columns(trashed: true)
-			end
-
-			log_out
-		end
+		log_out
 	end
 
-	test "should delete destroy (only [un-trashed] admin)" do
-		load_documents
+	# Needs PUT test
+	test "should patch/put trash (only un-trashed admins)" do
+		populate_archivings
+		populate_blog_posts
+		populate_documents
 
-		## Guest
-		loop_documents do |document|
+		# [require_admin]
+		[ [@archiving, @archiving_document],
+			[@blog_post, @blog_post_document] ].each do |pair|
+			clear_flashes
+			assert_no_changes -> { pair[1].trashed }, from: false do
+				patch trash_article_document_path(pair[0], pair[1])
+				pair[1].reload
+			end
+			assert_response :redirect
+			assert flash[:warning]
+		end
+
+		# [require_admin]
+		log_in_as @user
+		[ [@archiving, @archiving_document],
+			[@blog_post, @blog_post_document] ].each do |pair|
+			clear_flashes
+			assert_no_changes -> { pair[1].trashed }, from: false do
+				patch trash_article_document_path(pair[0], pair[1])
+				pair[1].reload
+			end
+			assert_response :redirect
+			assert flash[:warning]
+		end
+		log_out
+
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		[ [@archiving, @archiving_document],
+			[@blog_post, @blog_post_document] ].each do |pair|
+			clear_flashes
+			assert_no_changes -> { pair[1].trashed }, from: false do
+				patch trash_article_document_path(pair[0], pair[1])
+				pair[1].reload
+			end
+			assert_response :redirect
+			assert flash[:warning]
+		end
+		log_out
+
+		## User, Admin, Un-Trashed
+		log_in_as @admin_user
+		[ [@archiving, @archiving_document],
+			[@blog_post, @blog_post_document] ].each do |pair|
+			clear_flashes
+			assert_changes -> { pair[1].trashed }, from: false, to: true do
+				patch trash_article_document_path(pair[0], pair[1])
+				pair[1].reload
+			end
+			assert_response :redirect
+			assert flash[:success]
+			pair[1].update_columns(trashed: false)
+		end
+		log_out
+	end
+
+	# Needs PUT test
+	test "should patch/put untrash (only un-trashed admins)" do
+		populate_archivings
+		populate_blog_posts
+		populate_documents
+
+		# [require_admin]
+		[ [@archiving, @archiving_trashed_document],
+			[@blog_post, @blog_post_trashed_document] ].each do |pair|
+			clear_flashes
+			assert_no_changes -> { pair[1].trashed }, from: true do
+				patch untrash_article_document_path(pair[0], pair[1])
+				pair[1].reload
+			end
+			assert_response :redirect
+			assert flash[:warning]
+		end
+
+		# [require_admin]
+		log_in_as @user
+		[ [@archiving, @archiving_trashed_document],
+			[@blog_post, @blog_post_trashed_document] ].each do |pair|
+			clear_flashes
+			assert_no_changes -> { pair[1].trashed }, from: true do
+				patch untrash_article_document_path(pair[0], pair[1])
+				pair[1].reload
+			end
+			assert_response :redirect
+			assert flash[:warning]
+		end
+		log_out
+
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		[ [@archiving, @archiving_trashed_document],
+			[@blog_post, @blog_post_trashed_document] ].each do |pair|
+			clear_flashes
+			assert_no_changes -> { pair[1].trashed }, from: true do
+				patch untrash_article_document_path(pair[0], pair[1])
+				pair[1].reload
+			end
+			assert_response :redirect
+			assert flash[:warning]
+		end
+		log_out
+
+		## User, Admin, Un-Trashed
+		log_in_as @admin_user
+		[ [@archiving, @archiving_trashed_document],
+			[@blog_post, @blog_post_trashed_document] ].each do |pair|
+			clear_flashes
+			assert_changes -> { pair[1].trashed }, from: true, to: false do
+				patch untrash_article_document_path(pair[0], pair[1])
+				pair[1].reload
+			end
+			assert_response :redirect
+			assert flash[:success]
+			pair[1].update_columns(trashed: false)
+		end
+		log_out
+	end
+
+	test "should delete destroy (only un-trashed admin)" do
+		populate_archivings
+		populate_blog_posts
+		populate_documents
+
+		# [require_admin]
+		[ [@archiving, @archiving_trashed_document],
+			[@blog_post, @blog_post_trashed_document] ].each do |pair|
+			clear_flashes
 			assert_no_difference 'Document.count' do
-				delete article_document_path(document.article, document)
+				delete article_document_path(pair[0], pair[1])
 			end
-			assert_nothing_raised { document.reload }
+			assert_nothing_raised { pair[1].reload }
 			assert_response :redirect
+			assert flash[:warning]
 		end
 
-
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			loop_documents do |document|
-				assert_no_difference 'Document.count' do
-					delete article_document_path(document.article, document)
-				end
-				assert_nothing_raised { document.reload }
-				assert_response :redirect
+		# [require_admin]
+		log_in_as @user
+		[ [@archiving, @archiving_trashed_document],
+			[@blog_post, @blog_post_trashed_document] ].each do |pair|
+			clear_flashes
+			assert_no_difference 'Document.count' do
+				delete article_document_path(pair[0], pair[1])
 			end
-
-			log_out
+			assert_nothing_raised { pair[1].reload }
+			assert_response :redirect
+			assert flash[:warning]
 		end
+		log_out
 
-
-		## User, Admin, Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true} ) do |user|
-			log_in_as user
-
-			loop_documents do |document|
-				assert_no_difference 'Document.count' do
-					delete article_document_path(document.article, document)
-				end
-				assert_nothing_raised { document.reload }
-				assert_response :redirect
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		[ [@archiving, @archiving_trashed_document],
+			[@blog_post, @blog_post_trashed_document] ].each do |pair|
+			clear_flashes
+			assert_no_difference 'Document.count' do
+				delete article_document_path(pair[0], pair[1])
 			end
-
-			log_out
+			assert_nothing_raised { pair[1].reload }
+			assert_response :redirect
+			assert flash[:warning]
 		end
+		log_out
 
+		# [require_trashed_document]
+		log_in_as @admin_user
+		[ [@archiving, @archiving_document],
+			[@blog_post, @blog_post_document] ].each do |pair|
+			clear_flashes
+			assert_no_difference 'Document.count' do
+				delete article_document_path(pair[0], pair[1])
+			end
+			assert_nothing_raised { pair[1].reload }
+			assert_response :redirect
+			assert flash[:warning]
+		end
+		log_out
 
 		## User, Admin, Un-Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false} ) do |user, user_key|
-			log_in_as user
+		log_in_as @admin_user
+		[ [@archiving, @archiving_trashed_document],
+			[@blog_post, @blog_post_trashed_document] ].each do |pair|
+			clear_flashes
 
-			loop_documents( document_numbers: [user_key.split('_').last],
-				document_modifiers: { 'hidden' => user.hidden } ) do |document|
-
-				assert_difference 'Document.count', -1 do
-					delete article_document_path(document.article, document)
-				end
-				assert_raise(ActiveRecord::RecordNotFound) { document.reload }
-				assert_response :redirect
+			assert_difference 'Document.count', -1 do
+				delete article_document_path(pair[0], pair[1])
 			end
-
-			log_out
+			assert_raise(ActiveRecord::RecordNotFound) { pair[1].reload }
+			assert_response :redirect
+			assert flash[:success]
 		end
+		log_out
 	end
 
 end

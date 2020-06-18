@@ -14,6 +14,7 @@ class ForumPost < ApplicationRecord
 	scope :non_hidden_or_owned_by, -> (user) { where(hidden: false).or( where(user: user) ) }
 
 	validates :title, presence: true,
+						uniqueness: true,
 					  length: { maximum: 96 }
 	validates :content, presence: true,
 						length: { maximum: 4096 }

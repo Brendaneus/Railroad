@@ -1,7 +1,7 @@
 module SuggestionsHelper
 
 	def formatted_diff(first, second)
-		diff = Diffy::Diff.new((@citation.content + "\r\n"), (@suggestion.content + "\r\n"),
+		diff = Diffy::Diff.new(((@citation.content || "") + "\r\n"), ((@suggestion.content || "") + "\r\n"),
 			include_plus_and_minus_in_html: true).to_s(:html)
 
 		diff.gsub!( /^<div class=\"diff\">\n\s+/, "" )

@@ -19,6 +19,10 @@ class User < ApplicationRecord
 									 through: :comments,
 									 source: :post,
 									 source_type: 'ForumPost'
+	has_many :commented_suggestions, -> { distinct },
+									 through: :comments,
+									 source: :post,
+									 source_type: 'Suggestion'
 	has_one_attached :avatar
 
 	scope :trashed, -> { where(trashed: true) }

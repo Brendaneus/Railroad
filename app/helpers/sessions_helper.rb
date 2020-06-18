@@ -22,8 +22,7 @@ module SessionsHelper
 	end
 
 	def mark_activity
-		@current_user.last_active = Time.now
-		@current_user.save!(touch: false)
+		@current_user.update_columns(last_active: Time.now)
 		if remembered?
 			@current_session.last_active = Time.now
 			@current_session.ip = request.remote_ip if current_session.ip.present?

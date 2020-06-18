@@ -1,6 +1,16 @@
 require 'factory_helpers.rb'
 include FactoryHelper
 
+# Come back to this and rewrite into a gem using this below code:
+
+Rails.application.eager_load!
+# Zeitwerk::Loader.eager_load_all # For use with zeitwerk
+ApplicationRecord.descendants do |model|
+	p model.name
+	p model.column_names
+	puts
+end
+
 def write_users verbose: false
 	print "WRITING USERS..." if verbose
 	File.open('test/fixtures/users.yml', 'w') {|f| f.truncate(0)}

@@ -12,7 +12,7 @@
 	<% else %>
 		/ <%= link_to @source.title, archiving_document_path(@article, @source) %>
 		/ <%= link_to "History", archiving_document_versions_path(@article, @source) %>
-		/ <%= link_to @version.name, archiving_document_version_path(@article, @document, @version) %>
+		/ <%= link_to @version.name, archiving_document_version_path(@article, @source, @version) %>
 	<% end %>
 <% end %>
 

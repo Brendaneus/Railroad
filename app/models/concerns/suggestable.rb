@@ -21,6 +21,7 @@ module Suggestable
 	def merge(suggestion)
 		raise 'unmergable' if (self.class == Suggestion) || (suggestion.class != Suggestion)
 		raise 'citation_mismatch' unless suggestion.citing?(self)
+		return false if suggestion.matches?(self)
 
 		self.title = suggestion.title unless suggestion.title.nil?
 		self.content = suggestion.content unless suggestion.content.nil?

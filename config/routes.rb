@@ -2,16 +2,16 @@ Rails.application.routes.draw do
 
 	concern :hidable do
 		member do
-			patch :hide
-			patch :unhide
+			match :hide, via: [:patch, :put]
+			match :unhide, via: [:patch, :put]
 		end
 	end
 
 	concern :trashable do
 		get :trashed, on: :collection
 		member do
-			patch :trash
-			patch :untrash
+			match :trash, via: [:patch, :put]
+			match :untrash, via: [:patch, :put]
 		end
 	end
 
@@ -23,7 +23,7 @@ Rails.application.routes.draw do
 
 	concern :suggestable do
 		resources :suggestions, post_class: 'Suggestion' do
-			patch :merge, on: :member
+			match :merge, on: :member, via: [:patch, :put] ### POTENTIAL PROBLEM
 			concerns [:hidable, :trashable, :commentable]
 		end
 	end

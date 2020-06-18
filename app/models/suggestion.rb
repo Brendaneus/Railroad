@@ -19,8 +19,9 @@ class Suggestion < ApplicationRecord
 	validate :title_or_content_present
 	validate :unique_archiving_title,
 		if: -> { self.title.present? && citation.present? && (citation.class == Archiving) }
-	validate :unique_local_title,
+	validate :unique_local_document_title,
 		if: -> { self.title.present? && citation.present? && (citation.class == Document) }
+	validate :unique_edits
 	validates :title, length: { maximum: 64 }
 	validates :content, length: { maximum: 4096 }
 
@@ -36,6 +37,10 @@ class Suggestion < ApplicationRecord
 		self.citation == record
 	end
 
+	def matches? record
+		( self.title.nil? || (self.title == record.title) ) && ( self.content.nil? || (self.content == record.content) )
+	end
+
 	private
 
 		def set_matching_to_nil
@@ -43,27 +48,52 @@ class Suggestion < ApplicationRecord
 			self.content = nil if self.content == self.citation.content
 		end
 
+		# case-sensitive
 		def unique_local_name
-			if other_suggestion = ( citation.suggestions.where.not(id: id).where('lower(name) = ?', name.downcase).first )
+			name_is_taken = citation.suggestions.where.not(id: id).any? do |suggestion|
+				suggestion.name.upcase == self.name.upcase
+			end
+
+			if name_is_taken
 				errors.add(:name, "is already taken")
 			end
 		end
 
 		def title_or_content_present
 			unless self.title.present? || self.content.present?
-				errors.add(:base, "Must include an edit for title or content.")
+				errors.add(:base, "Suggestion must include an edit for title or content.")
 			end
 		end
 
 		def unique_archiving_title
-			if other_suggestion = ( Archiving.where('lower(title) = ?', title.downcase).first )
+			if Archiving.where('lower(title) = ?', title.downcase).first
 				errors.add(:title, "is already taken")
 			end
 		end
 
-		def unique_local_title
-			if other_suggestion = ( citation.article.documents.where('lower(title) = ?', title.downcase).first )
+		def unique_local_document_title
+			if citation.article.documents.where('lower(title) = ?', title.downcase).first
 				errors.add(:title, "is already taken")
+			end
+		end
+
+		def unique_edits
+			matches_edits = Proc.new do |other|
+				(other.title == self.title) && (other.content == self.content)
+			end
+
+			edits_are_matching = citation.suggestions.where.not(id: id).any?(&matches_edits)
+			
+			unless edits_are_matching
+				if (citation.class == Archiving)
+					edits_are_matching ||= citation.documents.any?(&matches_edits)
+				else
+					edits_are_matching ||= matches_edits.call(citation.article)
+				end
+			end
+
+			if edits_are_matching
+				errors.add(:base, "These edits have already been suggested.")
 			end
 		end
 

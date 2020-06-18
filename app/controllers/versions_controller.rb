@@ -6,8 +6,9 @@ class VersionsController < ApplicationController
 	before_action :set_version, except: [:index]
 	before_action :require_admin, only: [:hide, :unhide, :destroy]
 	before_action :require_untrashed_user, only: [:hide, :unhide, :destroy]
-	before_action :require_admin_for_hidden, only: [:show]
-	before_action :require_admin_for_hidden_archiving_or_document#, except: [:trash, :untrash]
+	before_action :require_admin_for_hidden_archiving_or_document, except: [:hide, :unhide, :destroy]
+	before_action :require_admin_for_hidden_version, only: [:show]
+	before_action :require_hidden_version, only: [:destroy]
 
 	after_action :mark_activity, only: [:hide, :unhide, :destroy]
 
@@ -18,7 +19,7 @@ class VersionsController < ApplicationController
 
 	# Kind of janky, maps object_changes to the version's 'old' object data
 	# under an instance variable appropriate for source's controller
-	# and renders to the source's show template
+	# and renders to the source's show template ( template has additional control flow )
 	def show
 		changeset = @version.changeset.to_h.transform_values{ |values| values.last }#.transform_keys(&:to_sym)
 		version = @version.reify || @source.class.new
@@ -35,22 +36,32 @@ class VersionsController < ApplicationController
 	end
 
 	def hide
-		if @version.update_columns(hidden: true)
-			flash[:success] = "The version has been successfully hidden."
-			redirect_to source_version_path(@source, @version)
-		else
-			flash[:failure] = "There was a problem hiding this version."
+		if @version.hidden?
+			flash[:warning] = "The version has already been hidden."
 			redirect_back fallback_location: source_versions_path(@source)
+		else
+			if @version.update_columns(hidden: true)
+				flash[:success] = "The version has been successfully hidden."
+				redirect_to source_version_path(@source, @version)
+			else
+				flash[:failure] = "There was a problem hiding this version."
+				redirect_back fallback_location: source_versions_path(@source)
+			end
 		end
 	end
 
 	def unhide
-		if @version.update_columns(hidden: false)
-			flash[:success] = "The version has been successfully unhidden."
-			redirect_to source_version_path(@source, @version)
-		else
-			flash[:failure] = "There was a problem unhiding this version."
+		unless @version.hidden?
+			flash[:warning] = "The version has already been un-hidden."
 			redirect_back fallback_location: source_versions_path(@source)
+		else
+			if @version.update_columns(hidden: false)
+				flash[:success] = "The version has been successfully unhidden."
+				redirect_to source_version_path(@source, @version)
+			else
+				flash[:failure] = "There was a problem unhiding this version."
+				redirect_back fallback_location: source_versions_path(@source)
+			end
 		end
 	end
 
@@ -82,7 +93,7 @@ class VersionsController < ApplicationController
 			@version = PaperTrail::Version.find(params[:id])
 		end
 
-		def require_admin_for_hidden
+		def require_admin_for_hidden_version
 			if @version.hidden? && !admin_user?
 				flash[:warning] = "This version has been hidden."
 				redirect_back fallback_location: source_versions_path(@source)
@@ -92,6 +103,13 @@ class VersionsController < ApplicationController
 		def require_admin_for_hidden_archiving_or_document
 			if (@source.hidden? || (@source.class == Document) && @source.article.hidden?) && !admin_user?
 				flash[:warning] = "This version history's source has been hidden and cannot be viewed."
+				redirect_back fallback_location: source_versions_path(@source)
+			end
+		end
+
+		def require_hidden_version
+			unless @version.hidden?
+				flash[:warning] = "This version must be hidden before proceeding."
 				redirect_back fallback_location: source_versions_path(@source)
 			end
 		end

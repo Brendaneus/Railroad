@@ -7,8 +7,8 @@
 		/ <%= link_to @archiving.title, archiving_path(@archiving) %>
 	<% else %>
 		/ <%= link_to @source.title, archiving_path(@source) %>
-		/ <%= link_to "History", archiving_versions_path(@archiving) %>
-		/ <%= link_to @version.name, archiving_version_path(@archiving, @version) %>
+		/ <%= link_to "History", archiving_versions_path(@source) %>
+		/ <%= link_to @version.name, archiving_version_path(@source, @version) %>
 	<% end %>
 <% end %>
 

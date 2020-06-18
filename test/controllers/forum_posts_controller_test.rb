@@ -2,17 +2,52 @@ require 'test_helper'
 
 class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 
-	fixtures :users, :forum_posts, :comments
-
 	def setup
-		load_users
+		populate_users
+	end
+
+	def populate_users
+		@user = create(:user)
+		@other_user = create(:user, name: "Other User", email: "other_user@example.com")
+		@hidden_user = create(:user, name: "Hidden User", email: "hidden_user@example.com", hidden: true)
+		@trashed_user = create(:user, name: "Trashed User", email: "trashed_user@example.com", trashed: true)
+		@admin_user = create(:user, name: "Admin User", email: "admin_user@example.com", admin: true)
+		# @hidden_admin_user = create(:user, name: "Hidden Admin User", email: "hidden_admin_user@example.com", admin: true, hidden: true)
+		@trashed_admin_user = create(:user, name: "Trashed Admin User", email: "trashed_admin_user@example.com", admin: true, trashed: true)
+		# @hidden_trashed_user = create(:user, name: "Hidden Trashed User", email: "hidden_trashed_user@example.com", hidden: true, trashed: true)
+	end
+
+	def populate_forum_posts
+		@user_forum_post = create(:forum_post, user: @user, title: "User's Forum Post", content: "Sample Text")
+		@user_hidden_forum_post = create(:forum_post, user: @user, title: "User's Hidden Forum Post", content: "Sample Text", hidden: true)
+		@user_trashed_forum_post = create(:forum_post, user: @user, title: "User's Trashed Forum Post", content: "Sample Text", trashed: true)
+		@user_hidden_trashed_forum_post = create(:forum_post, user: @user, title: "User's Hidden Trashed Forum Post", content: "Sample Text", hidden: true, trashed: true)
+		@other_user_forum_post = create(:forum_post, user: @other_user, title: "Other User's Forum Post", content: "Sample Text")
+		@other_user_hidden_forum_post = create(:forum_post, user: @other_user, title: "Other User's Hidden Forum Post", content: "Sample Text", hidden: true)
+		@other_user_trashed_forum_post = create(:forum_post, user: @other_user, title: "Other User's Trashed Forum Post", content: "Sample Text", trashed: true)
+		@other_user_hidden_trashed_forum_post = create(:forum_post, user: @other_user, title: "Other User's Hidden Trashed Forum Post", content: "Sample Text", hidden: true, trashed: true)
+		@trashed_user_forum_post = create(:forum_post, user: @trashed_user, title: "Trashed User's Forum Post", content: "Sample Text")
+		@trashed_user_hidden_forum_post = create(:forum_post, user: @trashed_user, title: "Trashed User's Hidden Forum Post", content: "Sample Text", hidden: true)
+		@trashed_user_trashed_forum_post = create(:forum_post, user: @trashed_user, title: "Trashed User's Trashed Forum Post", content: "Sample Text", trashed: true)
+		@trashed_admin_user_trashed_forum_post = create(:forum_post, user: @trashed_admin_user, title: "Trashed Admin User's Trashed Forum Post", content: "Sample Text", trashed: true)
+	end
+
+	def populate_comments
+		@user_comment = create(:comment, user: @user, post: @user_forum_post, content: "User's Comment")
+		@user_hidden_comment = create(:comment, user: @user, post: @user_forum_post, content: "User's Hidden Comment", hidden: true)
+		@user_trashed_comment = create(:comment, user: @user, post: @user_forum_post, content: "User's Trashed Comment", trashed: true)
+		@user_hidden_trashed_comment = create(:comment, user: @user, post: @user_forum_post, content: "User's Hidden Trashed Comment", hidden: true, trashed: true)
+		@other_user_comment = create(:comment, user: @other_user, post: @user_forum_post, content: "Other User's Comment")
+		@other_user_hidden_comment = create(:comment, user: @other_user, post: @user_forum_post, content: "Other User's Hidden Comment", hidden: true)
+		@other_user_trashed_comment = create(:comment, user: @other_user, post: @user_forum_post, content: "Other User's Trashed Comment", trashed: true)
+		@other_user_hidden_trashed_comment = create(:comment, user: @other_user, post: @user_forum_post, content: "Other User's Hidden Trashed Comment", hidden: true, trashed: true)
 	end
 
 	test "should get index" do
-		load_forum_posts
+		populate_forum_posts
 
 		## Guest
-		get forum_posts_url
+		get forum_posts_path
 		assert_response :success
 
 		# control panel
@@ -23,1289 +58,1127 @@ class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 		end
 
 		# un-trashed, un-hidden forum post links
-		loop_forum_posts( forum_modifiers: { 'trashed' => false, 'hidden' => false } ) do |forum_post|
+		assert_select 'main a[href=?]', forum_post_path(@user_forum_post), 1
+		[ @user_hidden_forum_post,
+			@user_trashed_forum_post ].each do |forum_post|
+			assert_select 'main a[href=?]', forum_post_path(forum_post), 0
+		end
+
+
+		## User
+		log_in_as @user
+
+		get forum_posts_path
+		assert_response :success
+
+		# control panel
+		assert_select 'div.admin.control', 0
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', trashed_forum_posts_path, 1
+			assert_select 'a[href=?]', new_forum_post_path, 1
+		end
+
+		# owned, un-trashed and un-owned, un-hidden, un-trashed forum post links
+		[ @user_forum_post,
+			@user_hidden_forum_post,
+			@other_user_forum_post ].each do |forum_post|
 			assert_select 'main a[href=?]', forum_post_path(forum_post), 1
 		end
-		loop_forum_posts( forum_modifiers: { 'trashed' => true } ) do |forum_post|
+		[ @user_trashed_forum_post,
+			@user_hidden_trashed_forum_post,
+			@other_user_hidden_forum_post,
+			@other_user_trashed_forum_post ].each do |forum_post|
 			assert_select 'main a[href=?]', forum_post_path(forum_post), 0
 		end
-		loop_forum_posts( forum_modifiers: { 'hidden' => true } ) do |forum_post|
-			assert_select 'main a[href=?]', forum_post_path(forum_post), 0
+
+		log_out
+
+
+		## User, Trashed
+		log_in_as @trashed_user
+
+		get forum_posts_path
+		assert_response :success
+
+		# control panel
+		assert_select 'div.admin.control', 0
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', trashed_forum_posts_path, 1
+			assert_select 'a[href=?]', new_forum_post_path, 0
 		end
 
+		log_out
 
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user, user_key|
-			log_in_as user
 
-			get forum_posts_url
-			assert_response :success
+		## User, Hidden
+		log_in_as @hidden_user
 
-			# control panel
-			assert_select 'div.admin.control', 0
-			assert_select 'div.control' do
-				assert_select 'a[href=?]', trashed_forum_posts_path, 1
-				assert_select 'a[href=?]', new_forum_post_path, !user.trashed?
-			end
+		get forum_posts_path
+		assert_response :success
 
-			# owned, un-trashed forum post links
-			loop_forum_posts( only: { user: user_key },
-					forum_modifiers: { 'trashed' => false } ) do |forum_post|
-				assert_select 'main a[href=?]', forum_post_path(forum_post), 1
-			end
-			loop_forum_posts( only: { user: user_key },
-					forum_modifiers: { 'trashed' => true } ) do |forum_post|
-				assert_select 'main a[href=?]', forum_post_path(forum_post), 0
-			end
-			# un-owned, un-hidden, un-trashed forum post links
-			loop_forum_posts( except: { user: user_key },
-					forum_modifiers: { 'trashed' => false, 'hidden' => false } ) do |forum_post|
-				assert_select 'main a[href=?]', forum_post_path(forum_post), 1
-			end
-			loop_forum_posts( except: { user: user_key },
-					forum_modifiers: { 'trashed' => true } ) do |forum_post|
-				assert_select 'main a[href=?]', forum_post_path(forum_post), 0
-			end
-			loop_forum_posts( except: { user: user_key },
-					forum_modifiers: { 'hidden' => true } ) do |forum_post|
-				assert_select 'main a[href=?]', forum_post_path(forum_post), 0
-			end
-
-			log_out
+		# control panel
+		assert_select 'div.admin.control', 0
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', trashed_forum_posts_path, 1
+			assert_select 'a[href=?]', new_forum_post_path, 0
 		end
+
+		log_out
 
 
 		## User, Admin
-		loop_users( user_modifiers: { 'admin' => true } ) do |user|
-			log_in_as user
+		log_in_as @admin_user
 
-			get forum_posts_url
-			assert_response :success
+		get forum_posts_path
+		assert_response :success
 
-			# admin control panel
-			assert_select 'div.admin.control' do
-				assert_select 'a[href=?]', trashed_forum_posts_path, 1
-				assert_select 'a[href=?]', new_forum_post_path, !user.trashed?
-			end
+		# control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', trashed_forum_posts_path, 1
+			assert_select 'a[href=?]', new_forum_post_path, 1
+		end
 
-			# un-trashed forum posts
-			loop_forum_posts( forum_modifiers: { 'trashed' => false } ) do |forum_post|
-				assert_select 'main a[href=?]', forum_post_path(forum_post), 1
-			end
-			loop_forum_posts( forum_modifiers: { 'trashed' => true } ) do |forum_post|
-				assert_select 'main a[href=?]', forum_post_path(forum_post), 0
-			end
-
-			log_out
+		# un-trashed forum post links
+		[ @user_forum_post,
+			@user_hidden_forum_post,
+			@other_user_forum_post,
+			@other_user_hidden_forum_post ].each do |forum_post|
+			assert_select 'main a[href=?]', forum_post_path(forum_post), 1
+		end
+		[ @user_trashed_forum_post,
+			@user_hidden_trashed_forum_post,
+			@other_user_trashed_forum_post,
+			@other_user_hidden_trashed_forum_post ].each do |forum_post|
+			assert_select 'main a[href=?]', forum_post_path(forum_post), 0
 		end
 	end
 
 	test "should get trashed" do
-		load_forum_posts
+		populate_forum_posts
 
 		## Guest
-		get trashed_forum_posts_url
+		get trashed_forum_posts_path
 		assert_response :success
 
 		# trashed, un-hidden forum post links
-		loop_forum_posts( forum_modifiers: { 'trashed' => true, 'hidden' => false } ) do |forum_post|
+		[ @user_trashed_forum_post,
+			@other_user_hidden_trashed_forum_post ].each do |forum_post|
+			assert_select 'main a[href=?]', forum_post_path(@user_trashed_forum_post), 1
+		end
+		[ @user_forum_post,
+			@user_hidden_forum_post,
+			@user_hidden_trashed_forum_post,
+			@other_user_forum_post,
+			@other_user_hidden_forum_post,
+			@other_user_hidden_trashed_forum_post ].each do |forum_post|
+			assert_select 'main a[href=?]', forum_post_path(forum_post), 0
+		end
+
+
+		## User
+		log_in_as @user
+
+		get trashed_forum_posts_path
+		assert_response :success
+
+		# trashed, un-hidden forum post links
+		[ @user_trashed_forum_post,
+			@user_hidden_trashed_forum_post,
+			@other_user_trashed_forum_post ].each do |forum_post|
 			assert_select 'main a[href=?]', forum_post_path(forum_post), 1
 		end
-		loop_forum_posts( forum_modifiers: { 'trashed' => false } ) do |forum_post|
+		[ @user_forum_post,
+			@user_hidden_forum_post,
+			@other_user_forum_post,
+			@other_user_hidden_forum_post,
+			@other_user_hidden_trashed_forum_post ].each do |forum_post|
 			assert_select 'main a[href=?]', forum_post_path(forum_post), 0
 		end
-		loop_forum_posts( forum_modifiers: { 'hidden' => true } ) do |forum_post|
-			assert_select 'main a[href=?]', forum_post_path(forum_post), 0
-		end
 
-
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user, user_key|
-			log_in_as user
-
-			get trashed_forum_posts_url
-			assert_response :success
-
-			# owned, trashed forum post links
-			loop_forum_posts( only: { user: user_key },
-					forum_modifiers: { 'trashed' => true } ) do |forum_post|
-				assert_select 'main a[href=?]', forum_post_path(forum_post), 1
-			end
-			loop_forum_posts( only: { user: user_key },
-					forum_modifiers: { 'trashed' => false } ) do |forum_post|
-				assert_select 'main a[href=?]', forum_post_path(forum_post), 0
-			end
-			# un-owned, trashed, un-hidden forum post links
-			loop_forum_posts( except: { user: user_key },
-					forum_modifiers: { 'trashed' => true, 'hidden' => false } ) do |forum_post|
-				assert_select 'main a[href=?]', forum_post_path(forum_post), 1
-			end
-			loop_forum_posts( except: { user: user_key },
-					forum_modifiers: { 'trashed' => false } ) do |forum_post|
-				assert_select 'main a[href=?]', forum_post_path(forum_post), 0
-			end
-			loop_forum_posts( except: { user: user_key },
-					forum_modifiers: { 'hidden' => true } ) do |forum_post|
-				assert_select 'main a[href=?]', forum_post_path(forum_post), 0
-			end
-
-			log_out
-		end
+		log_out
 
 
 		## User, Admin
-		loop_users( user_modifiers: { 'admin' => true } ) do |user|
-			log_in_as user
+		log_in_as @admin_user
 
-			get trashed_forum_posts_url
-			assert_response :success
-		
-			# trashed forum posts
-			loop_forum_posts( forum_modifiers: { 'trashed' => true } ) do |forum_post|
-				assert_select 'main a[href=?]', forum_post_path(forum_post), 1
-			end
-			loop_forum_posts( forum_modifiers: { 'trashed' => false } ) do |forum_post|
-				assert_select 'main a[href=?]', forum_post_path(forum_post), 0
-			end
+		get trashed_forum_posts_path
+		assert_response :success
 
-			log_out
+		# trashed, un-hidden forum post links
+		[ @user_trashed_forum_post,
+			@user_hidden_trashed_forum_post,
+			@other_user_trashed_forum_post,
+			@other_user_hidden_trashed_forum_post ].each do |forum_post|
+			assert_select 'main a[href=?]', forum_post_path(forum_post), 1
 		end
+		[ @user_forum_post,
+			@user_hidden_forum_post,
+			@other_user_forum_post,
+			@other_user_hidden_forum_post ].each do |forum_post|
+			assert_select 'main a[href=?]', forum_post_path(forum_post), 0
+		end
+
+		log_out
 	end
 
 	test "should get show (only authorized and admins for trashed)" do
-		load_forum_posts
-		load_comments
+		populate_forum_posts
+		populate_comments
+
+		# [require_authorize_or_admin_for_hidden_forum_post]
+		get forum_post_path(@user_hidden_forum_post)
+		assert_response :redirect
+		assert flash[:warning]
+
+		# [require_authorize_or_admin_for_hidden_forum_post]
+		log_in_as @user
+		clear_flashes
+		get forum_post_path(@other_user_hidden_forum_post)
+		assert_response :redirect
+		assert flash[:warning]
+		log_out
+
 
 		## Guest
-		# Forum Posts, Un-Hidden -- Success
-		loop_forum_posts( forum_modifiers: { 'hidden' => false } ) do |forum_post, forum_post_key, poster_key|
-			get forum_post_url(forum_post)
-			assert_response :success
+		get forum_post_path(@user_forum_post)
+		assert_response :success
 
-			# control panel
-			assert_select 'div.admin.control', 0
-			assert_select 'div.control' do
-				assert_select 'a[href=?]', trashed_forum_post_comments_path(forum_post), 1
-			end
-			assert_select 'a[href=?]', edit_forum_post_path(forum_post), 0
-			assert_select 'a[href=?][data-method=patch]', hide_forum_post_path(forum_post), 0
-			assert_select 'a[href=?][data-method=patch]', unhide_forum_post_path(forum_post), 0
-			assert_select 'a[href=?][data-method=patch]', trash_forum_post_path(forum_post), 0
-			assert_select 'a[href=?][data-method=patch]', untrash_forum_post_path(forum_post), 0
-			assert_select 'a[href=?][data-method=delete]', forum_post_path(forum_post), 0
+		# control panel
+		assert_select 'div.admin.control', 0
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', trashed_forum_post_comments_path(@user_forum_post), 1
+		end
+		assert_select 'a[href=?]', edit_forum_post_path(@user_forum_post), 0
+		assert_select 'a[href=?][data-method=patch]', hide_forum_post_path(@user_forum_post), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_forum_post_path(@user_forum_post), 0
+		assert_select 'a[href=?][data-method=patch]', trash_forum_post_path(@user_forum_post), 0
+		assert_select 'a[href=?][data-method=patch]', untrash_forum_post_path(@user_forum_post), 0
+		assert_select 'a[href=?][data-method=delete]', forum_post_path(@user_forum_post), 0
 
-			# new comment form
-			assert_select 'form[action=?][method=post]', forum_post_comments_path(forum_post), !forum_post.trashed?
+		# new comment form
+		assert_select 'form[action=?][method=post]', forum_post_comments_path(@user_forum_post), 1
 
-			# un-trashed, un-hidden comments
-			loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-					only: { poster: poster_key, forum_post: forum_post_key },
-					comment_modifiers: { 'trashed' => false, 'hidden' => false } ) do |comment|
-				assert_select 'main p', { text: comment.content, count: 1 }
-				assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-			end
-			loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-					only: { poster: poster_key, forum_post: forum_post_key },
-					comment_modifiers: { 'trashed' => true } ) do |comment|
-				assert_select 'main p', { text: comment.content, count: 0 }
-				assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-			end
-			loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-					only: { poster: poster_key, forum_post: forum_post_key },
-					comment_modifiers: { 'hidden' => true } ) do |comment|
-				assert_select 'main p', { text: comment.content, count: 0 }
-				assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-			end
+		# un-trashed, un-hidden comments
+		[ @user_comment,
+			@other_user_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 1 }
+			assert_select 'form[action=?][method=post]', forum_post_comment_path(@user_forum_post, comment), 0
+		end
+		[ @user_hidden_comment,
+			@user_trashed_comment,
+			@user_hidden_trashed_comment,
+			@other_user_hidden_comment,
+			@other_user_trashed_comment,
+			@other_user_hidden_trashed_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 0 }
+			assert_select 'form[action=?][method=post]', forum_post_comment_path(@user_forum_post, comment), 0
 		end
 
-		# Forum Posts, Hidden -- Redirect
-		loop_forum_posts( forum_modifiers: { 'hidden' => true } ) do |forum_post|
-			get forum_post_url(forum_post)
-			assert_response :redirect
+		get forum_post_path(@user_trashed_forum_post)
+		assert_response :success
+
+		# no new comment form
+		assert_select 'form[action=?][method=post]', forum_post_comments_path(@user_trashed_forum_post), 0
+
+
+		## User
+		log_in_as @user
+
+		get forum_post_path(@user_forum_post)
+		assert_response :success
+
+		# control panel
+		assert_select 'div.admin.control', 0
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', edit_forum_post_path(@user_forum_post), 1
+			assert_select 'a[href=?][data-method=patch]', hide_forum_post_path(@user_forum_post), 1
+			assert_select 'a[href=?][data-method=patch]', unhide_forum_post_path(@user_forum_post), 0
+			assert_select 'a[href=?][data-method=patch]', trash_forum_post_path(@user_forum_post), 1
+			assert_select 'a[href=?][data-method=patch]', untrash_forum_post_path(@user_forum_post), 0
+			assert_select 'a[href=?][data-method=delete]', forum_post_path(@user_forum_post), 0
+			assert_select 'a[href=?]', trashed_forum_post_comments_path(@user_forum_post), 1
 		end
 
+		# new comment form
+		assert_select 'form[action=?][method=post]', forum_post_comments_path(@user_forum_post), 1
 
-		## User, Non-Admin, Trashed
-		loop_users( user_modifiers: { 'admin' => false, 'trashed' => true } ) do |user, user_key|
-			log_in_as user
-
-			# Forum Posts, Owned -- Success
-			loop_forum_posts( only: { user: user_key } ) do |forum_post, forum_post_key, poster_key|
-
-				get forum_post_url(forum_post)
-				assert_response :success
-
-				# control panel
-				assert_select 'div.admin.control', 0
-				assert_select 'div.control' do
-					assert_select 'a[href=?]', trashed_forum_post_comments_path(forum_post), 1
-				end
-				assert_select 'a[href=?]', edit_forum_post_path(forum_post), 0
-				assert_select 'a[href=?][data-method=patch]', hide_forum_post_path(forum_post), 0
-				assert_select 'a[href=?][data-method=patch]', unhide_forum_post_path(forum_post), 0
-				assert_select 'a[href=?][data-method=patch]', trash_forum_post_path(forum_post), 0
-				assert_select 'a[href=?][data-method=patch]', untrash_forum_post_path(forum_post), 0
-				assert_select 'a[href=?][data-method=delete]', forum_post_path(forum_post), 0
-
-				# no new comment form
-				assert_select 'form[action=?][method=post]', forum_post_comments_path(forum_post), 0
-
-				# owned, un-trashed comments
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key, user: user_key },
-						include_guests: false,
-						comment_modifiers: { 'trashed' => false } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 1 }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-				end
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key, user: user_key },
-						include_guests: false,
-						comment_modifiers: { 'trashed' => true } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 0 }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-				end
-				# un-owned, un-trashed, un-hidden comments
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key },
-						except: { user: user_key },
-						comment_modifiers: { 'trashed' => false, 'hidden' => false } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 1 }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-				end
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key },
-						except: { user: user_key },
-						comment_modifiers: { 'trashed' => true } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 0 }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-				end
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key },
-						except: { user: user_key },
-						comment_modifiers: { 'hidden' => true } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 0 }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-				end
-			end
-
-			# Forum Posts, Un-Owned, Un-Hidden -- Success
-			loop_forum_posts( except: { user: user_key },
-				forum_modifiers: { 'hidden' => false } ) do |forum_post, forum_post_key, poster_key|
-
-				get forum_post_url(forum_post)
-				assert_response :success
-
-				# control panel
-				assert_select 'div.admin.control', 0
-				assert_select 'div.control' do
-					assert_select 'a[href=?]', trashed_forum_post_comments_path(forum_post), 1
-				end
-				assert_select 'a[href=?]', edit_forum_post_path(forum_post), 0
-				assert_select 'a[href=?][data-method=patch]', hide_forum_post_path(forum_post), 0
-				assert_select 'a[href=?][data-method=patch]', unhide_forum_post_path(forum_post), 0
-				assert_select 'a[href=?][data-method=patch]', trash_forum_post_path(forum_post), 0
-				assert_select 'a[href=?][data-method=patch]', untrash_forum_post_path(forum_post), 0
-				assert_select 'a[href=?][data-method=delete]', forum_post_path(forum_post), 0
-
-				# no new comment form
-				assert_select 'form[action=?][method=post]', forum_post_comments_path(forum_post), 0
-
-				# owned, un-trashed comments
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key, user: user_key },
-						include_guests: false,
-						comment_modifiers: { 'trashed' => false } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 1 }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-				end
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key, user: user_key },
-						include_guests: false,
-						comment_modifiers: { 'trashed' => true } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 0 }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-				end
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key },
-						except: { user: user_key },
-						comment_modifiers: { 'trashed' => false, 'hidden' => false } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 1 }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-				end
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key },
-						except: { user: user_key },
-						comment_modifiers: { 'trashed' => true } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 0 }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-				end
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key },
-						except: { user: user_key },
-						comment_modifiers: { 'hidden' => true } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 0 }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-				end
-			end
-
-			# Forum Posts, Un-Owned, Hidden -- Redirect
-			loop_forum_posts( except: { user: user_key },
-				forum_modifiers: { 'hidden' => true } ) do |forum_post|
-
-				get forum_post_url(forum_post)
-				assert_response :redirect
-			end
-
-			log_out
+		# owned, un-trashed and un-owned, un-hidden, un-trashed comments
+		[ @user_comment,
+			@user_hidden_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 0 }
+			assert_select 'form[action=?][method=post]', forum_post_comment_path(@user_forum_post, comment), 1
+		end
+		assert_select 'main p', { text: @other_user_comment.content, count: 1 }
+		assert_select 'form[action=?][method=post]', forum_post_comment_path(@user_forum_post, @other_user_comment), 0
+		[ @user_trashed_comment,
+			@user_hidden_trashed_comment,
+			@other_user_hidden_comment,
+			@other_user_trashed_comment,
+			@other_user_hidden_trashed_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 0 }
+			assert_select 'form[action=?][method=post]', forum_post_comment_path(@user_forum_post, comment), 0
 		end
 
+		get forum_post_path(@user_hidden_forum_post)
+		assert_response :success
 
-		## User, Non-Admin, Un-Trashed
-		loop_users( user_modifiers: { 'admin' => false, 'trashed' => false } ) do |user, user_key|
-			log_in_as user
-
-			# Forum Posts, Owned -- Success
-			loop_forum_posts( only: { user: user_key } ) do |forum_post, forum_post_key, poster_key|
-
-				get forum_post_url(forum_post)
-				assert_response :success
-
-				# control panel
-				assert_select 'div.admin.control', 0
-				assert_select 'div.control' do
-					assert_select 'a[href=?]', edit_forum_post_path(forum_post), !forum_post.trashed?
-					assert_select 'a[href=?][data-method=patch]', hide_forum_post_path(forum_post), !forum_post.trashed? && !forum_post.hidden?
-					assert_select 'a[href=?][data-method=patch]', unhide_forum_post_path(forum_post), !forum_post.trashed? && forum_post.hidden?
-					assert_select 'a[href=?][data-method=patch]', trash_forum_post_path(forum_post), !forum_post.trashed?
-					assert_select 'a[href=?][data-method=patch]', untrash_forum_post_path(forum_post), forum_post.trashed?
-					assert_select 'a[href=?][data-method=delete]', forum_post_path(forum_post), 0
-					assert_select 'a[href=?]', trashed_forum_post_comments_path(forum_post), 1
-				end
-
-				# new comment form
-				assert_select 'form[action=?][method=post]', forum_post_comments_path(forum_post), !forum_post.trashed? && !user.hidden?
-
-				# owned, un-trashed comment forms
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key, user: user_key },
-						include_guests: false,
-						comment_modifiers: { 'trashed' => false } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: (forum_post.trashed? ? 1 : 0) }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), !forum_post.trashed?
-				end
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key, user: user_key },
-						include_guests: false,
-						comment_modifiers: { 'trashed' => true } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 0 }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-				end
-				# un-owned, un-trashed, un-hidden comments
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key },
-						except: { user: user_key },
-						comment_modifiers: { 'trashed' => false, 'hidden' => false } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 1 }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-				end
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key },
-						except: { user: user_key },
-						comment_modifiers: { 'trashed' => true } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 0 }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-				end
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key },
-						except: { user: user_key },
-						comment_modifiers: { 'hidden' => true } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 0 }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-				end
-			end
-
-			# Forum Posts, Un-Owned, Un-Hidden -- Success
-			loop_forum_posts( except: { user: user_key },
-				forum_modifiers: { 'hidden' => false } ) do |forum_post, forum_post_key, poster_key|
-
-				get forum_post_url(forum_post)
-				assert_response :success
-
-				# control panel
-				assert_select 'div.admin.control', 0
-				assert_select 'div.control' do
-					assert_select 'a[href=?]', trashed_forum_post_comments_path(forum_post), 1
-				end
-				assert_select 'a[href=?]', edit_forum_post_path(forum_post), 0
-				assert_select 'a[href=?][data-method=patch]', hide_forum_post_path(forum_post), 0
-				assert_select 'a[href=?][data-method=patch]', unhide_forum_post_path(forum_post), 0
-				assert_select 'a[href=?][data-method=patch]', trash_forum_post_path(forum_post), 0
-				assert_select 'a[href=?][data-method=patch]', untrash_forum_post_path(forum_post), 0
-				assert_select 'a[href=?][data-method=delete]', forum_post_path(forum_post), 0
-
-				# new comment form
-				assert_select 'form[action=?][method=post]', forum_post_comments_path(forum_post), !forum_post.trashed? && !user.hidden?
-
-				# owned, un-trashed comment forms
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key, user: user_key },
-						include_guests: false,
-						comment_modifiers: { 'trashed' => false } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: (forum_post.trashed? ? 1 : 0) }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), !forum_post.trashed?
-				end
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key, user: user_key },
-						include_guests: false,
-						comment_modifiers: { 'trashed' => true } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 0 }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-				end
-				# un-owned, un-trashed, un-hidden comments
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key },
-						except: { user: user_key },
-						comment_modifiers: { 'trashed' => false, 'hidden' => false } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 1 }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-				end
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key },
-						except: { user: user_key },
-						comment_modifiers: { 'trashed' => true } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 0 }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-				end
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key },
-						except: { user: user_key },
-						comment_modifiers: { 'hidden' => true } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 0 }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-				end
-			end
-
-			# Forum Posts, Un-Owned, Hidden -- Redirect
-			loop_forum_posts( except: { user: user_key },
-				forum_modifiers: { 'hidden' => true } ) do |forum_post, forum_post_key, poster_key|
-
-				get forum_post_url(forum_post)
-				assert_redirected_to forum_posts_url
-			end
-
-			log_out
+		# control panel
+		assert_select 'div.admin.control', 0
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', edit_forum_post_path(@user_hidden_forum_post), 1
+			assert_select 'a[href=?][data-method=patch]', hide_forum_post_path(@user_hidden_forum_post), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_forum_post_path(@user_hidden_forum_post), 1
+			assert_select 'a[href=?][data-method=patch]', trash_forum_post_path(@user_hidden_forum_post), 1
+			assert_select 'a[href=?][data-method=patch]', untrash_forum_post_path(@user_hidden_forum_post), 0
+			assert_select 'a[href=?][data-method=delete]', forum_post_path(@user_hidden_forum_post), 0
+			assert_select 'a[href=?]', trashed_forum_post_comments_path(@user_hidden_forum_post), 1
 		end
 
+		# new comment form
+		assert_select 'form[action=?][method=post]', forum_post_comments_path(@user_hidden_forum_post), 1
 
-		## User, Admin, Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user, user_key|
-			log_in_as user
+		get forum_post_path(@user_trashed_forum_post)
+		assert_response :success
 
-			# Forum Posts -- Success
-			loop_forum_posts do |forum_post, forum_post_key, poster_key|
-
-				get forum_post_url(forum_post)
-				assert_response :success
-
-				# admin control panel
-				assert_select 'div.admin.control' do
-					assert_select 'a[href=?]', trashed_forum_post_comments_path(forum_post), 1
-				end
-				assert_select 'a[href=?]', edit_forum_post_path(forum_post), 0
-				assert_select 'a[href=?][data-method=patch]', hide_forum_post_path(forum_post), 0
-				assert_select 'a[href=?][data-method=patch]', unhide_forum_post_path(forum_post), 0
-				assert_select 'a[href=?][data-method=patch]', trash_forum_post_path(forum_post), 0
-				assert_select 'a[href=?][data-method=patch]', untrash_forum_post_path(forum_post), 0
-				assert_select 'a[href=?][data-method=delete]', forum_post_path(forum_post), 0
-
-				# no new comment form
-				assert_select 'form[action=?][method=post]', forum_post_comments_path(forum_post), 0
-
-				# un-trashed comments
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key },
-						comment_modifiers: { 'trashed' => false } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 1 }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-				end
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key },
-						comment_modifiers: { 'trashed' => true } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 0 }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-				end
-			end
-
-			log_out
+		# control panel
+		assert_select 'div.admin.control', 0
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', edit_forum_post_path(@user_trashed_forum_post), 0
+			assert_select 'a[href=?][data-method=patch]', hide_forum_post_path(@user_trashed_forum_post), 1
+			assert_select 'a[href=?][data-method=patch]', unhide_forum_post_path(@user_trashed_forum_post), 0
+			assert_select 'a[href=?][data-method=patch]', trash_forum_post_path(@user_trashed_forum_post), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_forum_post_path(@user_trashed_forum_post), 1
+			assert_select 'a[href=?][data-method=delete]', forum_post_path(@user_trashed_forum_post), 0
+			assert_select 'a[href=?]', trashed_forum_post_comments_path(@user_trashed_forum_post), 1
 		end
 
+		# no new comment form
+		assert_select 'form[action=?][method=post]', forum_post_comments_path(@user_trashed_forum_post), 0
 
-		## User, Admin, Un-Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |user, user_key|
-			log_in_as user
+		log_out
 
-			# Forum Posts
-			loop_forum_posts do |forum_post, forum_post_key, poster_key|
 
-				get forum_post_url(forum_post)
-				assert_response :success
+		## User, Hidden
+		log_in_as @hidden_user
 
-				# admin control panel
-				assert_select 'div.admin.control' do
-					assert_select 'a[href=?]', edit_forum_post_path(forum_post), !forum_post.trashed?
-					assert_select 'a[href=?]', hide_forum_post_path(forum_post), !forum_post.trashed? && !forum_post.hidden?
-					assert_select 'a[href=?]', unhide_forum_post_path(forum_post), !forum_post.trashed? && forum_post.hidden?
-					assert_select 'a[href=?]', trash_forum_post_path(forum_post), !forum_post.trashed?
-					assert_select 'a[href=?]', untrash_forum_post_path(forum_post), forum_post.trashed?
-					assert_select 'a[href=?][data-method=delete]', forum_post_path(forum_post), forum_post.trashed?
-					assert_select 'a[href=?]', trashed_forum_post_comments_path(forum_post), 1
-				end
+		get forum_post_path(@user_forum_post)
+		assert_response :success
 
-				assert_select 'form[action=?][method=post]', forum_post_comments_path(forum_post), !forum_post.trashed? && !user.hidden?
+		# no new comment form
+		assert_select 'form[action=?][method=post]', forum_post_comments_path(@user_forum_post), 0
 
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key },
-						forum_modifiers: { 'trashed' => false } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: (forum_post.trashed? ? 1 : 0) }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), !forum_post.trashed?
-				end
-				loop_comments( include_archivings: false, include_documents: false, include_forums: false, include_blogs: false,
-						only: { poster: poster_key, forum_post: forum_post_key },
-						forum_modifiers: { 'trashed' => true } ) do |comment|
-					assert_select 'main p', { text: comment.content, count: 0 }
-					assert_select 'form[action=?][method=post]', forum_post_comment_path(forum_post, comment), 0
-				end
-			end
+		log_out
 
-			log_out
+
+		## User, Trashed
+		log_in_as @trashed_user
+
+		get forum_post_path(@user_forum_post)
+		assert_response :success
+
+		# control panel
+		assert_select 'div.admin.control', 0
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', trashed_forum_post_comments_path(@user_forum_post), 1
 		end
+		assert_select 'a[href=?]', edit_forum_post_path(@user_forum_post), 0
+		assert_select 'a[href=?][data-method=patch]', hide_forum_post_path(@user_forum_post), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_forum_post_path(@user_forum_post), 0
+		assert_select 'a[href=?][data-method=patch]', trash_forum_post_path(@user_forum_post), 0
+		assert_select 'a[href=?][data-method=patch]', untrash_forum_post_path(@user_forum_post), 0
+		assert_select 'a[href=?][data-method=delete]', forum_post_path(@user_forum_post), 0
+
+		# no new comment form
+		assert_select 'form[action=?][method=post]', forum_post_comments_path(@user_forum_post), 0
+
+		log_out
+
+
+		## User, Admin
+		log_in_as @admin_user
+
+		get forum_post_path(@user_forum_post)
+		assert_response :success
+
+		# control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', edit_forum_post_path(@user_forum_post), 1
+			assert_select 'a[href=?][data-method=patch]', hide_forum_post_path(@user_forum_post), 1
+			assert_select 'a[href=?][data-method=patch]', unhide_forum_post_path(@user_forum_post), 0
+			assert_select 'a[href=?][data-method=patch]', trash_forum_post_path(@user_forum_post), 1
+			assert_select 'a[href=?][data-method=patch]', untrash_forum_post_path(@user_forum_post), 0
+			assert_select 'a[href=?][data-method=delete]', forum_post_path(@user_forum_post), 0
+			assert_select 'a[href=?]', trashed_forum_post_comments_path(@user_forum_post), 1
+		end
+
+		# new comment form
+		assert_select 'form[action=?][method=post]', forum_post_comments_path(@user_forum_post), 1
+
+		# owned, un-trashed and un-owned, un-hidden, un-trashed comments
+		[ @user_comment,
+			@user_hidden_comment,
+			@other_user_comment,
+			@other_user_hidden_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 0 }
+			assert_select 'form[action=?][method=post]', forum_post_comment_path(@user_forum_post, comment), 1
+		end
+		[ @user_trashed_comment,
+			@user_hidden_trashed_comment,
+			@other_user_trashed_comment,
+			@other_user_hidden_trashed_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 0 }
+			assert_select 'form[action=?][method=post]', forum_post_comment_path(@user_forum_post, comment), 0
+		end
+
+		get forum_post_path(@user_hidden_forum_post)
+		assert_response :success
+
+		# control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', edit_forum_post_path(@user_hidden_forum_post), 1
+			assert_select 'a[href=?][data-method=patch]', hide_forum_post_path(@user_hidden_forum_post), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_forum_post_path(@user_hidden_forum_post), 1
+			assert_select 'a[href=?][data-method=patch]', trash_forum_post_path(@user_hidden_forum_post), 1
+			assert_select 'a[href=?][data-method=patch]', untrash_forum_post_path(@user_hidden_forum_post), 0
+			assert_select 'a[href=?][data-method=delete]', forum_post_path(@user_hidden_forum_post), 0
+			assert_select 'a[href=?]', trashed_forum_post_comments_path(@user_hidden_forum_post), 1
+		end
+
+		# new comment form
+		assert_select 'form[action=?][method=post]', forum_post_comments_path(@user_hidden_forum_post), 1
+
+		get forum_post_path(@user_trashed_forum_post)
+		assert_response :success
+
+		# control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', edit_forum_post_path(@user_trashed_forum_post), 0
+			assert_select 'a[href=?][data-method=patch]', hide_forum_post_path(@user_trashed_forum_post), 1
+			assert_select 'a[href=?][data-method=patch]', unhide_forum_post_path(@user_trashed_forum_post), 0
+			assert_select 'a[href=?][data-method=patch]', trash_forum_post_path(@user_trashed_forum_post), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_forum_post_path(@user_trashed_forum_post), 1
+			assert_select 'a[href=?][data-method=delete]', forum_post_path(@user_trashed_forum_post), 1
+			assert_select 'a[href=?]', trashed_forum_post_comments_path(@user_trashed_forum_post), 1
+		end
+
+		# new comment form
+		assert_select 'form[action=?][method=post]', forum_post_comments_path(@user_trashed_forum_post), 0
 	end
 
 	test "should get new (only untrashed, unhidden users)" do
-		# Guest
-		get new_forum_post_url
+		# [require_login]
+		get new_forum_post_path
+		assert flash[:warning]
 		assert_response :redirect
 
-		# User, Trashed
-		loop_users( user_modifiers: { 'trashed' => true } ) do |user|
-			log_in_as user
+		# [require_untrashed_user]
+		log_in_as @trashed_user
+		clear_flashes
+		get new_forum_post_path
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
 
-			get new_forum_post_url
-			assert_response :redirect
+		# [require_unhidden_user]
+		log_in_as @hidden_user
+		clear_flashes
+		get new_forum_post_path
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
 
-			log_out
+
+		## User
+		log_in_as @user
+		get new_forum_post_path
+		assert_response :success
+
+		assert_select 'form' do
+			assert_select 'input[name="forum_post[title]"][type="text"]', 1
+			assert_select 'textarea[name="forum_post[content]"]', 1
+			assert_select 'input[name="forum_post[motd]"][type="checkbox"]', 0
+			assert_select 'input[name="forum_post[sticky]"][type="checkbox"]', 0
+			assert_select 'input[type="submit"]', 1
 		end
 
-		# User, Hidden
-		loop_users( user_modifiers: { 'hidden' => true } ) do |user|
-			log_in_as user
+		log_out
 
-			get new_forum_post_url
-			assert_response :redirect
 
-			log_out
-		end
+		## User, Admin
+		log_in_as @admin_user
+		get new_forum_post_path
+		assert_response :success
 
-		# User, Un-Trashed, Un-Hidden
-		loop_users( user_modifiers: { 'trashed' => false, 'hidden' => false } ) do |user|
-			log_in_as user
-
-			get new_forum_post_url
-			assert_response :success
-
-			log_out
+		assert_select 'form' do
+			assert_select 'input[name="forum_post[title]"][type="text"]', 1
+			assert_select 'textarea[name="forum_post[content]"]', 1
+			assert_select 'input[name="forum_post[motd]"][type="checkbox"]', 1
+			assert_select 'input[name="forum_post[sticky]"][type="checkbox"]', 1
+			assert_select 'input[type="submit"]', 1
 		end
 	end
 
 	test "should post create (only untrashed, unhidden users)" do
-		# Guest
+		# [require_login]
 		assert_no_difference 'ForumPost.count' do
-			post forum_posts_url, params: { forum_post: {
-				title: "Guest's New Forum Post",
-				content: "Sample Text"
+			post forum_posts_path, params: { forum_post: {
+				title: "New Forum Post", content: "Sample Text"
 			} }
 		end
-		assert_redirected_to login_url
+		assert flash[:warning]
+		assert_response :redirect
 
-		# User, Trashed
-		loop_users( user_modifiers: { 'trashed' => true } ) do |user|
-			log_in_as user
-
-			assert_no_difference 'ForumPost.count' do
-				post forum_posts_url, params: { forum_post: {
-					title: user.name.possessive + " New Forum Post",
-					content: "Sample Text"
-				} }
-			end
-			assert_response :redirect
-
-			log_out
+		# [require_untrashed_user]
+		log_in_as @trashed_user
+		clear_flashes
+		assert_no_difference 'ForumPost.count' do
+			post forum_posts_path, params: { forum_post: {
+				title: "New Forum Post", content: "Sample Text"
+			} }
 		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
 
-		# User, Hidden
-		loop_users( user_modifiers: { 'hidden' => true } ) do |user|
-			log_in_as user
-
-			assert_no_difference 'ForumPost.count' do
-				post forum_posts_url, params: { forum_post: {
-					title: user.name.possessive + " New Forum Post",
-					content: "Sample Text"
-				} }
-			end
-			assert_response :redirect
-
-			log_out
+		# [require_unhidden_user]
+		log_in_as @hidden_user
+		clear_flashes
+		assert_no_difference 'ForumPost.count' do
+			post forum_posts_path, params: { forum_post: {
+				title: "New Forum Post", content: "Sample Text"
+			} }
 		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
 
-		# User, Un-Trashed, Un-Hidden
-		loop_users( user_modifiers: { 'trashed' => false, 'hidden' => false } ) do |user|
-			log_in_as user
 
-			assert_difference 'ForumPost.count', 1 do
-				post forum_posts_url, params: { forum_post: {
-					title: user.name.possessive + " New Forum Post",
-					content: "Sample Text"
-				} }
-			end
-			assert_response :redirect
+		## User
+		log_in_as @user
 
-			log_out
+		# Failure
+		clear_flashes
+		assert_no_difference 'ForumPost.count' do
+			post forum_posts_path, params: { forum_post: {
+				title: "Bad Forum Post", content: ("X" * 8192)
+			} }
 		end
+		assert flash[:failure]
+		assert_response :ok
+
+		# Success
+		clear_flashes
+		assert_difference 'ForumPost.count', 1 do
+			post forum_posts_path, params: { forum_post: {
+				title: "New Forum Post", content: "Sample Text"
+			} }
+		end
+		assert flash[:success]
+		assert_response :redirect
+
+		log_out
+
+
+		## User, Admin
+		log_in_as @admin_user
+		clear_flashes
+
+		assert_difference 'ForumPost.count', 1 do
+			post forum_posts_path, params: { forum_post: {
+				title: "Admin's Forum Post", content: "Sample Text"
+			} }
+		end
+		assert flash[:success]
+		assert_response :redirect
 	end
 
 	test "should get edit (only untrashed, authorized users)" do
-		load_forum_posts
+		populate_forum_posts
 
-		## Guest
-		# Forum Post -- Redirect
-		loop_forum_posts do |forum_post|
-			get edit_forum_post_url(forum_post)
-			assert_response :redirect
+		# [require_login]
+		get edit_forum_post_path(@user_forum_post)
+		assert flash[:warning]
+		assert_response :redirect
+
+		# [require_untrashed_user]
+		log_in_as @trashed_user
+		clear_flashes
+		get edit_forum_post_path(@trashed_user_forum_post)
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+		# [require_authorize]
+		log_in_as @user
+		clear_flashes
+		get edit_forum_post_path(@other_user_forum_post)
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+		# [require_untrashed_forum_post]
+		log_in_as @user
+		clear_flashes
+		get edit_forum_post_path(@user_trashed_forum_post)
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+
+		# User
+		log_in_as @user
+		[ @user_forum_post,
+			@user_hidden_forum_post ].each do |forum_post|
+			get edit_forum_post_path(forum_post)
+			assert_response :success
 		end
+		log_out
 
 
-		## User, Trashed
-		loop_users( user_modifiers: { 'trashed' => true } ) do |user, user_key|
-			log_in_as user
-
-			# Forum Post -- Redirect
-			loop_forum_posts do |forum_post|
-				get edit_forum_post_url(forum_post)
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-
-		## User, Non-Admin, Un-Trashed
-		loop_users( user_modifiers: { 'admin' => false, 'trashed' => false } ) do |user, user_key|
-			log_in_as user
-
-			# Forum Posts, Owned, Un-Trashed -- Success
-			loop_forum_posts( only: { user: user_key },
-				forum_modifiers: { 'trashed' => false } ) do |forum_post|
-
-				get edit_forum_post_url(forum_post)
-				assert_response :success
-			end
-
-			# Forum Posts, Owned, Trashed -- Redirect
-			loop_forum_posts( only: { user: user_key },
-				forum_modifiers: { 'trashed' => true } ) do |forum_post|
-
-				get edit_forum_post_url(forum_post)
-				assert_response :redirect
-			end
-
-			# Forum Posts, Un-Owned
-			loop_forum_posts( except: { user: user_key } ) do |forum_post|
-				get edit_forum_post_url(forum_post)
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-
-		## User, Admin, Un-Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => false } ) do |user, user_key|
-			log_in_as user
-
-			# Forum Posts, Un-Trashed -- Success
-			loop_forum_posts( forum_modifiers: { 'trashed' => false } ) do |forum_post|
-				get edit_forum_post_url(forum_post)
-				assert_response :success
-			end
-
-			# Forum Posts, Trashed -- Redirect
-			loop_forum_posts( forum_modifiers: { 'trashed' => true } ) do |forum_post|
-				get edit_forum_post_url(forum_post)
-				assert_response :redirect
-			end
-
-			log_out
+		# User, Admin
+		log_in_as @admin_user
+		[ @user_forum_post,
+			@user_hidden_forum_post,
+			@other_user_forum_post,
+			@other_user_hidden_forum_post ].each do |forum_post|
+			get edit_forum_post_path(forum_post)
+			assert_response :success
 		end
 	end
 
 	test "should patch update (only untrashed, authorized users)" do
-		load_forum_posts
+		populate_forum_posts
 
-		## Guest
-		# Forum Posts -- Redirect
-		loop_forum_posts do |forum_post, forum_post_key|
+		# [require_login]
+		assert_no_changes -> { @user_forum_post.title } do
+			patch forum_post_path(@user_forum_post), params: {
+				forum_post: { title: "Updated Title" } }
+			@user_forum_post.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+
+		# [require_untrashed_user]
+		log_in_as @trashed_user
+		clear_flashes
+		assert_no_changes -> { @trashed_user_forum_post.title } do
+			patch forum_post_path(@trashed_user_forum_post), params: {
+				forum_post: { title: "Updated Title" } }
+			@trashed_user_forum_post.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+		# [require_authorize]
+		log_in_as @user
+		clear_flashes
+		assert_no_changes -> { @other_user_forum_post.title } do
+			patch forum_post_path(@other_user_forum_post), params: {
+				forum_post: { title: "Updated Title" } }
+			@other_user_forum_post.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+		# [require_untrashed_forum_post]
+		log_in_as @user
+		clear_flashes
+		assert_no_changes -> { @user_forum_post.title } do
+			patch forum_post_path(@user_trashed_forum_post), params: {
+				forum_post: { title: "Updated Title" } }
+			@user_forum_post.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+
+		## User
+		log_in_as @user
+
+		# Failure
+		[ @user_forum_post,
+			@user_hidden_forum_post ].each do |forum_post|
+			clear_flashes
 			assert_no_changes -> { forum_post.title } do
-				patch forum_post_url(forum_post), params: { forum_post: {
-					title: "Guest's Edited Forum Post"
-				} }
+				patch forum_post_path(forum_post), params: { forum_post: { title: @other_user_forum_post.title } }
 				forum_post.reload
 			end
+			assert flash[:failure]
+			assert_response :ok
+		end
+
+		# Success - PATCH
+		[ @user_forum_post,
+			@user_hidden_forum_post ].each do |forum_post|
+			old_title = forum_post.title
+			clear_flashes
+			assert_changes -> { forum_post.title } do
+				patch forum_post_path(forum_post), params: { forum_post: { title: "Updated Title" } }
+				forum_post.reload
+			end
+			assert flash[:success]
 			assert_response :redirect
+			forum_post.update_columns(title: old_title)
 		end
 
-
-		## User, Trashed
-		loop_users( user_modifiers: { 'trashed' => true } ) do |user, user_key|
-			log_in_as user
-
-			# Forum Post -- Redirect
-			loop_forum_posts do |forum_post, forum_post_key|
-				assert_no_changes -> { forum_post.title } do
-					patch forum_post_url(forum_post), params: { forum_post: {
-						title: user.name.possessive + " Edited " + forum_post_key.split('_').map(&:capitalize).join(' ')
-					} }
-					forum_post.reload
-				end
-				assert_response :redirect
+		# Success - PUT
+		[ @user_forum_post,
+			@user_hidden_forum_post ].each do |forum_post|
+			old_title = forum_post.title
+			clear_flashes
+			assert_changes -> { forum_post.title } do
+				put forum_post_path(forum_post), params: { forum_post: { title: "Updated Title" } }
+				forum_post.reload
 			end
-
-			log_out
+			assert flash[:success]
+			assert_response :redirect
+			forum_post.update_columns(title: old_title)
 		end
 
+		log_out
 
-		## User, Un-Trashed, Non-Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => false } ) do |user, user_key|
-			log_in_as user
 
-			# Forum Posts, Owned, Un-Trashed -- Success
-			loop_forum_posts( only: { user: user_key },
-				forum_modifiers: { 'trashed' => false } ) do |forum_post, forum_post_key|
-
-				old_title = forum_post.title
-
-				assert_changes -> { forum_post.title } do
-					patch forum_post_url(forum_post), params: { forum_post: {
-						title: user.name.possessive + " Edited " + forum_post_key.split('_').map(&:capitalize).join(' ')
-					} }
-					forum_post.reload
-				end
-				assert_response :redirect
-
-				forum_post.update_columns(title: old_title)
+		## User, Admin
+		log_in_as @admin_user
+		[ @user_forum_post,
+			@user_hidden_forum_post,
+			@other_user_forum_post,
+			@other_user_hidden_forum_post ].each do |forum_post|
+			old_title = forum_post.title
+			clear_flashes
+			assert_changes -> { forum_post.title } do
+				patch forum_post_path(forum_post), params: { forum_post: { title: "Updated Title" } }
+				forum_post.reload
 			end
-
-			# Forum Posts, Owned, Trashed -- Redirect
-			loop_forum_posts( only: { user: user_key },
-				forum_modifiers: { 'trashed' => true } ) do |forum_post, forum_post_key|
-
-				assert_no_changes -> { forum_post.title } do
-					patch forum_post_url(forum_post), params: { forum_post: {
-						title: user.name.possessive + " Edited " + forum_post_key.split('_').map(&:capitalize).join(' ')
-					} }
-					forum_post.reload
-				end
-				assert_response :redirect
-			end
-
-			# Forum Posts, Un-Owned -- Redirect
-			loop_forum_posts( except: { user: user_key } ) do |forum_post, forum_post_key|
-				assert_no_changes -> { forum_post.title } do
-					patch forum_post_url(forum_post), params: { forum_post: {
-						title: user.name.possessive + " Edited " + forum_post_key.split('_').map(&:capitalize).join(' ')
-					} }
-					forum_post.reload
-				end
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-
-		## User, Un-Trashed, Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user, user_key|
-			log_in_as user
-
-			# Forum Post, Un-Trashed -- Success
-			loop_forum_posts( forum_modifiers: { 'trashed' => false } ) do |forum_post, forum_post_key|
-				old_title = forum_post.title
-
-				assert_changes -> { forum_post.title } do
-					patch forum_post_url(forum_post), params: { forum_post: {
-						title: user.name.possessive + " Edited " + forum_post_key.split('_').map(&:capitalize).join(' ')
-					} }
-					forum_post.reload
-				end
-				assert_response :redirect
-
-				forum_post.update_columns(title: old_title)
-			end
-
-			# Forum Post, Trashed -- Redirect
-			loop_forum_posts( forum_modifiers: { 'trashed' => true } ) do |forum_post, forum_post_key|
-				assert_no_changes -> { forum_post.title } do
-					patch forum_post_url(forum_post), params: { forum_post: {
-						title: user.name.possessive + " Edited " + forum_post_key.split('_').map(&:capitalize).join(' ')
-					} }
-					forum_post.reload
-				end
-				assert_response :redirect
-			end
-
-			log_out
+			assert flash[:success]
+			assert_response :redirect
+			forum_post.update_columns(title: old_title)
 		end
 	end
 
 	test "should patch hide (only untrashed, authorized users)" do
-		load_forum_posts
+		populate_forum_posts
 
-		## Guest
-		# Forum Posts -- Redirect
-		loop_forum_posts( forum_modifiers: { 'hidden' => false } ) do |forum_post|
-			assert_no_changes -> { forum_post.updated_at } do
-				assert_no_changes -> { forum_post.hidden? }, from: false do
-					patch hide_forum_post_url(forum_post)
-					forum_post.reload
-				end
+		# [require_login]
+		assert_no_changes -> { @user_forum_post.hidden }, from: false do
+			patch hide_forum_post_path(@user_forum_post)
+			@user_forum_post.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+
+		# [require_untrashed_user]
+		log_in_as @trashed_user
+		clear_flashes
+		assert_no_changes -> { @trashed_user_forum_post.hidden }, from: false do
+			patch hide_forum_post_path(@trashed_user_forum_post)
+			@trashed_user_forum_post.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+		# [require_authorize]
+		log_in_as @user
+		clear_flashes
+		assert_no_changes -> { @other_user_forum_post.hidden }, from: false do
+			patch hide_forum_post_path(@other_user_forum_post)
+			@other_user_forum_post.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+
+		## User
+		log_in_as @user
+
+		# Failure
+		[ @user_hidden_forum_post,
+			@user_hidden_trashed_forum_post ].each do |forum_post|
+			clear_flashes
+			assert_no_changes -> { forum_post.hidden }, from: true do
+				patch hide_forum_post_path(forum_post)
+				forum_post.reload
 			end
+			assert flash[:warning]
 			assert_response :redirect
 		end
 
-
-		## User, Trashed
-		loop_users( user_modifiers: { 'trashed' => true } ) do |user|
-			log_in_as user
-
-			# Forum Posts -- Redirect
-			loop_forum_posts( forum_modifiers: { 'hidden' => false } ) do |forum_post|
-				assert_no_changes -> { forum_post.updated_at } do
-					assert_no_changes -> { forum_post.hidden? }, from: false do
-						patch hide_forum_post_url(forum_post)
-						forum_post.reload
-					end
-				end
-				assert_response :redirect
+		# Success
+		[ @user_forum_post,
+			@user_trashed_forum_post ].each do |forum_post|
+			clear_flashes
+			assert_changes -> { forum_post.hidden }, from: false, to: true do
+				patch hide_forum_post_path(forum_post)
+				forum_post.reload
 			end
-
-			log_out
+			assert flash[:success]
+			assert_response :redirect
+			forum_post.update_columns(hidden: false)
 		end
 
+		log_out
 
-		## User, Un-Trashed, Non-Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => false } ) do |user, user_key|
-			log_in_as user
 
-			# Forum Posts, Owned -- Success
-			loop_forum_posts( only: { user: user_key },
-				forum_modifiers: { 'hidden' => false } ) do |forum_post|
-
-				assert_no_changes -> { forum_post.updated_at } do
-					assert_changes -> { forum_post.hidden? }, from: false, to: true do
-						patch hide_forum_post_url(forum_post)
-						forum_post.reload
-					end
-				end
-				assert_response :redirect
-
-				forum_post.update_columns(hidden: false)
+		## User, Admin
+		log_in_as @admin_user
+		[ @user_forum_post,
+			@user_trashed_forum_post,
+			@other_user_forum_post,
+			@other_user_trashed_forum_post ].each do |forum_post|
+			clear_flashes
+			assert_changes -> { forum_post.hidden }, from: false, to: true do
+				patch hide_forum_post_path(forum_post)
+				forum_post.reload
 			end
-
-			# Forum Posts, Un-Owned -- Redirect
-			loop_forum_posts( except: { user: user_key },
-				forum_modifiers: { 'hidden' => false } ) do |forum_post|
-
-				assert_no_changes -> { forum_post.updated_at } do
-					assert_no_changes -> { forum_post.hidden? }, from: false do
-						patch hide_forum_post_url(forum_post)
-						forum_post.reload
-					end
-				end
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-
-		## Admin, Un-Trashed
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user|
-			log_in_as user
-
-			# Forum Posts -- Success
-			loop_forum_posts( forum_modifiers: { 'hidden' => false } ) do |forum_post|
-				assert_no_changes -> { forum_post.updated_at } do
-					assert_changes -> { forum_post.hidden? }, from: false, to: true do
-						patch hide_forum_post_url(forum_post)
-						forum_post.reload
-					end
-				end
-				assert_response :redirect
-
-				forum_post.update_columns(hidden: false)
-			end
-
-			log_out
+			assert flash[:success]
+			assert_response :redirect
+			forum_post.update_columns(hidden: false)
 		end
 	end
 
 	test "should patch unhide (only untrashed, authorized users)" do
-		load_forum_posts
+		populate_forum_posts
 
-		## Guest
-		# Forum Post -- Redirect
-		loop_forum_posts( forum_modifiers: { 'hidden' => true } ) do |forum_post|
-			assert_no_changes -> { forum_post.updated_at } do
-				assert_no_changes -> { forum_post.hidden? }, from: true do
-					patch unhide_forum_post_url(forum_post)
-					forum_post.reload
-				end
+		# [require_login]
+		assert_no_changes -> { @user_hidden_forum_post.hidden }, from: true do
+			patch unhide_forum_post_path(@user_hidden_forum_post)
+			@user_hidden_forum_post.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+
+		# [require_untrashed_user]
+		log_in_as @trashed_user
+		clear_flashes
+		assert_no_changes -> { @trashed_user_hidden_forum_post.hidden }, from: true do
+			patch unhide_forum_post_path(@trashed_user_hidden_forum_post)
+			@trashed_user_hidden_forum_post.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+		# [require_authorize]
+		log_in_as @user
+		clear_flashes
+		assert_no_changes -> { @other_user_hidden_forum_post.hidden }, from: true do
+			patch unhide_forum_post_path(@other_user_hidden_forum_post)
+			@other_user_hidden_forum_post.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+
+		## User
+		log_in_as @user
+
+		# Failure
+		[ @user_forum_post,
+			@user_trashed_forum_post ].each do |forum_post|
+			clear_flashes
+			assert_no_changes -> { forum_post.hidden }, from: false do
+				patch unhide_forum_post_path(forum_post)
+				forum_post.reload
 			end
+			assert flash[:warning]
 			assert_response :redirect
 		end
 
-
-		## User, Trashed
-		loop_users( user_modifiers: { 'trashed' => true } ) do |user|
-			log_in_as user
-
-			# Forum Post -- Redirect
-			loop_forum_posts( forum_modifiers: { 'hidden' => true } ) do |forum_post|
-				assert_no_changes -> { forum_post.updated_at } do
-					assert_no_changes -> { forum_post.hidden? }, from: true do
-						patch unhide_forum_post_url(forum_post)
-						forum_post.reload
-					end
-				end
-				assert_response :redirect
+		# Success - PATCH
+		[ @user_hidden_forum_post,
+			@user_hidden_trashed_forum_post ].each do |forum_post|
+			clear_flashes
+			assert_changes -> { forum_post.hidden }, from: true, to: false do
+				patch unhide_forum_post_path(forum_post)
+				forum_post.reload
 			end
-
-			log_out
+			assert flash[:success]
+			assert_response :redirect
+			forum_post.update_columns(hidden: true)
 		end
 
-
-		## User, Un-Trashed, Non-Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => false } ) do |user, user_key|
-			log_in_as user
-
-			# Forum Posts, Owned -- Success
-			loop_forum_posts( only: { user: user_key },
-				forum_modifiers: { 'hidden' => true } ) do |forum_post|
-				
-				assert_no_changes -> { forum_post.updated_at } do
-					assert_changes -> { forum_post.hidden? }, from: true, to: false do
-						patch unhide_forum_post_url(forum_post)
-						forum_post.reload
-					end
-				end
-				assert_response :redirect
-
-				forum_post.update_columns(hidden: true)
+		# Success - PUT
+		[ @user_hidden_forum_post,
+			@user_hidden_trashed_forum_post ].each do |forum_post|
+			clear_flashes
+			assert_changes -> { forum_post.hidden }, from: true, to: false do
+				put unhide_forum_post_path(forum_post)
+				forum_post.reload
 			end
-
-			# Forum Posts, Un-Owned
-			loop_forum_posts( except: { user: user_key },
-				forum_modifiers: { 'hidden' => true } ) do |forum_post|
-
-				assert_no_changes -> { forum_post.updated_at } do
-					assert_no_changes -> { forum_post.hidden? }, from: true do
-						patch unhide_forum_post_url(forum_post)
-						forum_post.reload
-					end
-				end
-				assert_response :redirect
-			end
-
-			log_out
+			assert flash[:success]
+			assert_response :redirect
+			forum_post.update_columns(hidden: true)
 		end
 
+		log_out
 
-		## User, Un-Trashed, Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user|
-			log_in_as user
 
-			# Forum Posts -- Success
-			loop_forum_posts( forum_modifiers: { 'hidden' => true } ) do |forum_post|
-				assert_no_changes -> { forum_post.updated_at } do
-					assert_changes -> { forum_post.hidden? }, from: true, to: false do
-						patch unhide_forum_post_url(forum_post)
-						forum_post.reload
-					end
-				end
-				assert_response :redirect
-
-				forum_post.update_columns(hidden: true)
+		## User, Admin
+		log_in_as @admin_user
+		[ @user_hidden_forum_post,
+			@user_hidden_trashed_forum_post,
+			@other_user_hidden_forum_post,
+			@other_user_hidden_trashed_forum_post ].each do |forum_post|
+			clear_flashes
+			assert_changes -> { forum_post.hidden }, from: true, to: false do
+				patch unhide_forum_post_path(forum_post)
+				forum_post.reload
 			end
-
-			log_out
+			assert_response :redirect
+			assert flash[:success]
+			forum_post.update_columns(hidden: true)
 		end
 	end
 
 	test "should patch trash (only untrashed, authorized)" do
-		load_forum_posts
+		populate_forum_posts
 
-		## Guest
-		# Forum Posts -- Redirect
-		loop_forum_posts( forum_modifiers: { 'trashed' => false } ) do |forum_post|
-			assert_no_changes -> { forum_post.updated_at } do
-				assert_no_changes -> { forum_post.trashed? }, from: false do
-					patch trash_forum_post_url(forum_post)
-					forum_post.reload
-				end
+		# [require_login]
+		assert_no_changes -> { @user_forum_post.trashed }, from: false do
+			patch trash_forum_post_path(@user_forum_post)
+			@user_forum_post.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+
+		# [require_untrashed_user]
+		log_in_as @trashed_user
+		clear_flashes
+		assert_no_changes -> { @trashed_user_forum_post.trashed }, from: false do
+			patch trash_forum_post_path(@trashed_user_forum_post)
+			@trashed_user_forum_post.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+		# [require_authorize]
+		log_in_as @user
+		clear_flashes
+		assert_no_changes -> { @other_user_forum_post.trashed }, from: false do
+			patch trash_forum_post_path(@other_user_forum_post)
+			@other_user_forum_post.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+
+		## User
+		log_in_as @user
+
+		# Failure
+		[ @user_trashed_forum_post,
+			@user_hidden_trashed_forum_post ].each do |forum_post|
+			clear_flashes
+			assert_no_changes -> { forum_post.trashed }, from: true do
+				patch trash_forum_post_path(forum_post)
+				forum_post.reload
 			end
+			assert flash[:warning]
 			assert_response :redirect
 		end
 
-
-		## User, Trashed
-		loop_users( user_modifiers: { 'trashed' => true } ) do |user|
-			log_in_as user
-
-			# Forum Posts -- Redirect
-			loop_forum_posts( forum_modifiers: { 'trashed' => false } ) do |forum_post|
-				assert_no_changes -> { forum_post.updated_at } do
-					assert_no_changes -> { forum_post.trashed? }, from: false do
-						patch trash_forum_post_url(forum_post)
-						forum_post.reload
-					end
-				end
-				assert_response :redirect
+		# Success - PATCH
+		[ @user_forum_post,
+			@user_hidden_forum_post ].each do |forum_post|
+			clear_flashes
+			assert_changes -> { forum_post.trashed }, from: false, to: true do
+				patch trash_forum_post_path(forum_post)
+				forum_post.reload
 			end
-
-			log_out
+			assert flash[:success]
+			assert_response :redirect
+			forum_post.update_columns(trashed: false)
 		end
 
-
-		## User, Un-Trashed, Non-Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => false } ) do |user, user_key|
-			log_in_as user
-
-			# Forum Posts, Owned -- Success
-			loop_forum_posts( only: { user: user_key },
-				forum_modifiers: { 'trashed' => false } ) do |forum_post|
-
-				assert_no_changes -> { forum_post.updated_at } do
-					assert_changes -> { forum_post.trashed? }, from: false, to: true do
-						patch trash_forum_post_url(forum_post)
-						forum_post.reload
-					end
-				end
-				assert_response :redirect
-
-				forum_post.update_columns(trashed: false)
+		# Success - PUT
+		[ @user_forum_post,
+			@user_hidden_forum_post ].each do |forum_post|
+			clear_flashes
+			assert_changes -> { forum_post.trashed }, from: false, to: true do
+				put trash_forum_post_path(forum_post)
+				forum_post.reload
 			end
-
-			# Forum Posts, Un-Owned -- Redirect
-			loop_forum_posts( except: { user: user_key },
-				forum_modifiers: { 'trashed' => false } ) do |forum_post|
-				
-				assert_no_changes -> { forum_post.updated_at } do
-					assert_no_changes -> { forum_post.trashed? }, from: false do
-						patch trash_forum_post_url(forum_post)
-						forum_post.reload
-					end
-				end
-				assert_response :redirect
-			end
-
-			log_out
+			assert flash[:success]
+			assert_response :redirect
+			forum_post.update_columns(trashed: false)
 		end
+		log_out
 
 
-		## User, Un-Trashed, Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user|
-			log_in_as user
-
-			# Forum Posts -- Success
-			loop_forum_posts( forum_modifiers: { 'trashed' => false } ) do |forum_post|
-				assert_no_changes -> { forum_post.updated_at } do
-					assert_changes -> { forum_post.trashed? }, from: false, to: true do
-						patch trash_forum_post_url(forum_post)
-						forum_post.reload
-					end
-				end
-				assert_response :redirect
-
-				forum_post.update_columns(trashed: false)
+		## User, Admin
+		log_in_as @admin_user
+		[ @user_forum_post,
+			@user_hidden_forum_post,
+			@other_user_forum_post,
+			@other_user_hidden_forum_post ].each do |forum_post|
+			clear_flashes
+			assert_changes -> { forum_post.trashed }, from: false, to: true do
+				patch trash_forum_post_path(forum_post)
+				forum_post.reload
 			end
-
-			log_out
+			assert_response :redirect
+			assert flash[:success]
+			forum_post.update_columns(trashed: false)
 		end
 	end
 
 	test "should patch untrash (only untrashed, authorized)" do
-		load_forum_posts
+		populate_forum_posts
 
-		## Guest
-		# Forum Posts -- Redirect
-		loop_forum_posts( forum_modifiers: { 'trashed' => true } ) do |forum_post|
-			assert_no_changes -> { forum_post.updated_at } do
-				assert_no_changes -> { forum_post.trashed? }, from: true do
-					patch untrash_forum_post_url(forum_post)
-					forum_post.reload
-				end
+		# [require_login]
+		assert_no_changes -> { @user_trashed_forum_post.trashed }, from: true do
+			patch untrash_forum_post_path(@user_trashed_forum_post)
+			@user_trashed_forum_post.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+
+		# [require_untrashed_user]
+		log_in_as @trashed_user
+		clear_flashes
+		assert_no_changes -> { @trashed_user_trashed_forum_post.trashed }, from: true do
+			patch untrash_forum_post_path(@trashed_user_trashed_forum_post)
+			@trashed_user_trashed_forum_post.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+		# [require_authorize]
+		log_in_as @user
+		clear_flashes
+		assert_no_changes -> { @other_user_trashed_forum_post.trashed }, from: true do
+			patch untrash_forum_post_path(@other_user_trashed_forum_post)
+			@other_user_trashed_forum_post.reload
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+
+		## User
+		log_in_as @user
+
+		# Failure
+		[ @user_forum_post,
+			@user_hidden_forum_post ].each do |forum_post|
+			clear_flashes
+			assert_no_changes -> { forum_post.trashed }, from: false do
+				patch untrash_forum_post_path(forum_post)
+				forum_post.reload
 			end
+			assert flash[:warning]
 			assert_response :redirect
 		end
 
-
-		## User, Trashed
-		loop_users( user_modifiers: { 'trashed' => true } ) do |user|
-			log_in_as user
-
-			# Forum Posts -- Redirect
-			loop_forum_posts( forum_modifiers: { 'trashed' => true } ) do |forum_post|
-				assert_no_changes -> { forum_post.updated_at } do
-					assert_no_changes -> { forum_post.trashed? }, from: true do
-						patch untrash_forum_post_url(forum_post)
-						forum_post.reload
-					end
-				end
-				assert_response :redirect
+		# Success - PATCH
+		[ @user_trashed_forum_post,
+			@user_hidden_trashed_forum_post ].each do |forum_post|
+			clear_flashes
+			assert_changes -> { forum_post.trashed }, from: true, to: false do
+				patch untrash_forum_post_path(forum_post)
+				forum_post.reload
 			end
-
-			log_out
+			assert flash[:success]
+			assert_response :redirect
+			forum_post.update_columns(trashed: true)
 		end
 
-
-		## Non-Admin, Un-Trashed
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => false } ) do |user, user_key|
-			log_in_as user
-
-			# Forum Posts, Owned -- Success
-			loop_forum_posts( only: { user: user_key },
-				forum_modifiers: { 'trashed' => true } ) do |forum_post|
-				
-				assert_no_changes -> { forum_post.updated_at } do
-					assert_changes -> { forum_post.trashed? }, from: true, to: false do
-						patch untrash_forum_post_url(forum_post)
-						forum_post.reload
-					end
-				end
-				assert_response :redirect
-
-				forum_post.update_columns(trashed: true)
+		# Success - PUT
+		[ @user_trashed_forum_post,
+			@user_hidden_trashed_forum_post ].each do |forum_post|
+			clear_flashes
+			assert_changes -> { forum_post.trashed }, from: true, to: false do
+				put untrash_forum_post_path(forum_post)
+				forum_post.reload
 			end
-
-			# Forum Posts, Un-Owned -- Success
-			loop_forum_posts( except: { user: user_key },
-				forum_modifiers: { 'trashed' => true } ) do |forum_post|
-
-				assert_no_changes -> { forum_post.updated_at } do
-					assert_no_changes -> { forum_post.trashed? }, from: true do
-						patch untrash_forum_post_url(forum_post)
-						forum_post.reload
-					end
-				end
-				assert_response :redirect
-			end
-
-			log_out
+			assert flash[:success]
+			assert_response :redirect
+			forum_post.update_columns(trashed: true)
 		end
 
+		log_out
 
-		## Admin, Un-Trashed
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user|
-			log_in_as user
 
-			# Forum Posts -- Success
-			loop_forum_posts( forum_modifiers: { 'trashed' => true } ) do |forum_post|
-				assert_no_changes -> { forum_post.updated_at } do
-					assert_changes -> { forum_post.trashed? }, from: true, to: false do
-						patch untrash_forum_post_url(forum_post)
-						forum_post.reload
-					end
-				end
-				assert_response :redirect
-
-				forum_post.update_columns(trashed: true)
+		## User, Admin
+		log_in_as @admin_user
+		[ @user_trashed_forum_post,
+			@user_hidden_trashed_forum_post,
+			@other_user_trashed_forum_post,
+			@other_user_hidden_trashed_forum_post ].each do |forum_post|
+			clear_flashes
+			assert_changes -> { forum_post.trashed }, from: true, to: false do
+				patch untrash_forum_post_path(forum_post)
+				forum_post.reload
 			end
-
-			log_out
+			assert_response :redirect
+			assert flash[:success]
+			forum_post.update_columns(trashed: true)
 		end
 	end
 
 	test "should delete destroy (only untrashed admins)" do
-		load_forum_posts
+		populate_forum_posts
 
-		## Guest
-		# Forum Posts - Redirect
-		loop_forum_posts do |forum_post|
-			assert_no_difference 'ForumPost.count' do
-				delete forum_post_url(forum_post)
+		# [require_login]
+		assert_no_difference 'ForumPost.count' do
+			delete forum_post_path(@user_trashed_forum_post)
+		end
+		assert flash[:warning]
+		assert_response :redirect
+
+		# [require_admin]
+		log_in_as @user
+		clear_flashes
+		assert_no_difference 'ForumPost.count' do
+			delete forum_post_path(@user_trashed_forum_post)
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+		# [require_untrashed_user]
+		log_in_as @trashed_admin_user
+		clear_flashes
+		assert_no_difference 'ForumPost.count' do
+			delete forum_post_path(@trashed_admin_user_trashed_forum_post)
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+		# [require_trashed_forum_post]
+		log_in_as @admin_user
+		clear_flashes
+		assert_no_difference 'ForumPost.count' do
+			delete forum_post_path(@user_forum_post)
+		end
+		assert flash[:warning]
+		assert_response :redirect
+		log_out
+
+
+		## User, Admin
+		log_in_as @admin_user
+		[ @user_trashed_forum_post,
+			@user_hidden_trashed_forum_post,
+			@other_user_trashed_forum_post,
+			@other_user_hidden_trashed_forum_post ].each do |forum_post|
+			clear_flashes
+			assert_difference 'ForumPost.count', -1 do
+				delete forum_post_path(forum_post)
 			end
-			assert_nothing_raised { forum_post.reload }
+			assert flash[:success]
 			assert_response :redirect
-		end
-
-		## User, Non-Admin
-		loop_users( user_modifiers: { 'admin' => false } ) do |user|
-			log_in_as user
-
-			# Forum Posts -- Redirect
-			loop_forum_posts do |forum_post|
-				assert_no_difference 'ForumPost.count' do
-					delete forum_post_url(forum_post)
-				end
-				assert_nothing_raised { forum_post.reload }
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-		## User, Admin, Trashed
-		loop_users( user_modifiers: { 'admin' => true, 'trashed' => true } ) do |user|
-			log_in_as user
-
-			# Forum Posts -- Redirect
-			loop_forum_posts do |forum_post|
-				assert_no_difference 'ForumPost.count' do
-					delete forum_post_url(forum_post)
-				end
-				assert_nothing_raised { forum_post.reload }
-				assert_response :redirect
-			end
-
-			log_out
-		end
-
-		## User, Un-Trashed, Admin
-		loop_users( user_modifiers: { 'trashed' => false, 'admin' => true } ) do |user, user_key|
-			log_in_as user
-
-			# Forum Posts, Trashed -- Success
-			loop_forum_posts( forum_numbers: [user_key.split('_').last],
-				forum_modifiers: { 'trashed' => true, 'hidden' => user.hidden? } ) do |forum_post|
-
-				assert_difference 'ForumPost.count', -1 do
-					delete forum_post_url(forum_post)
-				end
-				assert_raise(ActiveRecord::RecordNotFound) { forum_post.reload }
-				assert_response :redirect
-			end
-
-			# Forum Posts, Un-Trashed -- Redirect
-			loop_forum_posts( forum_modifiers: { 'trashed' => false } ) do |forum_post|
-
-				assert_no_difference 'ForumPost.count' do
-					delete forum_post_url(forum_post)
-				end
-				assert_nothing_raised { forum_post.reload }
-				assert_response :redirect
-			end
-
-			log_out
+			assert_raise(ActiveRecord::RecordNotFound) { forum_post.reload }
 		end
 	end
 

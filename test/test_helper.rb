@@ -2,25 +2,17 @@ ENV['RAILS_ENV'] ||= 'test'
 require_relative '../config/environment'
 require 'rails/test_help'
 
-require 'fixture_writers'
-require 'fixture_iterators'
-require 'fixture_loaders'
-
-#LOG BLOAT FIX
-print "CLEARING LOG FILE..."
-begin
-	File.open('log/test.log', 'w') {|f| f.truncate(0)}
-	puts "DONE"
-rescue
-	puts "NO LOG FILE, CREATING NEW"
-end
+# require 'fixture_writers'
+# require 'fixture_iterators'
+# require 'fixture_loaders'
 
 class Minitest::Unit::TestCase
 end
 
 class ActiveSupport::TestCase
-	# parallelize(workers: :number_of_processors)
+	parallelize(workers: :number_of_processors)
 	set_fixture_class versions: PaperTrail::Version
+	fixtures :all
 
 	include FactoryBot::Syntax::Methods
 	require "minitest/reporters"
@@ -56,8 +48,10 @@ class ActiveSupport::TestCase
 	end
 
 	def build_session_and_cookies
-		log_in_as users(:admin_user_one), remember: '1'
+		@throwaway_user = create(:user, name: "Throwaway", email: "throwaway@email.com")
+		log_in_as @throwaway_user, remember: '1'
 		log_out
+		flash.clear
 		require_session_and_cookies
 	end
 
@@ -115,6 +109,11 @@ class ActiveSupport::TestCase
 			PaperTrail.enabled = was_enabled
 			PaperTrail.request.enabled = was_enabled_for_request
 		end
+	end
+
+	def clear_flashes
+		get about_path
+		flash.clear
 	end
 
 	# URL AND PATH HELPERS
@@ -221,6 +220,28 @@ class ActiveSupport::TestCase
 		else
 			p article
 			raise "Error constructing Article Path: Article type unknown"
+		end
+	end
+
+	def trashed_article_documents_path(article)
+		if article.class == BlogPost
+			trashed_blog_post_documents_path(article)
+		elsif article.class == Archiving
+			trashed_archiving_documents_path(article)
+		else
+			p article
+			raise "Error constructing Trashed Article Documents Path: Article type unknown"
+		end
+	end
+
+	def article_documents_path(article)
+		if article.class == BlogPost
+			blog_post_documents_path(article)
+		elsif article.class == Archiving
+			archiving_documents_path(article)
+		else
+			p article
+			raise "Error constructing Article Documents Path: Article type unknown"
 		end
 	end
 
@@ -416,6 +437,25 @@ class ActiveSupport::TestCase
 			end
 		else
 			raise "Error constructing Unhide Item Version Path: Item type unknown"
+		end
+	end
+
+	def trashed_post_comments_path(post)
+		if post.class == BlogPost
+			trashed_blog_post_comments_path(post)
+		elsif post.class == ForumPost
+			trashed_forum_post_comments_path(post)
+		elsif post.class == Suggestion
+			if post.citation.class == Archiving
+				trashed_archiving_suggestion_comments_path(post.citation, post)
+			elsif post.citation.class == Document
+				trashed_archiving_document_suggestion_comments_path(post.citation.article, post.citation, post)
+			else
+				raise "Error constructing Trashed Post Comments Path: Post Citation type unknown"
+			end
+		else
+			p post.class
+			raise "Error constructing Trashed Post Comment Path: Post type unknown"
 		end
 	end
 

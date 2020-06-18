@@ -10,10 +10,12 @@ module Trashable
 	end
 
 	def trash_canned?
-		if self.class == Comment
-			self.trashed? || self.post.trash_canned?
+		if self.class == ForumPost
+			self.trashed?# || self.user.trash_canned?
+		elsif self.class == Comment
+			self.trashed? || self.post.trash_canned?# || self.user.trash_canned?
 		elsif self.class == Suggestion
-			self.trashed? || self.citation.trash_canned?
+			self.trashed? || self.citation.trash_canned?# || self.user.trash_canned?
 		elsif self.class == Document
 			self.trashed? || self.article.trash_canned?
 		else

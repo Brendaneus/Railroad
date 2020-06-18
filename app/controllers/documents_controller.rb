@@ -6,10 +6,11 @@ class DocumentsController < ApplicationController
 	before_action :require_untrashed_user, except: [:trashed, :show]
 	before_action :set_article
 	before_action :set_document, except: [:trashed, :new, :create]
-	before_action :require_untrashed_article, only: [:new, :create, :edit, :update]
-	before_action :require_untrashed_document, only: [:edit, :update]
 	before_action :require_admin_for_hidden_article, only: [:trashed, :show]
 	before_action :require_admin_for_hidden_document, only: [:show]
+	before_action :require_untrashed_article, only: [:new, :create, :edit, :update]
+	before_action :require_untrashed_document, only: [:edit, :update]
+	before_action :require_trashed_document, only: [:destroy]
 
 	before_action :set_document_bucket, unless: -> { Rails.env.test? }
 	after_action :mark_activity, only: [:create, :update, :hide, :unhide, :trash, :untrash, :destroy], if: :logged_in?
@@ -134,6 +135,13 @@ class DocumentsController < ApplicationController
 		def require_untrashed_document
 			if @document.trashed?
 				flash[:warning] = "This document must be restored from trash before proceeding."
+				redirect_back fallback_location: article_document_path( @article, @document )
+			end
+		end
+
+		def require_trashed_document
+			unless @document.trashed?
+				flash[:warning] = "This document must be sent to trash before proceeding."
 				redirect_back fallback_location: article_document_path( @article, @document )
 			end
 		end

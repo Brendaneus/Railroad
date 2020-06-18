@@ -1,202 +1,180 @@
 require 'test_helper'
 
 class BlogPostTest < ActiveSupport::TestCase
-	fixtures :blog_posts, :documents, :users, :comments
 
 	def setup
-		load_blog_posts
 	end
 
-	test "should associate with documents" do
-		loop_blog_posts do |blog_post, blog_post_key|
-			assert blog_post.documents ==
-				load_documents( flat_array: true,
-					include_archivings: false,
-					only: { blog_post: blog_post_key } )
-		end
+	def populate_blog_posts
+		@motd_blog_post = create(:blog_post, title: "MOTD Blog Post", motd: true)
+		@hidden_blog_post = create(:blog_post, title: "Hidden Blog Post", hidden: true)
+		@unhidden_blog_post = create(:blog_post, title: "Unhidden Blog Post", hidden: false)
+		@trashed_blog_post = create(:blog_post, title: "Trashed Blog Post", trashed: true)
+		@untrashed_blog_post = create(:blog_post, title: "Untrashed Blog Post", trashed: false)
 	end
 
-	test "should associate with comments" do
-		loop_blog_posts do |blog_post, blog_post_key|
-			assert blog_post.comments ==
-				load_comments( flat_array: true,
-					include_suggestions: false,
-					include_forums: false,
-					only: { blog_post: blog_post_key } )
-		end
+	test "should associate with Documents" do
+		@blog_post = create(:blog_post)
+		@document = create(:document, article: @blog_post)
+
+		assert @blog_post.documents == [@document]
 	end
 
-	test "should associate with commenters" do
-		loop_blog_posts do |blog_post|
-			assert blog_post.commenters ==
-				load_users( flat_array: true )
-		end
+	test "should associate with Comments" do
+		@blog_post = create(:blog_post)
+		@document = create(:document, article: @blog_post)
+
+		assert @blog_post.documents == [@document]
 	end
 
-	test "should dependent destroy documents" do
-		load_documents
+	test "should associate with Commenters" do
+		@blog_post = create(:blog_post)
+		@user = create(:user)
+		@comment = create(:comment, user: @user, post: @blog_post)
 
-		loop_blog_posts do |blog_post, blog_post_key|
-			blog_post.destroy
-
-			assert_raise(ActiveRecord::RecordNotFound) { blog_post.reload }
-
-			loop_documents( include_archivings: false,
-				only: { blog_post: blog_post_key } ) do |document|
-				assert_raise(ActiveRecord::RecordNotFound) { document.reload }
-			end
-		end
+		assert @blog_post.commenters == [@user]
 	end
 
-	test "should dependent destroy comments" do
-		load_comments( include_suggestions: false, include_forums: false )
+	test "should dependent destroy Documents" do
+		@blog_post = create(:blog_post)
+		@document = create(:document, article: @blog_post)
 
-		loop_blog_posts do |blog_post, blog_post_key|
-			blog_post.destroy
+		@blog_post.destroy
+		assert_raise(ActiveRecord::RecordNotFound) { @document.reload }
+	end
 
-			assert_raise(ActiveRecord::RecordNotFound) { blog_post.reload }
+	test "should dependent destroy Comments" do
+		@blog_post = create(:blog_post)
+		@comment = create(:comment, post: @blog_post)
 
-			loop_comments( include_suggestions: false,
-				include_forums: false,
-				only: { blog_post: blog_post_key } ) do |comment|
-
-				assert_raise(ActiveRecord::RecordNotFound) { comment.reload }
-			end
-		end
+		@blog_post.destroy
+		assert_raise(ActiveRecord::RecordNotFound) { @comment.reload }
 	end
 
 	test "should validate title presence" do
-		loop_blog_posts do |blog_post|
-			blog_post.title = ""
-			assert_not blog_post.valid?
-			
-			blog_post.title = "    "
-			assert_not blog_post.valid?
-		end
+		@blog_post = create(:blog_post)
+
+		@blog_post.title = ""
+		assert_not @blog_post.valid?
+
+		@blog_post.title = "   "
+		assert_not @blog_post.valid?
 	end
 
 	test "should validate title uniqueness (case-insensitive)" do
-		loop_blog_posts do |blog_post, blog_post_key|
-			loop_blog_posts(except: {blog_post: blog_post_key}) do |other_blog_post|
-				blog_post.title = other_blog_post.title.downcase
-				assert_not blog_post.valid?
+		@blog_post = create(:blog_post)
+		@other_blog_post = create(:blog_post, title: "Other Title")
 
-				blog_post.title = other_blog_post.title.upcase
-				assert_not blog_post.valid?
-				
-				blog_post.reload
-			end
-		end
+		@blog_post.title = @other_blog_post.title.downcase
+		assert_not @blog_post.valid?
+
+		@blog_post.title = @other_blog_post.title.upcase
+		assert_not @blog_post.valid?
 	end
 
-	test "should validate title length (maximum: 64)" do
-		loop_blog_posts do |blog_post|
-			blog_post.title = "X"
-			assert blog_post.valid?
+	# Important?
+	# test "should validate title length (maximum: 64)" do
+	# 	@blog_post = create(:blog_post)
 
-			blog_post.title = "X" * 64
-			assert blog_post.valid?
+	# 	@blog_post.title = "X"
+	# 	assert @blog_post.valid?
 
-			blog_post.title = "X" * 65
-			assert_not blog_post.valid?
-		end
-	end
+	# 	@blog_post.title = "X" * 64
+	# 	assert @blog_post.valid?
+
+	# 	@blog_post.title = "X" * 65
+	# 	assert_not @blog_post.valid?
+	# end
 
 	test "should not validate subtitle presence" do
-		loop_blog_posts do |blog_post|
-			blog_post.subtitle = ""
-			assert blog_post.valid?
+		@blog_post = create(:blog_post)
 
-			blog_post.subtitle = "    "
-			assert blog_post.valid?
-		end
+		@blog_post.subtitle = nil
+		assert @blog_post.valid?
 	end
 
-	test "should validate subtitle length (maximum: 64)" do
-		loop_blog_posts do |blog_post|
-			blog_post.subtitle = "X"
-			assert blog_post.valid?
+	# Important?
+	# test "should validate subtitle length (maximum: 64)" do
+	# 	@blog_post = create(:blog_post)
 
-			blog_post.subtitle = "X" * 64
-			assert blog_post.valid?
+	# 	@blog_post.subtitle = "X"
+	# 	assert @blog_post.valid?
 
-			blog_post.subtitle = "X" * 65
-			assert_not blog_post.valid?
-		end
-	end
+	# 	@blog_post.subtitle = "X" * 64
+	# 	assert @blog_post.valid?
+
+	# 	@blog_post.subtitle = "X" * 65
+	# 	assert_not @blog_post.valid?
+	# end
 
 	test "should validate content presence" do
-		loop_blog_posts do |blog_post|
-			blog_post.content = ""
-			assert_not blog_post.valid?
-		end
-	end
+		@blog_post = create(:blog_post)
 
-	test "should validate content length (maximum: 4096)" do
-		loop_blog_posts do |blog_post|
-			blog_post.content = "X"
-			assert blog_post.valid?
-
-			blog_post.content = "X" * 4096
-			assert blog_post.valid?
-
-			blog_post.content = "X" * 4097
-			assert_not blog_post.valid?
-		end
+		@blog_post.content = nil
+		assert_not @blog_post.valid?
 	end
 
 	test "should default motd as false" do
-		new_blog_post = BlogPost.create!(title: "New Blog Post", content: "Lorem Ipsum", motd: nil)
-		assert_not new_blog_post.motd?
+		@blog_post = create(:blog_post, motd: nil)
+		assert_not @blog_post.motd?
 	end
 
 	test "should default hidden as false" do
-		new_blog_post = BlogPost.create!(title: "New Blog Post", content: "Lorem Ipsum", hidden: nil)
-		assert_not new_blog_post.trashed?
+		@blog_post = create(:blog_post, hidden: nil)
+		assert_not @blog_post.hidden?
 	end
 
 	test "should default trashed as false" do
-		new_blog_post = BlogPost.create!(title: "New Blog Post", content: "Lorem Ipsum", trashed: nil)
-		assert_not new_blog_post.trashed?
+		@blog_post = create(:blog_post, trashed: nil)
+		assert_not @blog_post.trashed?
 	end
 
-	test "should scope motd posts" do
+	test "should scope motd BlogPosts" do
+		populate_blog_posts
+
 		assert BlogPost.motds == BlogPost.where(motd: true)
 	end
 
-	test "should scope hidden posts" do
+	test "should scope hidden BlogPosts" do
+		populate_blog_posts
+
 		assert BlogPost.hidden == BlogPost.where(hidden: true)
 	end
 
-	test "should scope non-hidden posts" do
+	test "should scope non-hidden BlogPosts" do
+		populate_blog_posts
+
 		assert BlogPost.non_hidden == BlogPost.where(hidden: false)
 	end
 
-	test "should scope trashed posts" do
+	test "should scope trashed BlogPosts" do
+		populate_blog_posts
+
 		assert BlogPost.trashed == BlogPost.where(trashed: true)
 	end
 
-	test "should scope non-trashed posts" do
+	test "should scope non-trashed BlogPosts" do
+		populate_blog_posts
+
 		assert BlogPost.non_trashed == BlogPost.where(trashed: false)
 	end
 
 	test "should check for edits" do
-		loop_blog_posts do |blog_post|
-			assert_not blog_post.edited?
+		@blog_post = create(:blog_post)
 
-			blog_post.updated_at = Time.now + 1
-			assert blog_post.edited?
-		end
+		assert_not @blog_post.edited?
+
+		@blog_post.updated_at = Time.now + 1
+		assert @blog_post.edited?
 	end
 
 	test "should check if trash-canned" do
-		loop_blog_posts( blog_modifiers: { 'trashed' => true } ) do |blog_post|
-			assert blog_post.trash_canned?
-		end
+		@blog_post = create(:blog_post, trashed: false)
 
-		loop_blog_posts( blog_modifiers: { 'trashed' => false } ) do |blog_post|
-			assert_not blog_post.trash_canned?
-		end
+		assert_not @blog_post.trash_canned?
+
+		@blog_post.trashed = true
+		assert @blog_post.trash_canned?
 	end
 
 end

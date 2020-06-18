@@ -1,10 +1,9 @@
 class SessionsController < ApplicationController
 
 	before_action :require_login, except: [:new_login, :login]
-	before_action :require_user_match, only: [:new, :create]
+	before_action :require_user_match, only: [:new, :create, :edit, :update, :destroy]
 	before_action :require_non_remembered, only: [:new, :create]
 	before_action :require_authorize_or_admin, only: [:index, :show]
-	before_action :require_authorize_or_untrashed_admin, only: [:edit, :update, :destroy]
 
 	before_action :set_user, except: [:new_login, :login, :logout]
 	after_action :mark_activity, only: [:create, :update, :destroy, :login, :logout], if: :logged_in?
@@ -72,14 +71,13 @@ class SessionsController < ApplicationController
 	def login
 		@session = Session.new
 		if ( @user = User.find_by(email: params[:email]) ) && @user.authenticate( params[:password] )
-			log_out
 			if params[:remember] == "1"
 				@session = @user.sessions.build(session_params)
 				@session.ip = request.remote_ip if params[:save_ip]
 				if @session.save
 					if remembered?
 						if current_session.destroy
-							@current_session = nil
+							forget
 							flash[:alert] = "Your old session has been removed."
 						else
 							flash[:warning] = "There was a problem removing your old session."
