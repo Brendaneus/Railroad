@@ -36,6 +36,12 @@ class BlogPostsControllerTest < ActionDispatch::IntegrationTest
 		@other_user_comment = create(:comment, user: @other_user, post: @blog_post, content: "Other User's Comment")
 		@other_user_hidden_comment = create(:comment, user: @other_user, post: @blog_post, content: "Other User's Hidden Comment", hidden: true)
 		@other_user_trashed_comment = create(:comment, user: @other_user, post: @blog_post, content: "Other User's Trashed Comment", trashed: true)
+		@trashed_user_comment = create(:comment, user: @trashed_user, post: @blog_post, content: "Trashed User's Comment")
+		@trashed_user_hidden_comment = create(:comment, user: @trashed_user, post: @blog_post, content: "Trashed User's Hidden Comment", hidden: true)
+		@trashed_user_trashed_comment = create(:comment, user: @trashed_user, post: @blog_post, content: "Trashed User's Trashed Comment", trashed: true)
+		@trashed_admin_user_comment = create(:comment, user: @trashed_admin_user, post: @blog_post, content: "Trashed Admin User's Comment")
+		@trashed_admin_user_hidden_comment = create(:comment, user: @trashed_admin_user, post: @blog_post, content: "Trashed Admin User's Hidden Comment", hidden: true)
+		@trashed_admin_user_trashed_comment = create(:comment, user: @trashed_admin_user, post: @blog_post, content: "Trashed Admin User's Trashed Comment", trashed: true)
 	end
 
 	test "should get index" do
@@ -234,9 +240,17 @@ class BlogPostsControllerTest < ActionDispatch::IntegrationTest
 		# un-hidden, un-trashed comments
 		assert_select 'main p', { text: @user_comment.content, count: 1 }
 		assert_select 'form[action=?]', blog_post_comment_path(@blog_post, @user_comment), 0
+		assert_select 'a[href=?][data-method=patch]', hide_blog_post_comment_path(@blog_post, @user_comment), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_blog_post_comment_path(@blog_post, @user_comment), 0
+		assert_select 'a[href=?][data-method=patch]', trash_blog_post_comment_path(@blog_post, @user_comment), 0
+		assert_select 'a[href=?][data-method=patch]', untrash_blog_post_comment_path(@blog_post, @user_comment), 0
 		[ @user_hidden_comment, @user_trashed_comment ].each do |comment|
 			assert_select 'main p', { text: comment.content, count: 0 }
 			assert_select 'form[action=?]', blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', hide_blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_blog_post_comment_path(@blog_post, comment), 0
 		end
 
 
@@ -247,53 +261,78 @@ class BlogPostsControllerTest < ActionDispatch::IntegrationTest
 		assert_response :success
 
 		# un-trashed comment forms and un-owned, un-hidden, un-trashed comments
-		[ @user_comment, @user_hidden_comment ].each do |comment|
-			assert_select 'main p', { text: comment.content, count: 0 }
-			assert_select 'form[action=?]', blog_post_comment_path(@blog_post, comment), 1
-		end
+		assert_select 'main p', { text: @user_comment.content, count: 0 }
+		assert_select 'form[action=?]', blog_post_comment_path(@blog_post, @user_comment), 1
+		assert_select 'a[href=?][data-method=patch]', hide_blog_post_comment_path(@blog_post, @user_comment), 1
+		assert_select 'a[href=?][data-method=patch]', unhide_blog_post_comment_path(@blog_post, @user_comment), 0
+		assert_select 'a[href=?][data-method=patch]', trash_blog_post_comment_path(@blog_post, @user_comment), 1
+		assert_select 'a[href=?][data-method=patch]', untrash_blog_post_comment_path(@blog_post, @user_comment), 0
+		assert_select 'main p', { text: @user_hidden_comment.content, count: 0 }
+		assert_select 'form[action=?]', blog_post_comment_path(@blog_post, @user_hidden_comment), 1
+		assert_select 'a[href=?][data-method=patch]', hide_blog_post_comment_path(@blog_post, @user_hidden_comment), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_blog_post_comment_path(@blog_post, @user_hidden_comment), 1
+		assert_select 'a[href=?][data-method=patch]', trash_blog_post_comment_path(@blog_post, @user_hidden_comment), 1
+		assert_select 'a[href=?][data-method=patch]', untrash_blog_post_comment_path(@blog_post, @user_hidden_comment), 0
 		assert_select 'main p', { text: @other_user_comment.content, count: 1 }
 		assert_select 'form[action=?]', blog_post_comment_path(@blog_post, @other_user_comment), 0
-		[ @user_trashed_comment, @other_user_hidden_comment, @other_user_trashed_comment ].each do |comment|
+		assert_select 'a[href=?][data-method=patch]', hide_blog_post_comment_path(@blog_post, @other_user_comment), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_blog_post_comment_path(@blog_post, @other_user_comment), 0
+		assert_select 'a[href=?][data-method=patch]', trash_blog_post_comment_path(@blog_post, @other_user_comment), 0
+		assert_select 'a[href=?][data-method=patch]', untrash_blog_post_comment_path(@blog_post, @other_user_comment), 0
+		[ @user_trashed_comment,
+			@other_user_hidden_comment,
+			@other_user_trashed_comment ].each do |comment|
 			assert_select 'main p', { text: comment.content, count: 0 }
 			assert_select 'form[action=?]', blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', hide_blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_blog_post_comment_path(@blog_post, comment), 0
 		end
 
 		log_out
 
 
 		## User, Hidden
-		## User, Trashed
-		[ @hidden_user, @trashed_user ].each do |user|
-			log_in_as user
-
-			get blog_post_path(@blog_post)
-			assert_response :success
-
-			# no new comment form
-			assert_select 'form[action=?][method=post]', blog_post_comments_path(@blog_post), 0
-
-			log_out
-		end
-
-
-		## User, Admin, Trashed
-		log_in_as @trashed_admin_user
+		log_in_as @hidden_user
 
 		get blog_post_path(@blog_post)
 		assert_response :success
 
-		# admin control panel
-		assert_select 'div.admin.control' do
-			assert_select 'a[href=?]', trashed_blog_post_documents_path(@blog_post), 1
-			assert_select 'a[href=?]', trashed_blog_post_comments_path(@blog_post), 1
+		# no new comment form
+		assert_select 'form[action=?][method=post]', blog_post_comments_path(@blog_post), 0
+
+
+		## User, Trashed
+		log_in_as @trashed_user
+
+		get blog_post_path(@blog_post)
+		assert_response :success
+
+		# no new comment form
+		assert_select 'form[action=?][method=post]', blog_post_comments_path(@blog_post), 0
+
+		# owned, un-trashed comments and un-owned, un-hidden, un-trashed comments
+		[ @trashed_user_comment,
+			@trashed_user_hidden_comment,
+			@other_user_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 1 }
+			assert_select 'form[action=?]', blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', hide_blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_blog_post_comment_path(@blog_post, comment), 0
 		end
-		assert_select 'a[href=?]', edit_blog_post_path(@blog_post), 0
-		assert_select 'a[href=?][data-method=patch]', hide_blog_post_path(@blog_post), 0
-		assert_select 'a[href=?][data-method=patch]', unhide_blog_post_path(@blog_post), 0
-		assert_select 'a[href=?][data-method=patch]', trash_blog_post_path(@blog_post), 0
-		assert_select 'a[href=?][data-method=patch]', untrash_blog_post_path(@blog_post), 0
-		assert_select 'a[href=?][data-method=delete]', blog_post_path(@blog_post), 0
-		assert_select 'a[href=?]', new_blog_post_document_path(@blog_post), 0
+		[ @trashed_user_trashed_comment,
+			@other_user_hidden_comment,
+			@other_user_trashed_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 0 }
+			assert_select 'form[action=?]', blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', hide_blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_blog_post_comment_path(@blog_post, comment), 0
+		end
 
 		log_out
 
@@ -301,6 +340,7 @@ class BlogPostsControllerTest < ActionDispatch::IntegrationTest
 		## User, Admin
 		log_in_as @admin_user
 
+		# Blog Post
 		get blog_post_path(@blog_post)
 		assert_response :success
 
@@ -326,12 +366,26 @@ class BlogPostsControllerTest < ActionDispatch::IntegrationTest
 		assert_select 'form[action=?][method=post]', blog_post_comments_path(@blog_post), 1
 
 		# un-trashed comment forms
-		[ @user_comment, @user_hidden_comment ].each do |comment|
-			assert_select 'main p', { text: comment.content, count: 0 }
-			assert_select 'form[action=?]', blog_post_comment_path(@blog_post, comment), 1
-		end
+		assert_select 'main p', { text: @user_comment.content, count: 0 }
+		assert_select 'form[action=?]', blog_post_comment_path(@blog_post, @user_comment), 1
+		assert_select 'a[href=?][data-method=patch]', hide_blog_post_comment_path(@blog_post, @user_comment), 1
+		assert_select 'a[href=?][data-method=patch]', unhide_blog_post_comment_path(@blog_post, @user_comment), 0
+		assert_select 'a[href=?][data-method=patch]', trash_blog_post_comment_path(@blog_post, @user_comment), 1
+		assert_select 'a[href=?][data-method=patch]', untrash_blog_post_comment_path(@blog_post, @user_comment), 0
+		assert_select 'main p', { text: @user_hidden_comment.content, count: 0 }
+		assert_select 'form[action=?]', blog_post_comment_path(@blog_post, @user_hidden_comment), 1
+		assert_select 'a[href=?][data-method=patch]', hide_blog_post_comment_path(@blog_post, @user_hidden_comment), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_blog_post_comment_path(@blog_post, @user_hidden_comment), 1
+		assert_select 'a[href=?][data-method=patch]', trash_blog_post_comment_path(@blog_post, @user_hidden_comment), 1
+		assert_select 'a[href=?][data-method=patch]', untrash_blog_post_comment_path(@blog_post, @user_hidden_comment), 0
 		assert_select 'main p', { text: @user_trashed_comment.content, count: 0 }
+		assert_select 'form[action=?]', blog_post_comment_path(@blog_post, @user_trashed_comment), 0
+		assert_select 'a[href=?][data-method=patch]', hide_blog_post_comment_path(@blog_post, @user_trashed_comment), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_blog_post_comment_path(@blog_post, @user_trashed_comment), 0
+		assert_select 'a[href=?][data-method=patch]', trash_blog_post_comment_path(@blog_post, @user_trashed_comment), 0
+		assert_select 'a[href=?][data-method=patch]', untrash_blog_post_comment_path(@blog_post, @user_trashed_comment), 0
 
+		# Blog Post, Hidden
 		get blog_post_path(@hidden_blog_post)
 		assert_response :success
 
@@ -348,6 +402,7 @@ class BlogPostsControllerTest < ActionDispatch::IntegrationTest
 			assert_select 'a[href=?]', trashed_blog_post_comments_path(@hidden_blog_post), 1
 		end
 
+		# Blog Post, Trashed
 		get blog_post_path(@trashed_blog_post)
 		assert_response :success
 
@@ -364,6 +419,7 @@ class BlogPostsControllerTest < ActionDispatch::IntegrationTest
 			assert_select 'a[href=?]', trashed_blog_post_comments_path(@trashed_blog_post), 1
 		end
 
+		# Blog Post, Hidden, Trashed
 		get blog_post_path(@hidden_trashed_blog_post)
 		assert_response :success
 
@@ -379,6 +435,50 @@ class BlogPostsControllerTest < ActionDispatch::IntegrationTest
 			assert_select 'a[href=?]', trashed_blog_post_documents_path(@hidden_trashed_blog_post), 1
 			assert_select 'a[href=?]', trashed_blog_post_comments_path(@hidden_trashed_blog_post), 1
 		end
+
+
+		## User, Admin, Trashed
+		log_in_as @trashed_admin_user
+
+		get blog_post_path(@blog_post)
+		assert_response :success
+
+		# admin control panel
+		assert_select 'div.admin.control' do
+			assert_select 'a[href=?]', trashed_blog_post_documents_path(@blog_post), 1
+			assert_select 'a[href=?]', trashed_blog_post_comments_path(@blog_post), 1
+		end
+		assert_select 'a[href=?]', edit_blog_post_path(@blog_post), 0
+		assert_select 'a[href=?][data-method=patch]', hide_blog_post_path(@blog_post), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_blog_post_path(@blog_post), 0
+		assert_select 'a[href=?][data-method=patch]', trash_blog_post_path(@blog_post), 0
+		assert_select 'a[href=?][data-method=patch]', untrash_blog_post_path(@blog_post), 0
+		assert_select 'a[href=?][data-method=delete]', blog_post_path(@blog_post), 0
+		assert_select 'a[href=?]', new_blog_post_document_path(@blog_post), 0
+
+		# un-trashed comments
+		[ @user_comment,
+			@user_hidden_comment,
+			@trashed_admin_user_comment,
+			@trashed_admin_user_hidden_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 1 }
+			assert_select 'form[action=?]', blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', hide_blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_blog_post_comment_path(@blog_post, comment), 0
+		end
+		[ @user_trashed_comment,
+			@trashed_admin_user_trashed_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 0 }
+			assert_select 'form[action=?]', blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', hide_blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_blog_post_comment_path(@blog_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_blog_post_comment_path(@blog_post, comment), 0
+		end
+
+		log_out
 	end
 
 	test "should get new (only un-trashed, un-hidden admins)" do

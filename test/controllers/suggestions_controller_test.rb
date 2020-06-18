@@ -76,6 +76,14 @@ class SuggestionsControllerTest < ActionDispatch::IntegrationTest
 		@other_user_hidden_comment = create(:comment, post: @archiving_user_suggestion, user: @other_user, content: "Other User's Hidden Comment for User's Suggestion for Archiving", hidden: true)
 		@other_user_trashed_comment = create(:comment, post: @archiving_user_suggestion, user: @other_user, content: "Other User's Trashed Comment for User's Suggestion for Archiving", trashed: true)
 		@other_user_hidden_trashed_comment = create(:comment, post: @archiving_user_suggestion, user: @other_user, content: "Other User's Hidden, Trashed Comment for User's Suggestion for Archiving", hidden: true, trashed: true)
+		@trashed_user_comment = create(:comment, post: @archiving_user_suggestion, user: @trashed_user, content: "Trashed User's Comment for User's Suggestion for Archiving")
+		@trashed_user_hidden_comment = create(:comment, post: @archiving_user_suggestion, user: @trashed_user, content: "Trashed User's Hidden Comment for User's Suggestion for Archiving", hidden: true)
+		@trashed_user_trashed_comment = create(:comment, post: @archiving_user_suggestion, user: @trashed_user, content: "Trashed User's Trashed Comment for User's Suggestion for Archiving", trashed: true)
+		@trashed_user_hidden_trashed_comment = create(:comment, post: @archiving_user_suggestion, user: @trashed_user, content: "Trashed User's Hidden, Trashed Comment for User's Suggestion for Archiving", hidden: true, trashed: true)
+		@trashed_admin_user_comment = create(:comment, post: @archiving_user_suggestion, user: @trashed_admin_user, content: "Trashed Admin User's Comment for User's Suggestion for Archiving")
+		@trashed_admin_user_hidden_comment = create(:comment, post: @archiving_user_suggestion, user: @trashed_admin_user, content: "Trashed Admin User's Hidden Comment for User's Suggestion for Archiving", hidden: true)
+		@trashed_admin_user_trashed_comment = create(:comment, post: @archiving_user_suggestion, user: @trashed_admin_user, content: "Trashed Admin User's Trashed Comment for User's Suggestion for Archiving", trashed: true)
+		@trashed_admin_user_hidden_trashed_comment = create(:comment, post: @archiving_user_suggestion, user: @trashed_admin_user, content: "Trashed Admin User's Hidden, Trashed Comment for User's Suggestion for Archiving", hidden: true, trashed: true)
 	end
 
 	test "should get index" do
@@ -499,11 +507,15 @@ class SuggestionsControllerTest < ActionDispatch::IntegrationTest
 		# new comment form
 		assert_select 'form[action=?][method=post]', archiving_suggestion_comments_path(@archiving, @archiving_user_suggestion), 1
 
-		# comments (un-trashed & un-hidden)
+		# comments (un-hidden, un-trashed)
 		[ @user_comment,
 			@other_user_comment ].each do |comment|
 			assert_select 'main p', { text: comment.content, count: 1 }
 			assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
 		end
 		[ @user_hidden_comment,
 			@user_trashed_comment,
@@ -513,6 +525,10 @@ class SuggestionsControllerTest < ActionDispatch::IntegrationTest
 			@other_user_hidden_trashed_comment ].each do |comment|
 			assert_select 'main p', { text: comment.content, count: 0 }
 			assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
 		end
 
 		# Archiving Suggestion, Trashed
@@ -551,16 +567,25 @@ class SuggestionsControllerTest < ActionDispatch::IntegrationTest
 		assert_select 'form[action=?][method=post]', archiving_suggestion_comments_path(@archiving, @archiving_user_suggestion), 1
 
 		# comment forms (owned & un-trashed)
-		[ @user_comment,
-			@user_hidden_comment ].each do |comment|
-			assert_select 'main p', { text: comment.content, count: 0 }
-			assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 1
-		end
+		assert_select 'main p', { text: @user_comment.content, count: 0 }
+		assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, @user_comment), 1
+		assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, @user_comment), 1
+		assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, @user_comment), 0
+		assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, @user_comment), 1
+		assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, @user_comment), 0
+		assert_select 'main p', { text: @user_hidden_comment.content, count: 0 }
+		assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, @user_hidden_comment), 1
+		assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, @user_hidden_comment), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, @user_hidden_comment), 1
+		assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, @user_hidden_comment), 1
+		assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, @user_hidden_comment), 0
 		# comments (un-owned, un-hidden, & un-trashed)
-		[ @other_user_comment ].each do |comment|
-			assert_select 'main p', { text: comment.content, count: 1 }
-			assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
-		end
+		assert_select 'main p', { text: @other_user_comment.content, count: 1 }
+		assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, @other_user_comment), 0
+		assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, @other_user_comment), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, @other_user_comment), 0
+		assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, @other_user_comment), 0
+		assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, @other_user_comment), 0
 		[ @user_trashed_comment,
 			@user_hidden_trashed_comment,
 			@other_user_hidden_comment,
@@ -568,6 +593,10 @@ class SuggestionsControllerTest < ActionDispatch::IntegrationTest
 			@other_user_hidden_trashed_comment ].each do |comment|
 			assert_select 'main p', { text: comment.content, count: 0 }
 			assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
 		end
 
 		# Archiving Suggestion, Owned, Hidden
@@ -625,6 +654,58 @@ class SuggestionsControllerTest < ActionDispatch::IntegrationTest
 		assert_select 'a[href=?][data-method=delete]', archiving_suggestion_path(@archiving, @archiving_other_user_suggestion), 0
 
 
+		## User, Trashed
+		log_in_as @trashed_user
+
+		# Archiving Suggestion, Owned
+		get archiving_suggestion_path(@archiving, @archiving_trashed_user_suggestion)
+		assert_response :success
+
+		# control panel (non-admin, no-merge, no-delete)
+		assert_select 'div.admin.control', 0
+		assert_select 'div.control' do
+			assert_select 'a[href=?]', edit_archiving_suggestion_path(@archiving, @archiving_trashed_user_suggestion), 0
+			assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_path(@archiving, @archiving_trashed_user_suggestion), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_path(@archiving, @archiving_trashed_user_suggestion), 0
+			assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_path(@archiving, @archiving_trashed_user_suggestion), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_path(@archiving, @archiving_trashed_user_suggestion), 0
+			assert_select 'a[href=?]', trashed_archiving_suggestion_comments_path(@archiving, @archiving_trashed_user_suggestion), 1
+		end
+		assert_select 'a[href=?][data-method=patch]', merge_archiving_suggestion_path(@archiving, @archiving_trashed_user_suggestion), 0
+		assert_select 'a[href=?][data-method=delete]', archiving_suggestion_path(@archiving, @archiving_trashed_user_suggestion), 0
+
+		# no new comment form
+		assert_select 'form[action=?][method=post]', archiving_suggestion_comments_path(@archiving, @archiving_trashed_user_suggestion), 0
+
+		# Archiving Suggestion, Un-Owned
+		get archiving_suggestion_path(@archiving, @archiving_user_suggestion)
+		assert_response :success
+
+		# comments (owned & un-trashed) and comments (un-owned, un-hidden, & un-trashed)
+		[ @trashed_user_comment,
+			@trashed_user_hidden_comment,
+			@other_user_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 1 }
+			assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+		end
+		[ @trashed_user_trashed_comment,
+			@trashed_user_hidden_trashed_comment,
+			@other_user_hidden_comment,
+			@other_user_trashed_comment,
+			@other_user_hidden_trashed_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 0 }
+			assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+		end
+
+
 		## Admin
 		log_in_as @admin_user
 
@@ -648,19 +729,26 @@ class SuggestionsControllerTest < ActionDispatch::IntegrationTest
 		assert_select 'form[action=?][method=post]', archiving_suggestion_comments_path(@archiving, @archiving_user_suggestion), 1
 
 		# comment forms (un-trashed)
-		[ @user_comment,
-			@user_hidden_comment,
-			@other_user_comment,
-			@other_user_hidden_comment ].each do |comment|
-			assert_select 'main p', { text: comment.content, count: 0 }
-			assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 1
-		end
+		assert_select 'main p', { text:  @user_comment.content, count: 0 }
+		assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion,  @user_comment), 1
+		assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion,  @user_comment), 1
+		assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion,  @user_comment), 0
+		assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion,  @user_comment), 1
+		assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion,  @user_comment), 0
+		assert_select 'main p', { text:  @user_hidden_comment.content, count: 0 }
+		assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion,  @user_hidden_comment), 1
+		assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion,  @user_hidden_comment), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion,  @user_hidden_comment), 1
+		assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion,  @user_hidden_comment), 1
+		assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion,  @user_hidden_comment), 0
 		[ @user_trashed_comment,
-			@user_hidden_trashed_comment,
-			@other_user_trashed_comment,
-			@other_user_hidden_trashed_comment ].each do |comment|
+			@user_hidden_trashed_comment ].each do |comment|
 			assert_select 'main p', { text: comment.content, count: 0 }
 			assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
 		end
 
 		# Archiving Suggestion, Trashed
@@ -681,6 +769,43 @@ class SuggestionsControllerTest < ActionDispatch::IntegrationTest
 
 		# no new comment form
 		assert_select 'form[action=?][method=post]', archiving_suggestion_comments_path(@archiving, @archiving_user_trashed_suggestion), 0
+
+		log_out
+
+
+		## Admin, Trashed
+		log_in_as @trashed_admin_user
+
+		# Archiving Suggestion, Trashed
+		get archiving_suggestion_path(@archiving, @archiving_user_suggestion)
+		assert_response :success
+
+		# no new comment form
+		assert_select 'form[action=?][method=post]', archiving_suggestion_comments_path(@archiving, @archiving_user_suggestion), 0
+
+		# comments un-trashed
+		[ @trashed_admin_user_comment,
+			@trashed_admin_user_hidden_comment,
+			@other_user_comment,
+			@other_user_hidden_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 1 }
+			assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+		end
+		[ @trashed_admin_user_trashed_comment,
+			@trashed_admin_user_hidden_trashed_comment,
+			@other_user_trashed_comment,
+			@other_user_hidden_trashed_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 0 }
+			assert_select 'form[action=?][method=post]', archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', hide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_archiving_suggestion_comment_path(@archiving, @archiving_user_suggestion, comment), 0
+		end
 	end
 
 	test "should get new (only un-trashed, un-hidden users)" do

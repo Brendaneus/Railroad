@@ -18,13 +18,13 @@
 
 	<% if untrashed_user? && ( admin_user? || comment.owned?(by: current_user) ) %>
 
-		<%= link_to "Hide", hide_post_comment_path(comment.post, comment.id) unless comment.hidden? %>
+		<%= link_to "Hide", hide_post_comment_path(comment.post, comment.id), method: :patch unless comment.hidden? %>
 
-		<%= link_to "Show", unhide_post_comment_path(comment.post, comment.id) if comment.hidden? %>
+		<%= link_to "Show", unhide_post_comment_path(comment.post, comment.id), method: :patch if comment.hidden? %>
 
-		<%= link_to "Trash", trash_post_comment_path(comment.post, comment.id) unless comment.trashed? %>
+		<%= link_to "Trash", trash_post_comment_path(comment.post, comment.id), method: :patch unless comment.trashed? %>
 
-		<%= link_to "Restore", untrash_post_comment_path(comment.post, comment.id) if comment.trashed? %>
+		<%= link_to "Restore", untrash_post_comment_path(comment.post, comment.id), method: :patch if comment.trashed? %>
 
 		<%= link_to "Delete", post_comment_path(comment.post, comment.id), method: :delete, data: { confirm: 'Really delete this comment?'} if comment.trashed? && admin_user? %>
 

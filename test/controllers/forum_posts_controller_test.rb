@@ -41,6 +41,14 @@ class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 		@other_user_hidden_comment = create(:comment, user: @other_user, post: @user_forum_post, content: "Other User's Hidden Comment", hidden: true)
 		@other_user_trashed_comment = create(:comment, user: @other_user, post: @user_forum_post, content: "Other User's Trashed Comment", trashed: true)
 		@other_user_hidden_trashed_comment = create(:comment, user: @other_user, post: @user_forum_post, content: "Other User's Hidden Trashed Comment", hidden: true, trashed: true)
+		@trashed_user_comment = create(:comment, user: @trashed_user, post: @user_forum_post, content: "Trashed User's Comment")
+		@trashed_user_hidden_comment = create(:comment, user: @trashed_user, post: @user_forum_post, content: "Trashed User's Hidden Comment", hidden: true)
+		@trashed_user_trashed_comment = create(:comment, user: @trashed_user, post: @user_forum_post, content: "Trashed User's Trashed Comment", trashed: true)
+		@trashed_user_hidden_trashed_comment = create(:comment, user: @trashed_user, post: @user_forum_post, content: "Trashed User's Hidden Trashed Comment", hidden: true, trashed: true)
+		@trashed_admin_user_comment = create(:comment, user: @trashed_admin_user, post: @user_forum_post, content: "Trashed Admin User's Comment")
+		@trashed_admin_user_hidden_comment = create(:comment, user: @trashed_admin_user, post: @user_forum_post, content: "Trashed Admin User's Hidden Comment", hidden: true)
+		@trashed_admin_user_trashed_comment = create(:comment, user: @trashed_admin_user, post: @user_forum_post, content: "Trashed Admin User's Trashed Comment", trashed: true)
+		@trashed_admin_user_hidden_trashed_comment = create(:comment, user: @trashed_admin_user, post: @user_forum_post, content: "Trashed Admin User's Hidden Trashed Comment", hidden: true, trashed: true)
 	end
 
 	test "should get index" do
@@ -263,6 +271,10 @@ class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 			@other_user_comment ].each do |comment|
 			assert_select 'main p', { text: comment.content, count: 1 }
 			assert_select 'form[action=?][method=post]', forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', hide_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_forum_post_comment_path(@user_forum_post, comment), 0
 		end
 		[ @user_hidden_comment,
 			@user_trashed_comment,
@@ -272,6 +284,10 @@ class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 			@other_user_hidden_trashed_comment ].each do |comment|
 			assert_select 'main p', { text: comment.content, count: 0 }
 			assert_select 'form[action=?][method=post]', forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', hide_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_forum_post_comment_path(@user_forum_post, comment), 0
 		end
 
 		get forum_post_path(@user_trashed_forum_post)
@@ -302,14 +318,26 @@ class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 		# new comment form
 		assert_select 'form[action=?][method=post]', forum_post_comments_path(@user_forum_post), 1
 
-		# owned, un-trashed and un-owned, un-hidden, un-trashed comments
-		[ @user_comment,
-			@user_hidden_comment ].each do |comment|
-			assert_select 'main p', { text: comment.content, count: 0 }
-			assert_select 'form[action=?][method=post]', forum_post_comment_path(@user_forum_post, comment), 1
-		end
+		# owned, un-trashed comment forms
+		assert_select 'main p', { text: @user_comment.content, count: 0 }
+		assert_select 'form[action=?][method=post]', forum_post_comment_path(@user_forum_post, @user_comment), 1
+		assert_select 'a[href=?][data-method=patch]', hide_forum_post_comment_path(@user_forum_post, @user_comment), 1
+		assert_select 'a[href=?][data-method=patch]', unhide_forum_post_comment_path(@user_forum_post, @user_comment), 0
+		assert_select 'a[href=?][data-method=patch]', trash_forum_post_comment_path(@user_forum_post, @user_comment), 1
+		assert_select 'a[href=?][data-method=patch]', untrash_forum_post_comment_path(@user_forum_post, @user_comment), 0
+		assert_select 'main p', { text: @user_hidden_comment.content, count: 0 }
+		assert_select 'form[action=?][method=post]', forum_post_comment_path(@user_forum_post, @user_hidden_comment), 1
+		assert_select 'a[href=?][data-method=patch]', hide_forum_post_comment_path(@user_forum_post, @user_hidden_comment), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_forum_post_comment_path(@user_forum_post, @user_hidden_comment), 1
+		assert_select 'a[href=?][data-method=patch]', trash_forum_post_comment_path(@user_forum_post, @user_hidden_comment), 1
+		assert_select 'a[href=?][data-method=patch]', untrash_forum_post_comment_path(@user_forum_post, @user_hidden_comment), 0
+		# un-owned, un-hidden, un-trashed comments
 		assert_select 'main p', { text: @other_user_comment.content, count: 1 }
 		assert_select 'form[action=?][method=post]', forum_post_comment_path(@user_forum_post, @other_user_comment), 0
+		assert_select 'a[href=?][data-method=patch]', hide_forum_post_comment_path(@user_forum_post, @other_user_comment), 0
+		assert_select 'a[href=?][data-method=patch]', unhide_forum_post_comment_path(@user_forum_post, @other_user_comment), 0
+		assert_select 'a[href=?][data-method=patch]', trash_forum_post_comment_path(@user_forum_post, @other_user_comment), 0
+		assert_select 'a[href=?][data-method=patch]', untrash_forum_post_comment_path(@user_forum_post, @other_user_comment), 0
 		[ @user_trashed_comment,
 			@user_hidden_trashed_comment,
 			@other_user_hidden_comment,
@@ -317,8 +345,13 @@ class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 			@other_user_hidden_trashed_comment ].each do |comment|
 			assert_select 'main p', { text: comment.content, count: 0 }
 			assert_select 'form[action=?][method=post]', forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', hide_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_forum_post_comment_path(@user_forum_post, comment), 0
 		end
 
+		# Forum Post, Hidden
 		get forum_post_path(@user_hidden_forum_post)
 		assert_response :success
 
@@ -337,6 +370,7 @@ class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 		# new comment form
 		assert_select 'form[action=?][method=post]', forum_post_comments_path(@user_hidden_forum_post), 1
 
+		# Forum Post, Trashed
 		get forum_post_path(@user_trashed_forum_post)
 		assert_response :success
 
@@ -361,6 +395,7 @@ class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 		## User, Hidden
 		log_in_as @hidden_user
 
+		# Forum Post
 		get forum_post_path(@user_forum_post)
 		assert_response :success
 
@@ -373,6 +408,7 @@ class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 		## User, Trashed
 		log_in_as @trashed_user
 
+		# Forum Post
 		get forum_post_path(@user_forum_post)
 		assert_response :success
 
@@ -391,12 +427,37 @@ class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 		# no new comment form
 		assert_select 'form[action=?][method=post]', forum_post_comments_path(@user_forum_post), 0
 
+		# owned, un-trashed comments and un-owned, un-hidden, un-trashed comments
+		[ @trashed_user_comment,
+			@trashed_user_hidden_comment,
+			@other_user_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 1 }
+			assert_select 'form[action=?][method=post]', forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', hide_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_forum_post_comment_path(@user_forum_post, comment), 0
+		end
+		[ @trashed_user_trashed_comment,
+			@trashed_user_hidden_trashed_comment,
+			@other_user_hidden_comment,
+			@other_user_trashed_comment,
+			@other_user_hidden_trashed_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 0 }
+			assert_select 'form[action=?][method=post]', forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', hide_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_forum_post_comment_path(@user_forum_post, comment), 0
+		end
+
 		log_out
 
 
-		## User, Admin
+		## Admin
 		log_in_as @admin_user
 
+		# Forum Post
 		get forum_post_path(@user_forum_post)
 		assert_response :success
 
@@ -414,13 +475,24 @@ class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 		# new comment form
 		assert_select 'form[action=?][method=post]', forum_post_comments_path(@user_forum_post), 1
 
-		# owned, un-trashed and un-owned, un-hidden, un-trashed comments
+		# un-trashed comment forms
 		[ @user_comment,
-			@user_hidden_comment,
-			@other_user_comment,
+			@other_user_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 0 }
+			assert_select 'form[action=?][method=post]', forum_post_comment_path(@user_forum_post, comment), 1
+			assert_select 'a[href=?][data-method=patch]', hide_forum_post_comment_path(@user_forum_post, comment), 1
+			assert_select 'a[href=?][data-method=patch]', unhide_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_forum_post_comment_path(@user_forum_post, comment), 1
+			assert_select 'a[href=?][data-method=patch]', untrash_forum_post_comment_path(@user_forum_post, comment), 0
+		end
+		[ @user_hidden_comment,
 			@other_user_hidden_comment ].each do |comment|
 			assert_select 'main p', { text: comment.content, count: 0 }
 			assert_select 'form[action=?][method=post]', forum_post_comment_path(@user_forum_post, comment), 1
+			assert_select 'a[href=?][data-method=patch]', hide_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_forum_post_comment_path(@user_forum_post, comment), 1
+			assert_select 'a[href=?][data-method=patch]', trash_forum_post_comment_path(@user_forum_post, comment), 1
+			assert_select 'a[href=?][data-method=patch]', untrash_forum_post_comment_path(@user_forum_post, comment), 0
 		end
 		[ @user_trashed_comment,
 			@user_hidden_trashed_comment,
@@ -428,8 +500,13 @@ class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 			@other_user_hidden_trashed_comment ].each do |comment|
 			assert_select 'main p', { text: comment.content, count: 0 }
 			assert_select 'form[action=?][method=post]', forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', hide_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_forum_post_comment_path(@user_forum_post, comment), 0
 		end
 
+		# Forum Post, Hidden
 		get forum_post_path(@user_hidden_forum_post)
 		assert_response :success
 
@@ -447,6 +524,7 @@ class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 		# new comment form
 		assert_select 'form[action=?][method=post]', forum_post_comments_path(@user_hidden_forum_post), 1
 
+		# Forum Post, Trashed
 		get forum_post_path(@user_trashed_forum_post)
 		assert_response :success
 
@@ -463,6 +541,41 @@ class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 
 		# new comment form
 		assert_select 'form[action=?][method=post]', forum_post_comments_path(@user_trashed_forum_post), 0
+
+
+		## Admin, Trashed
+		log_in_as @trashed_admin_user
+
+		# Forum Post
+		get forum_post_path(@user_forum_post)
+		assert_response :success
+
+		# no new comment form
+		assert_select 'form[action=?][method=post]', forum_post_comments_path(@user_forum_post), 0
+
+		# un-trashed comments
+		[ @trashed_admin_user_comment,
+			@trashed_admin_user_hidden_comment,
+			@other_user_comment,
+			@other_user_hidden_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 1 }
+			assert_select 'form[action=?][method=post]', forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', hide_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_forum_post_comment_path(@user_forum_post, comment), 0
+		end
+		[ @trashed_admin_user_trashed_comment,
+			@trashed_admin_user_hidden_trashed_comment,
+			@other_user_trashed_comment,
+			@other_user_hidden_trashed_comment ].each do |comment|
+			assert_select 'main p', { text: comment.content, count: 0 }
+			assert_select 'form[action=?][method=post]', forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', hide_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', unhide_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', trash_forum_post_comment_path(@user_forum_post, comment), 0
+			assert_select 'a[href=?][data-method=patch]', untrash_forum_post_comment_path(@user_forum_post, comment), 0
+		end
 	end
 
 	test "should get new (only untrashed, unhidden users)" do

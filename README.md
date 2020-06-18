@@ -24,7 +24,7 @@
 
 
 - **New Test Suite**
-	- [ ] First Pass
+	- [x] First Pass
 		- Uses Factories, not Fixtures -- use this to determine necessary records for ideal test database
 		- Tests for expected success and failure (triggering specific controller filters, etc)
 	- [ ] Second Pass -- might make it into AnythingIsPossible
@@ -69,6 +69,7 @@
 			- User groups testing routes? (?)
 	- [ ] **Test Definition**
 		- [ ] Test for both PUT & PATCH where applicable
+		- [ ] Test for proper comment trash/hide links where available
 			- Should certain links be GET-able? (hide, trash)
 		- [ ] Test for failure [redirects, flashes] upon bad CRUD requests
 			- **FLASH CLEARS ARE NOT WORKING AS EXPECTED -- USE _CLEAR_FLASHES_**
